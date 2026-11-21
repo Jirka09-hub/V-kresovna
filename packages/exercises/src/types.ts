@@ -69,6 +69,8 @@ export type ChoiceOption = {
   readonly errorCode: ErrorCode | null
   /** Prvek, kterého se chyba týká (pro zvýraznění ve 3D/2D). */
   readonly featureId?: string
+  /** Pohled, ve kterém je chyba vidět (u „chybějícího pohledu“ chybějící pohled). */
+  readonly view?: ViewName
 }
 
 /** Cvičení 1: nárys je pevně uprostřed, uživatel rozmístí karty s ostatními pohledy na volná místa. */

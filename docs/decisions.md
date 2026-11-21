@@ -153,3 +153,19 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   (0 = základní kvádr, 1… = prvky v pořadí popisu).
 - Proč: `originalID` je globální počítadlo instance WASM, takže id hran záviselo na tom, co se stavělo dřív.
   Distraktory, hodnocení a snapshoty potřebují stejná id při každém sestavení.
+
+## D-019 Generátor úloh a otisk výkresu
+
+- Stav: přijato (2026-11-21)
+- Otisk pohledu (`viewFingerprint` v enginu): kanonický popis čar relativně k průmětu tělesa, zaokrouhlený
+  na 0,001 mm, se sloučenými úseky na stejné přímce; skrytá čára pod viditelnou se nepočítá (není vidět).
+  Obsahuje i kružnice a osy. Dva pohledy se stejným otiskem uživatel nerozliší.
+- Generátor součástí: zamítací vzorkování s pravidly čitelnosti (`packages/exercises/src/layout.ts`):
+  materiál i mezera mezi prvky aspoň 3 mm, prvek aspoň 4 mm, díry Ø 6–16 mm, prvky se nepřekrývají
+  ani nedotýkají. Nejsou to normy, jen parametry generátoru, proto nejsou v `drafting-standards`.
+- „Chybějící pohled“: distraktor z mutace tělesa, který má **oba dané pohledy stejné** jako správná
+  součást, se zahazuje: jeho chybějící pohled by byl druhou správnou odpovědí. Nejtěžší distraktory
+  (obtížnost 4–5) jsou proto chybné výkresy správné součásti (skrytá hrana plnou čarou, viditelná
+  čárkovaně, chybějící hrana) a mutace tělesa, které se shodují aspoň v jednom daném pohledu.
+- Distraktory se vybírají tak, aby měly různé kódy chyb, pokud to jde. Id součástí v možnostech jsou
+  neutrální (`<id úlohy>/m1`…), aby z nich nešlo poznat správnou odpověď.
