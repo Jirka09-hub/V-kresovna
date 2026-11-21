@@ -187,3 +187,39 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   pro různé jmenné prostory).
 - Pozn. k testům: Playwright snímek celé stránky může u plátna v režimu „na vyžádání“ ukázat starší snímek;
   snímek samotného prvku je aktuální. Testy proto ověřují stav přes atributy (`data-rotation`), ne pixely.
+
+## D-023 Cvičení „Najdi chybu ve výkresu“ a jednoduchá adaptivita
+
+- Stav: přijato (2026-11-21), odborné volby na seznam ke kontrole učitelem před pilotem (D-017)
+- Chyba je vždy mutace **výkresu**, ne tělesa, a ve výkresu (nárys, půdorys, bokorys) je právě jedna:
+  chybějící hrana, čára navíc, skrytá hrana plnou čarou, viditelná čárkovaně, americké rozmístění,
+  prohozený půdorys a bokorys. Kód: `packages/exercises/src/find-error.ts`.
+- „Chybějící hrana“ se volí jen tam, kde na jejím místě nezůstane jiná čára (jinak by z plné čáry byla
+  čárkovaná a vypadalo by to jako záměna viditelnosti).
+- „Čára navíc“ = rovná hrana prvku zrcadlená na druhou stranu pohledu (jako by prvek byl i tam). Nesmí
+  se krýt s žádnou čárou ani osou a nesmí ležet blíž než 2 mm k rovnoběžné čáře. Id čáry `extra:<pohled>`.
+- U hrany se dvěma přímkami se stejným id (dva obrysy díry `sil:cyl:<díra>`) jde změnit i jen jednu:
+  `DrawingMutation.onLine` (aditivní pole). Obtížnost 5 tak umí „jedna skrytá čára díry plnou čarou“.
+- Viditelnost chyby hlídá otisk **včetně rozmístění** (`placedDrawingFingerprint`: pořadí sloupce a řádku
+  každého pohledu + `viewFingerprint`). Samotné `drawingFingerprint` na polohu pohledů nehledí, takže by
+  chyby rozmístění nepoznalo. Rozmístění počítá `placeViews` stejným postupem jako `createDrawing`
+  (test hlídá, že pro evropské rozmístění dá totéž co engine).
+- Správná odpověď: klik do tolerance od čáry chyby (6 mm u obtížnosti 1, 3 mm u 5; mm výkresu),
+  oblast 3 × 3 pohledu (klávesnice), která čáru protne, u chyb rozmístění tlačítko „Rozmístění pohledů je
+  špatně“ nebo klik do půdorysu či bokorysu. Minutí vrací kód skutečné chyby a `MISSED_ERROR`.
+- Výběr z klávesnice místo „virtuálního kurzoru“: každý pohled je skupina devíti tlačítek (šipky, Enter),
+  stejná tlačítka zachytí i klik myší, který se pak bere jako přesný bod. Neprozrazuje, kde chyba je.
+- Adaptivita (`packages/exercises/src/adaptivity.ts`, čisté funkce, subpath `@vykresovna/exercises/adaptivity`
+  bez enginu, smí do hlavního bundlu): váhy kódů chyb s poločasem 4 pokusy (nebo v ms, když jsou časy),
+  správná odpověď na úlohu zaměřenou na chybu váhu sníží. Typ cvičení se losuje ze seedu s vahou podle chyb,
+  které se v něm procvičují; u „najdi chybu“ se nejčastější chyba předá generátoru jako `focus` (ten ji zkusí
+  první). Obtížnost: 3 správně v řadě nahoru, 2 chyby v řadě dolů, vždy jen o 1, v rozsahu lekce.
+- `focus` je vstup generátoru jako seed: úloha = (typ, seed, obtížnost, focus). Ukládá se s výsledkem
+  (`TaskMeta.focus`, `FixedTask.focus`).
+- Lekce mají na konci adaptivní úlohy (`Lesson.adaptive`): lekce 1–5 jednu, lekce 6 dvě. Vybírají se až ve
+  chvíli, kdy na ně přijde řada, z historie relace v paměti (`apps/web/lib/session-history.ts`, nic se
+  neukládá). Uživatel vidí jen poznámku „Úloha vybraná podle vašich chyb“.
+- Demo zůstává na 5 úlohách: „najdi chybu“ (seed 4409, obtížnost 2) nahradila druhé přiřazování pohledů,
+  takže demo ukazuje všechny čtyři typy cvičení.
+- Ke kontrole učitelem: zda „čára navíc“ zrcadlením působí jako věrohodná chyba žáka, a zda je u chyby
+  rozmístění správně i klik do pohledu (ne jen tlačítko).

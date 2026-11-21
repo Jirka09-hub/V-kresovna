@@ -13,8 +13,11 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Jiří svěřil odborná rozhodnutí Claudovi (D-017): nejasnosti řeš podle běžné praxe, zapiš do
   `docs/decisions.md` a před pilotem doporuč kontrolu učitelem. Jiřího se na normy neptej.
 - Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
-  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
+  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>`.
   Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
+- Fáze 3: cvičení 4 „Najdi chybu ve výkresu“ a adaptivita (D-023): `packages/exercises/src/find-error.ts`,
+  `adaptivity.ts` (čisté, subpath `@vykresovna/exercises/adaptivity`), UI `FindError.tsx`. Lekce 1–6
+  dostupné (lekce 6 = chyby ve výkresu), 7–9 připravujeme; na konci lekcí adaptivní úlohy z historie relace.
 
 ## Jak pracujeme
 
