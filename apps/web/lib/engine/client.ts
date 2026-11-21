@@ -7,7 +7,9 @@ import type {
   ChoiceOption,
   Difficulty,
   DrawingMutation,
+  ErrorCode,
   ExerciseKind,
+  FindErrorTask,
   Task,
   TaskResult,
 } from '@vykresovna/exercises'
@@ -69,8 +71,22 @@ export function generateTask(
   kind: ExerciseKind,
   seed: number,
   difficulty: Difficulty,
+  focus?: ErrorCode,
 ): Promise<Task> {
-  return callEngine({ type: 'generate-task', kind, seed, difficulty })
+  return callEngine({
+    type: 'generate-task',
+    kind,
+    seed,
+    difficulty,
+    ...(focus ? { focus } : {}),
+  })
+}
+
+/** Výkres úlohy „najdi chybu“ (s chybou, nebo správný) včetně polohy pohledů. */
+export function renderFindError(task: FindErrorTask, correct = false): Promise<ViewsSvg> {
+  return callEngine(
+    correct ? { type: 'render-find-error', task, correct } : { type: 'render-find-error', task },
+  )
 }
 
 /** SVG vybraných pohledů součásti, volitelně s mutací výkresu (distraktor). */

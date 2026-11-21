@@ -2,15 +2,15 @@ import { expect, test } from '@playwright/test'
 import { solveCurrent } from './helpers'
 
 test.describe('lekce', () => {
-  test('přehled: 9 lekcí, 1–5 dostupné, 6–9 připravujeme', async ({ page }) => {
+  test('přehled: 9 lekcí, 1–6 dostupné, 7–9 připravujeme', async ({ page }) => {
     await page.goto('/cs/lekce')
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Pohledy a řezy')
     const items = page.locator('[data-testid="lesson-list"] > li')
     await expect(items).toHaveCount(9)
     await expect(
       page.locator('[data-testid="lesson-list"] > li[data-status="available"] a'),
-    ).toHaveCount(5)
-    await expect(page.locator('li[data-status="coming-soon"]')).toHaveCount(4)
+    ).toHaveCount(6)
+    await expect(page.locator('li[data-status="coming-soon"]')).toHaveCount(3)
     await expect(page.locator('li[data-status="coming-soon"]').first()).toContainText(
       'připravujeme',
     )

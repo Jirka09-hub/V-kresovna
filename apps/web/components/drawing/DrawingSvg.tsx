@@ -1,5 +1,6 @@
 'use client'
 
+import type { ViewName } from '@vykresovna/drafting-standards'
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { isRelated } from '@/lib/engine/highlight'
 
@@ -9,6 +10,8 @@ type Props = {
   label: string
   /** Id čar (hran, obrysů, os), které se mají zvýraznit. */
   highlightIds?: ReadonlySet<string> | null
+  /** Zvýraznit `highlightIds` jen v tomto pohledu (stejná hrana je i v ostatních pohledech). */
+  highlightView?: ViewName | null
   /** Najetí myší: zvýrazní související čáry (propojení s 3D). */
   hoverId?: string | null
   onHover?: (id: string | null) => void
@@ -21,6 +24,7 @@ export function DrawingSvg({
   svg,
   label,
   highlightIds,
+  highlightView = null,
   hoverId = null,
   onHover,
   className = '',
@@ -46,10 +50,11 @@ export function DrawingSvg({
     if (!root) return
     for (const el of root.querySelectorAll<SVGElement>('[data-edge-ids]:not([data-hit])')) {
       const ids = el.getAttribute('data-edge-ids')!.split(' ')
-      const on = ids.some((id) => highlightIds?.has(id) || isRelated(id, hoverId))
+      const inView = !highlightView || el.closest(`[data-view="${highlightView}"]`) !== null
+      const on = ids.some((id) => (inView && highlightIds?.has(id)) || isRelated(id, hoverId))
       el.setAttribute('data-highlight', String(on))
     }
-  }, [svg, highlightIds, hoverId])
+  }, [svg, highlightIds, highlightView, hoverId])
 
   return (
     <div

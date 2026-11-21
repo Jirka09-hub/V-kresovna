@@ -1,15 +1,47 @@
 'use client'
 
-import { expandPlan, getLesson, type IntroScreen } from '@vykresovna/content'
+import { expandPlan, getLesson, type IntroScreen, type Lesson } from '@vykresovna/content'
+import { pickNextTask } from '@vykresovna/exercises/adaptivity'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { TaskSequence } from '@/components/exercises/TaskSequence'
+import { TaskSequence, type SequenceItem } from '@/components/exercises/TaskSequence'
 import type { TaskRef } from '@/components/exercises/ExerciseRunner'
 import { btnPrimary, btnSecondary, panel } from '@/components/ui'
 import { Link } from '@/i18n/navigation'
 import { randomSeed } from '@/lib/seeds'
+import { sessionHistory } from '@/lib/session-history'
+import { ErrorExampleDemo } from './ErrorExampleDemo'
 import { LinkedDemo } from './LinkedDemo'
 import { UnfoldDemo } from './UnfoldDemo'
+
+/** Pevné úlohy plánu s novými seedy a na konci místa pro adaptivní úlohy. */
+function lessonItems(lesson: Lesson): SequenceItem[] {
+  return [
+    ...expandPlan(lesson.plan).map((p) => ({ ...p, seed: randomSeed() })),
+    ...Array.from({ length: lesson.adaptive?.count ?? 0 }, () => ({
+      adaptiveSlot: true as const,
+      seed: randomSeed(),
+    })),
+  ]
+}
+
+/** Adaptivní úloha podle historie této relace (jen v paměti, D-023). */
+function adaptiveTask(lesson: Lesson, seed: number): TaskRef {
+  const slots = lesson.adaptive!
+  const pick = pickNextTask(sessionHistory(), seed, {
+    kinds: slots.kinds,
+    minDifficulty: slots.minDifficulty,
+    maxDifficulty: slots.maxDifficulty,
+    baseDifficulty: lesson.plan.at(-1)?.difficulty ?? slots.minDifficulty,
+  })
+  return {
+    kind: pick.kind,
+    difficulty: pick.difficulty,
+    seed,
+    ...(pick.focus ? { focus: pick.focus } : {}),
+    adaptive: pick.reason,
+  }
+}
 
 /** Lekce: úvodní výklad (1–2 obrazovky s živým 3D) → úlohy podle plánu → shrnutí. */
 export function LessonPlayer({ slug }: { slug: string }) {
@@ -18,8 +50,7 @@ export function LessonPlayer({ slug }: { slug: string }) {
   const { lesson, module: mod } = found
   const [screen, setScreen] = useState(0)
   const [phase, setPhase] = useState<'intro' | 'tasks'>(lesson.intro.length ? 'intro' : 'tasks')
-  const makeTasks = (): TaskRef[] =>
-    expandPlan(lesson.plan).map((p) => ({ ...p, seed: randomSeed() }))
+  const makeTasks = () => lessonItems(lesson)
   const [tasks, setTasks] = useState(makeTasks)
   const [round, setRound] = useState(0)
 
@@ -74,6 +105,7 @@ export function LessonPlayer({ slug }: { slug: string }) {
     <TaskSequence
       key={round}
       tasks={tasks}
+      resolveAdaptive={(seed) => adaptiveTask(lesson, seed)}
       summaryText={t('summaryText')}
       summaryActions={
         <>
@@ -114,6 +146,8 @@ function IntroScreenView({ slug, screen }: { slug: string; screen: IntroScreen }
       </div>
       {screen.demo.kind === 'unfold' ? (
         <UnfoldDemo part={screen.part} label={t(`${base}.title`)} />
+      ) : screen.demo.kind === 'error-example' ? (
+        <ErrorExampleDemo part={screen.part} mutation={screen.demo.mutation} />
       ) : (
         <LinkedDemo
           part={screen.part}

@@ -9,9 +9,12 @@ import type {
   ChoiceOption,
   Difficulty,
   DrawingMutation,
+  ErrorCode,
   ExerciseKind,
+  FindErrorTask,
   Task,
   TaskResult,
+  ViewPlacement,
 } from '@vykresovna/exercises'
 
 /** SVG jednoho nebo více pohledů s rozměry výkresu v mm (kvůli stejnému měřítku vedle sebe). */
@@ -20,6 +23,8 @@ export type ViewsSvg = {
   /** Šířka a výška výkresu v mm (včetně okraje). */
   readonly width: number
   readonly height: number
+  /** Poloha pohledů na výkrese (převod kliknutí na souřadnice pohledu). */
+  readonly placements?: readonly ViewPlacement[]
 }
 
 export type EngineCall =
@@ -29,6 +34,8 @@ export type EngineCall =
       readonly kind: ExerciseKind
       readonly seed: number
       readonly difficulty: Difficulty
+      /** Upřednostněný druh chyby (adaptivita). */
+      readonly focus?: ErrorCode
     }
   | {
       readonly type: 'render-views'
@@ -43,6 +50,8 @@ export type EngineCall =
       readonly option: ChoiceOption
       readonly views: readonly ViewName[]
     }
+  /** Výkres úlohy „najdi chybu“ s chybou, nebo správný (`correct`), s polohou pohledů. */
+  | { readonly type: 'render-find-error'; readonly task: FindErrorTask; readonly correct?: boolean }
   /** Hodnocení odpovědi (kód `exercises` importuje engine, proto taky ve workeru). */
   | { readonly type: 'evaluate'; readonly task: Task; readonly answer: Answer }
 
@@ -51,7 +60,7 @@ export type EngineResult<C extends EngineCall> = C extends { type: 'render-part'
   ? PartRenderData
   : C extends { type: 'generate-task' }
     ? Task
-    : C extends { type: 'render-views' | 'render-option' }
+    : C extends { type: 'render-views' | 'render-option' | 'render-find-error' }
       ? ViewsSvg
       : C extends { type: 'evaluate' }
         ? TaskResult
