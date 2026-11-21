@@ -7,6 +7,7 @@ import {
   HATCH_PHASE,
   HATCH_SPACING_MM,
   isValidSectionLetter,
+  RIBS_UNHATCHED_IN_LENGTHWISE_SECTION,
   SECTION_HATCH_ANGLE_DEG,
   SECTION_LETTER_HEIGHT_MM,
   SECTION_LETTER_OFFSET_MM,
@@ -25,6 +26,7 @@ import { AXIS_INDEX, otherAxes, type Axis, type PartSpec } from '../part/spec'
 import { projectView, viewBasis, type Vec2, type ViewProjection } from '../projection/hlr'
 import { cutSolidWithCap, type CutPlane } from './cut'
 import { hatchLines } from './hatch'
+import { interiorRectEdges, lengthwiseRibRects, subtractRects } from './ribs'
 import { groupRings } from './triangulate'
 import type {
   CuttingPlaneMark,
@@ -175,13 +177,6 @@ export function prepareSection(
   const plane = cutPlaneOf(s, view)
   const cut = cutSolidWithCap(mesh, plane, `section:${s.label}`)
   const raw = projectView(cut.solid, extractEdges(cut.solid), view)
-  const projection: ViewProjection = {
-    view,
-    segments: SECTION_SHOWS_HIDDEN_EDGES
-      ? raw.segments
-      : raw.segments.filter((seg) => seg.visibility === 'visible'),
-    bounds: fullBounds(mesh, view),
-  }
 
   // obrysy plochy řezu v souřadnicích pohledu; normála plochy míří k pozorovateli, a protože
   // doprava × nahoru = −směr pohledu, jsou vnější obrysy proti směru hodinových ručiček
@@ -192,7 +187,36 @@ export function prepareSection(
   const faces: SectionFace[] = groupRings(
     loops2.map((l) => l.map((p) => ({ x: p[0], y: p[1], p }))),
   ).map((g) => ({ outer: g.outer.map((q) => q.p), holes: g.holes.map((h) => h.map((q) => q.p)) }))
-  const hatching = hatchLines(loops2, SECTION_HATCH_ANGLE_DEG, HATCH_SPACING_MM, HATCH_PHASE)
+  let hatching = hatchLines(loops2, SECTION_HATCH_ANGLE_DEG, HATCH_SPACING_MM, HATCH_PHASE)
+
+  // žebra řezaná podélně: bez šraf, ohraničená i tam, kde se stýkají se zbytkem součásti
+  const ribs = RIBS_UNHATCHED_IN_LENGTHWISE_SECTION
+    ? lengthwiseRibRects(spec, s.axis, cut.at, basis)
+    : []
+  hatching = subtractRects(hatching, ribs)
+  const ribEdges = ribs.flatMap((r) =>
+    interiorRectEdges(r, loops2).map((e) => ({
+      a: e.a,
+      b: e.b,
+      visibility: 'visible' as const,
+      edgeIds: [`section:${s.label}|rib:${r.id}`],
+    })),
+  )
+  const unhatched: SectionFace[] = ribs.map((r) => ({
+    outer: [r.min, [r.max[0], r.min[1]], r.max, [r.min[0], r.max[1]]],
+    holes: [],
+  }))
+
+  const projection: ViewProjection = {
+    view,
+    segments: [
+      ...(SECTION_SHOWS_HIDDEN_EDGES
+        ? raw.segments
+        : raw.segments.filter((seg) => seg.visibility === 'visible')),
+      ...ribEdges,
+    ],
+    bounds: fullBounds(mesh, view),
+  }
 
   const keepsFeature = (featureId: string) => {
     const ext = featureExtent(spec, featureId, ai)
@@ -208,7 +232,14 @@ export function prepareSection(
     view,
     markView,
     projection,
-    data: { label: s.label, title: sectionTitle(s.label), spec: s, faces, hatching },
+    data: {
+      label: s.label,
+      title: sectionTitle(s.label),
+      spec: s,
+      faces,
+      hatching,
+      ...(unhatched.length > 0 ? { unhatched } : {}),
+    },
     keepsFeature,
     mark,
   }

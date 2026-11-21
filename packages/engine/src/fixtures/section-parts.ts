@@ -57,4 +57,18 @@ export const SECTION_TEST_CASES: readonly SectionTestCase[] = [
     section: { axis: 'x', at: 35, label: 'A' },
     view: 'left',
   },
+  {
+    part: {
+      id: 'rez-04-zebro',
+      note: 'Úhelník se žebrem a dírou v desce, řez A–A v bokorysu rovinou žebra: žebro řezané podélně se nešrafuje, jen ohraničí.',
+      base: { kind: 'block', size: [80, 50, 10] },
+      features: [
+        { kind: 'rib', id: 'stena', box: { min: [0, 40, 10], max: [80, 50, 50] } },
+        { kind: 'rib', id: 'zebro', box: { min: [36, 10, 10], max: [44, 40, 34] } },
+        { kind: 'hole', id: 'd1', axis: 'z', at: [40, 5], diameter: 6 },
+      ],
+    },
+    section: { axis: 'x', at: 40, label: 'A' },
+    view: 'left',
+  },
 ]

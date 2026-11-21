@@ -40,6 +40,13 @@ export const SAME_HATCH_FOR_ONE_PART = true
  */
 export const SECTION_SHOWS_HIDDEN_EDGES = false
 
+/**
+ * Tenké žebro, které rovina řezu protíná podélně (po jeho délce), se nešrafuje, jen ohraničí plnou
+ * tlustou čarou. Šrafy by vyvolaly dojem masivního plného tělesa. Žebro řezané napříč se šrafuje
+ * normálně (D-021).
+ */
+export const RIBS_UNHATCHED_IN_LENGTHWISE_SECTION = true
+
 /** Tlusté konce stopy roviny řezu: plná tlustá čára. Zbytek stopy je čerchovaná tenká (`LINE_STYLES`). */
 export const CUTTING_PLANE_END_STYLE: LineStyle = { weight: 'thick', pattern: 'continuous' }
 

@@ -62,6 +62,8 @@ export type SectionViewData = {
   readonly faces: readonly SectionFace[]
   /** Šrafovací čáry oříznuté na plochy řezu (přesné úsečky, ne vzor SVG). */
   readonly hatching: readonly Segment2[]
+  /** Části plochy řezu, které se nešrafují (žebra řezaná podélně). */
+  readonly unhatched?: readonly SectionFace[]
 }
 
 /** Šipka směru pohledu u stopy roviny řezu. */

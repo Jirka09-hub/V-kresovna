@@ -217,6 +217,36 @@ describe('pohled v řezu na známých případech', () => {
     expect(left.projection.segments.some((s) => s.a[1] === 30 && s.b[1] === 30)).toBe(true)
   })
 
+  it('žebro řezané podélně se nešrafuje, ale je ohraničené', () => {
+    const left = viewOf(sectionDrawing('rez-04'), 'left')
+    // bokorys zleva: u = −y, v = z; žebro y 10–40, z 10–34
+    expect(left.section!.unhatched).toEqual([
+      {
+        outer: [
+          [-40, 10],
+          [-10, 10],
+          [-10, 34],
+          [-40, 34],
+        ],
+        holes: [],
+      },
+    ])
+    const inRib = left.section!.hatching.some((h) => {
+      const mu = (h.a[0] + h.b[0]) / 2
+      const mv = (h.a[1] + h.b[1]) / 2
+      return mu > -40 + 1e-6 && mu < -10 - 1e-6 && mv > 10 + 1e-6 && mv < 34 - 1e-6
+    })
+    expect(inRib).toBe(false)
+    // deska pod žebrem je šrafovaná
+    expect(left.section!.hatching.some((h) => h.a[1] < 10 && h.b[1] <= 10)).toBe(true)
+    // styk žebra s deskou (v = 10) a se stěnou (u = −40) je nakreslený
+    const ribLines = left.projection.segments.filter((s) => s.edgeIds[0]!.includes('rib:zebro'))
+    expect(ribLines.map((s) => `${s.a.join(',')}→${s.b.join(',')}`).sort()).toEqual([
+      '-40,10→-10,10',
+      '-40,34→-40,10',
+    ])
+  })
+
   it('pohledy zůstanou zarovnané a popisy se vejdou na výkres', () => {
     for (const c of SECTION_TEST_CASES) {
       const d = createDrawing(c.part, buildPart(wasm, c.part), {

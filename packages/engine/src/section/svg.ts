@@ -61,7 +61,10 @@ export function renderSectionUnderlay(v: DrawingView): string {
   const tx = viewToSheet(v)
   const out: string[] = []
   const ring = (loop: readonly Vec2[]) => `M${loop.map((p) => pt(tx(p))).join('L')}Z`
-  const faces = s.faces.map((f) => [f.outer, ...f.holes].map(ring).join('')).join('')
+  // nešrafované části (žebra řezaná podélně) se z podbarvení vyjmou pravidlem sudý–lichý
+  const faces = [...s.faces, ...(s.unhatched ?? [])]
+    .map((f) => [f.outer, ...f.holes].map(ring).join(''))
+    .join('')
   if (faces) {
     out.push(
       `<path class="sectionFace" data-section-face="${escapeXml(s.label)}" fill-rule="evenodd" d="${faces}"/>`,
