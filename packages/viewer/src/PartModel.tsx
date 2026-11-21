@@ -1,0 +1,184 @@
+'use client'
+
+import type { PartRenderData } from '@vykresovna/engine'
+import { type ThreeEvent } from '@react-three/fiber'
+import { Line } from '@react-three/drei'
+import { useMemo } from 'react'
+import * as THREE from 'three'
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import type { Bounds } from './coords'
+
+export type ViewerColors = {
+  body: string
+  edge: string
+  hiddenEdge: string
+  highlight: string
+}
+
+export const DEFAULT_COLORS: ViewerColors = {
+  body: '#c9d3df',
+  edge: '#18212f',
+  hiddenEdge: '#475569',
+  highlight: '#1d4ed8',
+}
+
+type Props = {
+  data: PartRenderData
+  bounds: Bounds
+  colors: ViewerColors
+  xray: boolean
+  opacity: number
+  highlightedEdgeIds: readonly string[]
+  /** Tloušťka viditelných hran v pixelech. */
+  edgeWidth: number
+  onHoverEdge?: (edgeId: string | null) => void
+}
+
+/** Těleso součásti s hranami. Souřadnice enginu, posunuté tak, aby střed tělesa byl v počátku. */
+export function PartModel({
+  data,
+  bounds,
+  colors,
+  xray,
+  opacity,
+  highlightedEdgeIds,
+  edgeWidth,
+  onHoverEdge,
+}: Props) {
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(data.positions, 3))
+    g.setIndex(new THREE.BufferAttribute(data.indices, 1))
+    // ostré hrany zůstanou ostré, válce dostanou hladké stínování
+    const creased = toCreasedNormals(g, (30 * Math.PI) / 180)
+    g.dispose()
+    return creased
+  }, [data])
+
+  const { edgeGeometry, segmentEdge, segmentPoints } = useMemo(() => {
+    const pts: number[] = []
+    const segmentEdge: number[] = []
+    data.edges.forEach((e, ei) => {
+      const n = e.points.length / 3
+      const count = e.closed ? n : n - 1
+      for (let i = 0; i < count; i++) {
+        const j = (i + 1) % n
+        pts.push(e.points[i * 3]!, e.points[i * 3 + 1]!, e.points[i * 3 + 2]!)
+        pts.push(e.points[j * 3]!, e.points[j * 3 + 1]!, e.points[j * 3 + 2]!)
+        segmentEdge.push(ei)
+      }
+    })
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
+    const segmentPoints: [number, number, number][] = []
+    for (let i = 0; i < pts.length; i += 3) segmentPoints.push([pts[i]!, pts[i + 1]!, pts[i + 2]!])
+    return { edgeGeometry: g, segmentEdge, segmentPoints }
+  }, [data])
+
+  const highlightLines = useMemo(() => {
+    const wanted = new Set(highlightedEdgeIds)
+    return data.edges
+      .filter((e) => wanted.has(e.id))
+      .map((edge) => {
+        const n = edge.points.length / 3
+        const pts: [number, number, number][] = []
+        for (let i = 0; i < (edge.closed ? n + 1 : n); i++) {
+          const k = i % n
+          pts.push([edge.points[k * 3]!, edge.points[k * 3 + 1]!, edge.points[k * 3 + 2]!])
+        }
+        return { id: edge.id, pts }
+      })
+  }, [data, highlightedEdgeIds])
+
+  const hiddenLines = useMemo(() => {
+    const lines = new THREE.LineSegments(
+      edgeGeometry,
+      new THREE.LineDashedMaterial({
+        color: colors.hiddenEdge,
+        dashSize: bounds.radius * 0.05,
+        gapSize: bounds.radius * 0.03,
+        depthFunc: THREE.GreaterDepth,
+        depthWrite: false,
+        transparent: true,
+        opacity: 0.85,
+      }),
+    )
+    lines.computeLineDistances()
+    lines.renderOrder = 2
+    return lines
+  }, [edgeGeometry, colors.hiddenEdge, bounds.radius])
+
+  /** Najde hranu nejblíž bodu na povrchu tělesa (hover na hranu bez přesného míření na čáru). */
+  const handleMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!onHoverEdge) return
+    e.stopPropagation()
+    const p = e.object.worldToLocal(e.point.clone())
+    const pos = edgeGeometry.getAttribute('position') as THREE.BufferAttribute
+    const a = new THREE.Vector3()
+    const b = new THREE.Vector3()
+    const line = new THREE.Line3()
+    const closest = new THREE.Vector3()
+    let best = Infinity
+    let bestEdge = -1
+    for (let s = 0; s < segmentEdge.length; s++) {
+      a.fromBufferAttribute(pos, s * 2)
+      b.fromBufferAttribute(pos, s * 2 + 1)
+      line.set(a, b)
+      line.closestPointToPoint(p, true, closest)
+      const d = closest.distanceTo(p)
+      if (d < best) {
+        best = d
+        bestEdge = segmentEdge[s]!
+      }
+    }
+    const threshold = bounds.radius * 0.06
+    onHoverEdge(best < threshold && bestEdge >= 0 ? data.edges[bestEdge]!.id : null)
+  }
+
+  const offset: [number, number, number] = [-bounds.center[0], -bounds.center[1], -bounds.center[2]]
+  const transparent = xray || opacity < 1
+
+  return (
+    <group position={offset}>
+      <mesh
+        geometry={geometry}
+        onPointerMove={handleMove}
+        onPointerOut={() => onHoverEdge?.(null)}
+        visible={opacity > 0.01}
+      >
+        <meshStandardMaterial
+          color={colors.body}
+          metalness={0.25}
+          roughness={0.5}
+          transparent={transparent}
+          opacity={xray ? 0.35 * opacity : opacity}
+          polygonOffset
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
+        />
+      </mesh>
+      {opacity > 0.01 ? (
+        <Line
+          points={segmentPoints}
+          segments
+          color={colors.edge}
+          lineWidth={edgeWidth}
+          transparent={opacity < 1}
+          opacity={opacity}
+          renderOrder={1}
+        />
+      ) : null}
+      {xray && opacity > 0.01 ? <primitive object={hiddenLines} /> : null}
+      {highlightLines.map((h) => (
+        <Line
+          key={h.id}
+          points={h.pts}
+          color={colors.highlight}
+          lineWidth={4}
+          depthTest={false}
+          renderOrder={3}
+        />
+      ))}
+    </group>
+  )
+}

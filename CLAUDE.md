@@ -7,9 +7,10 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 ## Stav projektu
 
 - Plán schválen 2026-11-21 (`docs/plan.md`), hosting změněn na Cloudflare (D-011).
-- Fáze 0 hotová: monorepo, Next.js + next-intl, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt,
-  konfigurace OpenNext pro Cloudflare Workers.
-- Další: fáze 1 (engine). Výkresy 10 testovacích součástí ukázat Jiřímu před fází 2.
+- Fáze 0 hotová a nasazená (PR #1).
+- Fáze 1 (engine) hotová a čeká na Jiřího kontrolu 10 výkresů: stránka `/cs/laborator`,
+  snapshoty v `packages/engine/test/__snapshots__/*.svg` a `apps/web/e2e/laborator.spec.ts-snapshots/`.
+- Další: fáze 2 (cvičení 1–3, distraktory, demo) až po schválení výkresů.
 
 ## Jak pracujeme
 
@@ -62,6 +63,15 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - `supabase/`: migrace, RLS, pgTAP testy.
 
 Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm (viz D-008).
+
+## Engine v kostce
+
+- `buildPart(wasm, spec)` → `SolidMesh` (síť + původ ploch), `extractEdges` → logické hrany,
+  `projectView` → viditelné/skryté úseky pohledu, `createDrawing` → rozmístění + osy, `drawingToSvg` → SVG.
+- Id hran: `<plocha>|<plocha>#n` (např. `cyl:d1|p:2:3#0`), obrys válce `sil:cyl:d1`, osa `feature:d1`.
+  Propojení 3D ↔ 2D řeší `apps/web/lib/engine/highlight.ts`.
+- Nové testovací součásti patří do `packages/engine/src/fixtures/test-parts.ts`; po změně výkresu
+  `pnpm test -u` a `pnpm --filter web test:e2e --update-snapshots`, změnu snapshotu vždy prohlédnout.
 
 ## Konvence
 

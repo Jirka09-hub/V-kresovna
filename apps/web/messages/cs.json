@@ -22,5 +22,49 @@
       "bottom": "pohled zdola",
       "rear": "pohled zezadu"
     }
+  },
+  "viewer": {
+    "reset": "Výchozí pohled",
+    "xray": "Rentgen (skryté hrany)",
+    "cube": {
+      "right": "Zprava",
+      "left": "Zleva",
+      "top": "Shora",
+      "bottom": "Zdola",
+      "front": "Zepředu",
+      "back": "Zezadu"
+    },
+    "unfold": {
+      "title": "Jak vznikají pohledy (evropské promítání)",
+      "play": "Přehrát",
+      "pause": "Pozastavit",
+      "back": "Krok zpět",
+      "next": "Další krok",
+      "close": "Zavřít průmětny",
+      "slider": "Průběh animace",
+      "hint": "Spusťte animaci: těleso se promítne na tři průmětny a ty se rozloží do roviny výkresu.",
+      "step1": "Těleso stojí uvnitř tří průměten: nárysna je za ním, půdorysna pod ním a bokorysna vpravo.",
+      "step2": "Promítací paprsky přenesou hrany tělesa kolmo na každou průmětnu. Hrany, které nejsou vidět, se kreslí čárkovaně.",
+      "step3": "Půdorysna se sklopí dolů a bokorysna se otočí doprava, až všechny leží v jedné rovině.",
+      "step4": "Hotovo: půdorys je pod nárysem a bokorys zleva vpravo od nárysu. Přesně tak to vypadá na výkrese."
+    },
+    "noWebgl": "Tento počítač neumí zobrazit 3D model (chybí WebGL). Výkres níže funguje i tak."
+  },
+  "lab": {
+    "title": "Laboratoř enginu",
+    "intro": "Kontrola projekce: deset testovacích součástí, jejich 3D model a automaticky vytvořený výkres v evropském promítání. Najetím myší na hranu ve 3D nebo ve výkresu se zvýrazní tatáž hrana na druhé straně.",
+    "partsLabel": "Testovací součásti",
+    "model": "3D model",
+    "drawing": "Výkres",
+    "loading": "Načítám model…",
+    "modelLabel": "3D model součásti {id}",
+    "drawingTitle": "Výkres součásti {id}: nárys, půdorys a bokorys",
+    "error": "Model se nepodařilo vytvořit: {message}",
+    "legend": {
+      "visible": "viditelná hrana",
+      "hidden": "skrytá hrana",
+      "center": "osa"
+    },
+    "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu."
   }
 }

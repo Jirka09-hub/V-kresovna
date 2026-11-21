@@ -97,3 +97,37 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
 - Rozhodnutí: nový projekt `vykresovna` (ref `lzzbnvqkwbcjsbmktelm`, Frankfurt) v Jiřího organizaci, zatím
   plán Free. Před pilotem přejít na Pro (Free projekt se po týdnu nečinnosti uspí).
 - Proč: zadání chce samostatný projekt; Frankfurt kvůli GDPR a latenci z ČR.
+
+## D-013 Prototyp potvrdil `manifold-3d`, `three-bvh-csg` nepotřebujeme
+
+- Stav: přijato (2026-11-21), upřesňuje D-003
+- Zjištění: kvádr s dírou trvá v Node asi 12 ms, výsledek je vždy uzavřená síť a `originalID` u běhů
+  trojúhelníků spolehlivě říká, ze kterého prvku plocha vznikla. WASM má 540 kB.
+- Rozhodnutí: `three-bvh-csg` jsme dál nezkoušeli, `manifold-3d` je jediná knihovna pro boolovské operace.
+  Válce mají 96 segmentů (násobek 4), takže obrysy děr leží přesně na průměru.
+
+## D-014 Viditelnost hran: 2D test zakrytí místo raycastu přes BVH
+
+- Stav: přijato (2026-11-21), upřesňuje D-004
+- Rozhodnutí: u pravoúhlého promítání je paprsek k pozorovateli rovnoběžný se směrem pohledu, takže test
+  zakrytí je jen „leží bod v průmětu trojúhelníku natočeného k pozorovateli a je ten trojúhelník blíž?“.
+  Počítá se ve float64 s mřížkou pro zrychlení. `three-mesh-bvh` proto engine nepotřebuje.
+- Proč: přesnější (float64 místo float32 v BVH), jednodušší, bez závislosti na three.js v enginu.
+  Desítky milisekund na pohled.
+
+## D-015 3D prohlížeč: tlusté viditelné hrany, tenké čárkované skryté
+
+- Stav: přijato (2026-11-21)
+- Rozhodnutí: viditelné hrany přes `Line` z drei (tloušťka v pixelech), skryté hrany v režimu „rentgen“
+  tenké čárkované s testem hloubky `GreaterDepth`. Vykreslování jen na vyžádání (`frameloop="demand"`),
+  `PerformanceMonitor` snižuje rozlišení na slabém HW. Bez WebGL se místo 3D ukáže hláška a výkres zůstane.
+- Proč: vizuálně odpovídá výkresu (tlustá viditelná, tenká skrytá) a šetří slabé grafiky.
+
+## D-016 Engine ve Web Workeru, WASM z `public/wasm`
+
+- Stav: přijato (2026-11-21)
+- Rozhodnutí: aplikace volá engine přes Web Worker (`apps/web/workers/engine.worker.ts`), `manifold.wasm`
+  se při `dev`/`build` kopíruje do `public/wasm`. Klientský kód importuje z enginu jen typy a čisté
+  podmoduly (`@vykresovna/engine/projection`, `@vykresovna/engine/fixtures`), aby se WASM nedostal do
+  hlavního bundlu.
+- `.npmrc` vytahuje `@types/*` do kořene, jinak typy three.js nevidí `@react-three/fiber`.

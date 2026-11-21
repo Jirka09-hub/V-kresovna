@@ -48,6 +48,7 @@ export default tseslint.config(
         {
           mode: 'jsx-only',
           'jsx-attributes': { include: ['alt', 'aria-label', 'title', 'placeholder'] },
+          callees: { exclude: ['t', 'tv', 'require'] },
         },
       ],
     },

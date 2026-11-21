@@ -16,3 +16,4 @@ blob-report/
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+apps/web/public/wasm/
