@@ -89,6 +89,15 @@ export const ERROR_PRACTICE: Readonly<
   FEATURE_RESIZED: { kinds: ['drawing-to-model', 'missing-view'] },
   THROUGH_VS_BLIND: { kinds: ['drawing-to-model', 'missing-view'] },
   MISSED_ERROR: { kinds: ['find-error'] },
+  SECTION_HOLE_HATCHED: { kinds: ['section'] },
+  SECTION_NOT_HATCHED: { kinds: ['section'] },
+  WRONG_SECTION_PLANE: { kinds: ['section'] },
+  SECTION_HIDDEN_EDGES: { kinds: ['section'] },
+  SECTION_WRONG_DIRECTION: { kinds: ['section'] },
+  DIMENSION_WRONG_FEATURE: { kinds: ['dimension'] },
+  DIMENSION_NOT_COMBINED: { kinds: ['dimension'] },
+  DIMENSION_ARITHMETIC: { kinds: ['dimension'] },
+  DIMENSION_WRONG: { kinds: ['dimension'] },
 }
 
 const clampDifficulty = (d: number, lo: Difficulty, hi: Difficulty): Difficulty =>

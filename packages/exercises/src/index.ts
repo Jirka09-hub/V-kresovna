@@ -6,6 +6,7 @@
  * - `evaluate(úloha, odpověď)`: výsledek s kódy chyb (evaluate.ts),
  * - `applyDrawingMutation(výkres, mutace)`: chybný výkres pro distraktor (drawing-mutations.ts),
  * - „najdi chybu“: chybný výkres, místa chyby a hodnocení kliknutí (find-error.ts),
+ * - „řez“: roviny řezu, distraktory a výkresy řezu (section.ts), „odečti kótu“ (dimension.ts),
  * - `pickNextTask(historie, seed, plán)`: adaptivní výběr další úlohy (adaptivity.ts).
  */
 export * from './types'
@@ -51,6 +52,28 @@ export {
   type ViewPlacement,
   type ViewPositions,
 } from './find-error'
+export {
+  buildSectionTask,
+  buildSectionViews,
+  distanceToAccepted,
+  evaluateSection,
+  generateSectionPart,
+  givenRender,
+  isolateView,
+  optionRender,
+  planeCandidates,
+  sectionDrawing,
+  sectionEvents,
+  sectionViews,
+  targetRender,
+  CUTTING_PLANE_VIEW,
+  OPPOSITE_VIEW,
+  SECTION_LABEL,
+  SECTION_PLACE_STEP_MM,
+  SECTION_PLACE_TOLERANCE_MM,
+  type PlaneCandidate,
+} from './section'
+export { buildDimensionTask, drawingDimensionsOf, evaluateDimension, WALLS } from './dimension'
 export * from './geometry2d'
 export * from './adaptivity'
 export { evaluate } from './evaluate'

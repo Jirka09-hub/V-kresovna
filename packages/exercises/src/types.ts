@@ -4,21 +4,23 @@
  * vygenerovat ze seedu.
  */
 import type { GridPosition, ViewName } from '@vykresovna/drafting-standards'
-import type { PartSpec, Vec2 } from '@vykresovna/engine'
+import type { Axis, PartSpec, SectionSpec, Vec2 } from '@vykresovna/engine'
 
 /** Obtížnost 1–5 (1 = kvádr s jedním výřezem, 5 = více prvků a distraktory lišící se jedinou hranou). */
 export type Difficulty = 1 | 2 | 3 | 4 | 5
 export const DIFFICULTIES: readonly Difficulty[] = [1, 2, 3, 4, 5]
 
 /**
- * Typy cvičení. Fáze 2: první tři; fáze 3 přidává 'find-error' (D-023), pak 'section', 'dimension'.
- * Nové typy se přidávají na konec (pořadí vstupuje do seedu úlohy).
+ * Typy cvičení. Fáze 2: první tři; fáze 3 přidává 'find-error' (D-023), 'section' a 'dimension'
+ * (D-024). Nové typy se přidávají na konec (pořadí vstupuje do seedu úlohy).
  */
 export const EXERCISE_KINDS = [
   'assign-views',
   'missing-view',
   'drawing-to-model',
   'find-error',
+  'section',
+  'dimension',
 ] as const
 export type ExerciseKind = (typeof EXERCISE_KINDS)[number]
 
@@ -44,6 +46,17 @@ export const ERROR_CODES = [
   'THROUGH_VS_BLIND', // průchozí díra místo slepé nebo naopak
   // hledání chyby ve výkresu
   'MISSED_ERROR', // uživatel ukázal na místo, kde chyba není
+  // řez (D-024)
+  'SECTION_HOLE_HATCHED', // šrafy i přes díru nebo drážku (vzduch)
+  'SECTION_NOT_HATCHED', // plocha řezu bez šraf
+  'WRONG_SECTION_PLANE', // řez jinou rovinou, než ukazuje stopa (nebo rovina umístěná jinam)
+  'SECTION_HIDDEN_EDGES', // v řezu nakreslené skryté hrany
+  'SECTION_WRONG_DIRECTION', // řez viděný z druhé strany (zrcadlově)
+  // kóty (D-024)
+  'DIMENSION_WRONG_FEATURE', // zapsaná hodnota je jiná kóta z výkresu
+  'DIMENSION_NOT_COMBINED', // u výpočtu ze dvou kót zapsaná jen jedna z nich
+  'DIMENSION_ARITHMETIC', // u výpočtu ze dvou kót špatný výsledek
+  'DIMENSION_WRONG', // hodnota, která na výkrese není
 ] as const
 export type ErrorCode = (typeof ERROR_CODES)[number]
 
@@ -181,7 +194,158 @@ export type FindErrorTask = TaskMeta & {
   readonly toleranceMm: number
 }
 
-export type Task = AssignViewsTask | MissingViewTask | DrawingToModelTask | FindErrorTask
+/**
+ * Úprava výkresu řezu u distraktoru: šrafy chybí, nebo jsou v řezu nakreslené i skryté hrany
+ * zbytku součásti.
+ */
+export type SectionMutation = 'no-hatching' | 'hidden-edges'
+
+/**
+ * Jak vykreslit řez: součást, rovina řezu (písmeno A), pohled nahrazený řezem, pohled se stopou
+ * roviny řezu (null = bez stopy) a které pohledy ukázat (každý jako samostatný výkres).
+ */
+export type SectionRender = {
+  readonly part: PartSpec
+  readonly section: SectionSpec
+  /** Pohled, který řez nahrazuje (u řezu viděného z druhé strany např. 'rear'). */
+  readonly view: ViewName
+  readonly cuttingPlaneView: ViewName | null
+  readonly show: readonly ViewName[]
+  readonly mutation?: SectionMutation
+}
+
+/** Možnost ve výběru řezu A–A: vlastní součást, rovina, pohled a případná úprava výkresu. */
+export type SectionOption = {
+  readonly id: string
+  readonly part: PartSpec
+  readonly section: SectionSpec
+  readonly view: ViewName
+  readonly mutation?: SectionMutation
+  /** Proč je možnost špatně (null = správná odpověď). */
+  readonly errorCode: ErrorCode | null
+  readonly featureId?: string
+}
+
+type SectionTaskBase = TaskMeta & {
+  readonly kind: 'section'
+  readonly part: PartSpec
+  /** Správná rovina řezu (písmeno A, strana pohledu podle `view`). */
+  readonly section: SectionSpec
+  /** Pohled nahrazený řezem (nárys u roviny kolmé na y, bokorys u x, půdorys u z). */
+  readonly view: ViewName
+  /** Prvek, kterým rovina prochází (osa díry, střed drážky), pro zvýraznění. */
+  readonly featureId: string
+}
+
+/**
+ * Cvičení 5a „Vyber správný řez A–A“: dané pohledy (jeden se stopou roviny řezu) a 3D model,
+ * vybírá se 1 ze 4 řezů.
+ */
+export type SectionChooseTask = SectionTaskBase & {
+  readonly variant: 'choose'
+  /** Pohled se stopou roviny řezu A–A. */
+  readonly cuttingPlaneView: ViewName
+  /** Pohledy, které uživatel vidí (bez pohledu nahrazeného řezem). */
+  readonly givenViews: readonly ViewName[]
+  /** 4 možnosti v zamíchaném pořadí. */
+  readonly options: readonly SectionOption[]
+}
+
+/** Interval polohy roviny (mm na ose řezu), uzavřený; u jednoho bodu `min === max`. */
+export type PlaneInterval = { readonly min: number; readonly max: number }
+
+/**
+ * Cvičení 5b „Umísti rovinu řezu“: uživatel vidí řez A–A a 3D model s posuvnou rovinou (osa je daná)
+ * a má rovinu posunout tak, aby řez odpovídal.
+ */
+export type SectionPlaceTask = SectionTaskBase & {
+  readonly variant: 'place'
+  /** Rozsah posuvníku a krok (mm). */
+  readonly range: PlaneInterval
+  readonly step: number
+  /** Výchozí poloha roviny (daleko od správné). */
+  readonly start: number
+  /** Jak daleko od správné polohy (mm) se ještě počítá. */
+  readonly toleranceMm: number
+  /**
+   * Polohy, ve kterých vypadá řez stejně jako správný (otisk výkresu), včetně správné polohy.
+   * Odpověď je správná, když je od některé nejvýš `toleranceMm`.
+   */
+  readonly accepted: readonly PlaneInterval[]
+}
+
+export type SectionTask = SectionChooseTask | SectionPlaceTask
+
+/** Stěna součásti (u otázek „jak daleko od…“). Levá = nejmenší x, přední = nejmenší y, spodní = z. */
+export type PartWall = 'left' | 'right' | 'front' | 'back' | 'bottom' | 'top'
+
+/**
+ * Otázka na kótu (text: `exercises.dimension.q.<kind>`):
+ * - přímé: `overall` (celý rozměr součásti), `size` (rozměr prvku ve směru osy), `slotDepth`,
+ *   `slotWidth`, `diameter`, `holeDepth`, `chamfer`, `baseThickness`, `holePosition` (osa díry od
+ *   stěny), `featurePosition` (prvek od stěny),
+ * - složené (obtížnost 4–5, hodnota na výkrese není): `wallBeyond` (materiál mezi prvkem a
+ *   protější stěnou), `holeFromFar` (osa díry od vzdálenější stěny), `featureFromFar` (prvek od
+ *   vzdálenější stěny, ze tří kót).
+ */
+export type DimensionQuestionKind =
+  | 'overall'
+  | 'size'
+  | 'slotDepth'
+  | 'slotWidth'
+  | 'diameter'
+  | 'holeDepth'
+  | 'chamfer'
+  | 'baseThickness'
+  | 'holePosition'
+  | 'featurePosition'
+  | 'wallBeyond'
+  | 'holeFromFar'
+  | 'featureFromFar'
+
+/** Druh prvku v otázce (pro text: díra, drážka, osazení, výřez, zkosení, žebro). */
+export type DimensionFeatureKind = 'hole' | 'slot' | 'step' | 'cutout' | 'chamfer' | 'rib'
+
+export type DimensionQuestion = {
+  readonly kind: DimensionQuestionKind
+  /** Prvek, na který se otázka ptá (zvýrazněný ve 3D); null = celá součást. */
+  readonly featureId: string | null
+  readonly featureKind?: DimensionFeatureKind
+  /** Směr měření. */
+  readonly axis?: Axis
+  /** Stěna, od které (nebo ke které) se měří. */
+  readonly wall?: PartWall
+}
+
+/** Kóta výkresu, jak ji vidí uživatel (pro rozpoznání chyb a zvýraznění). */
+export type DrawingDimensionRef = {
+  readonly id: string
+  readonly value: number
+  readonly featureId: string | null
+}
+
+/** Cvičení 6 „Odečti kótu“: zakótovaný výkres, otázka slovy, odpověď celé číslo (mm). */
+export type DimensionTask = TaskMeta & {
+  readonly kind: 'dimension'
+  readonly part: PartSpec
+  readonly question: DimensionQuestion
+  /** Správná hodnota (mm, celé číslo). */
+  readonly answer: number
+  /** Kóty, ze kterých se odpověď čte (u složené otázky dvě nebo tři). */
+  readonly dimensionIds: readonly string[]
+  /** Musí se odpověď spočítat z více kót? */
+  readonly combined: boolean
+  /** Všechny kóty na výkrese. */
+  readonly drawingDimensions: readonly DrawingDimensionRef[]
+}
+
+export type Task =
+  | AssignViewsTask
+  | MissingViewTask
+  | DrawingToModelTask
+  | FindErrorTask
+  | SectionTask
+  | DimensionTask
 
 export type AssignViewsAnswer = {
   readonly kind: 'assign-views'
@@ -214,7 +378,16 @@ export type FindErrorAnswer =
     }
   | { readonly kind: 'find-error'; readonly pick: 'layout' }
 
-export type Answer = AssignViewsAnswer | ChoiceAnswer | FindErrorAnswer
+/** Odpověď na řez: zvolená možnost (5a), nebo poloha roviny v mm (5b). */
+export type SectionAnswer =
+  | { readonly kind: 'section'; readonly optionId: string }
+  | { readonly kind: 'section'; readonly at: number }
+
+/** Odpověď na kótu: zapsané číslo (mm). */
+export type DimensionAnswer = { readonly kind: 'dimension'; readonly value: number }
+
+export type Answer =
+  AssignViewsAnswer | ChoiceAnswer | FindErrorAnswer | SectionAnswer | DimensionAnswer
 
 export type TaskError = {
   readonly code: ErrorCode
