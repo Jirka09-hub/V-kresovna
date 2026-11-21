@@ -1,0 +1,13 @@
+{
+  "name": "@vykresovna/drafting-standards",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Odborná pravidla technického kreslení (ČSN EN ISO): konstanty a čisté funkce",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

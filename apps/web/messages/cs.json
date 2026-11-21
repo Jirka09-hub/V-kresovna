@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "title": "Výkresovna",
+    "description": "Interaktivní trenažér čtení technických výkresů na 3D modelech."
+  },
+  "home": {
+    "eyebrow": "Pilotní verze se připravuje",
+    "title": "Naučte lidi číst technické výkresy na 3D modelech",
+    "lead": "Model si otočíte, rozříznete a porovnáte s výkresem. Tak se pochopí vztah mezi tělesem a jeho pohledy rychleji než z učebnice.",
+    "forCompanies": "Pro firmy",
+    "forCompaniesText": "Zaučení operátorů CNC, montážníků a kontrolorů kvality bez prezenčního školení.",
+    "forSchools": "Pro školy",
+    "forSchoolsText": "Technická dokumentace na SPŠ a SOU: úlohy s okamžitou zpětnou vazbou.",
+    "status": "Stav: vývoj, fáze 0"
+  },
+  "drafting": {
+    "view": {
+      "front": "nárys",
+      "top": "půdorys",
+      "left": "bokorys",
+      "right": "pohled zprava",
+      "bottom": "pohled zdola",
+      "rear": "pohled zezadu"
+    }
+  }
+}

@@ -30,9 +30,9 @@ Obsah:
   boolovské operace přes `manifold-3d` (WASM, ve Web Workeru). `three-bvh-csg` ověřím jen jako záložní
   variantu v úvodním prototypu fáze 1.
 - **Skryté hrany ve 2D výkresu**: analytický výpočet viditelnosti hran na CPU (rozdělení hran v průmětu
-  + test zákrytu paprskem přes BVH), doplněný o informace z parametrického generátoru (osy děr, přesné
-  kružnice a obrysové přímky válců). Výstup je čisté SVG, deterministické a testovatelné v Node bez GPU.
-  GPU přístup přes depth buffer použijeme jen pro „rentgen“ skrytých hran v živém 3D prohlížeči.
+  - test zákrytu paprskem přes BVH), doplněný o informace z parametrického generátoru (osy děr, přesné
+    kružnice a obrysové přímky válců). Výstup je čisté SVG, deterministické a testovatelné v Node bez GPU.
+    GPU přístup přes depth buffer použijeme jen pro „rentgen“ skrytých hran v živém 3D prohlížeči.
 - **Backend**: nový Supabase projekt v EU (Frankfurt), Auth + Postgres + RLS. Každý řádek s daty účastníka
   nese `org_id`; organizace nikdy nevidí data jiné organizace, ověřeno pgTAP testy v CI.
 - **Hosting**: **Cloudflare Workers** přes adaptér OpenNext (`@opennextjs/cloudflare`). Jiří má na
@@ -135,30 +135,30 @@ nemůžou žít uvnitř `apps/web/lib`. Pořád je to jeden modul s konstantami 
 
 ### 2.3 Technologie
 
-| Oblast | Volba | Poznámka |
-|---|---|---|
-| Frontend | Next.js (App Router, aktuální stabilní verze), React, TypeScript strict, Tailwind | dle zadání |
-| 3D | three.js + React Three Fiber + drei | dle zadání |
-| Boolovské operace | `manifold-3d` (WASM, Apache-2.0) | `three-bvh-csg` jen jako záloha po prototypu |
-| Akcelerace dotazů | `three-mesh-bvh` (MIT) | raycast pro viditelnost hran, výběr hran myší |
-| Stav UI | zustand | sdílené zvýraznění hrany 3D ↔ 2D, stav cvičení |
-| Drag & drop | dnd-kit | má vestavěné ovládání klávesnicí (cvičení 1) |
-| i18n | next-intl | `cs` výchozí, `sk` a `de` připravené |
-| Backend | Supabase (Postgres, Auth, RLS), region eu-central-1 | nový samostatný projekt |
-| E-mail | Cloudflare Email Routing (`send_email` binding) pro notifikace Jiřímu; Supabase Auth e-maily přes vlastní SMTP později | notifikace z formuláře „Chci pilot“ |
-| PDF | `@react-pdf/renderer` na serveru, vložený font s češtinou | certifikát |
-| Hosting | Cloudflare Workers + OpenNext | viz 2.4 |
-| Testy | Vitest, fast-check (property testy), Playwright, pgTAP | |
-| Kvalita | ESLint (flat config) + Prettier, `eslint-plugin-i18next` (zákaz textů natvrdo v JSX) | |
+| Oblast            | Volba                                                                                                                  | Poznámka                                       |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Frontend          | Next.js (App Router, aktuální stabilní verze), React, TypeScript strict, Tailwind                                      | dle zadání                                     |
+| 3D                | three.js + React Three Fiber + drei                                                                                    | dle zadání                                     |
+| Boolovské operace | `manifold-3d` (WASM, Apache-2.0)                                                                                       | `three-bvh-csg` jen jako záloha po prototypu   |
+| Akcelerace dotazů | `three-mesh-bvh` (MIT)                                                                                                 | raycast pro viditelnost hran, výběr hran myší  |
+| Stav UI           | zustand                                                                                                                | sdílené zvýraznění hrany 3D ↔ 2D, stav cvičení |
+| Drag & drop       | dnd-kit                                                                                                                | má vestavěné ovládání klávesnicí (cvičení 1)   |
+| i18n              | next-intl                                                                                                              | `cs` výchozí, `sk` a `de` připravené           |
+| Backend           | Supabase (Postgres, Auth, RLS), region eu-central-1                                                                    | nový samostatný projekt                        |
+| E-mail            | Cloudflare Email Routing (`send_email` binding) pro notifikace Jiřímu; Supabase Auth e-maily přes vlastní SMTP později | notifikace z formuláře „Chci pilot“            |
+| PDF               | `@react-pdf/renderer` na serveru, vložený font s češtinou                                                              | certifikát                                     |
+| Hosting           | Cloudflare Workers + OpenNext                                                                                          | viz 2.4                                        |
+| Testy             | Vitest, fast-check (property testy), Playwright, pgTAP                                                                 |                                                |
+| Kvalita           | ESLint (flat config) + Prettier, `eslint-plugin-i18next` (zákaz textů natvrdo v JSX)                                   |                                                |
 
 ### 2.4 Hosting: Vercel vs. Cloudflare
 
-| Kritérium | Vercel | Cloudflare |
-|---|---|---|
-| Podpora Next.js App Router | nativní, bez konfigurace | přes adaptér OpenNext, část funkcí s omezeními |
-| Náhledové deploye pro PR | ano, automaticky | ano, ale víc nastavování |
-| Region vedle Supabase (Frankfurt) | ano (`fra1`) | edge všude, Node runtime omezeně |
-| Cena pro komerční pilot | plán Pro (Hobby nesmí komerčně) | velmi levné |
+| Kritérium                         | Vercel                          | Cloudflare                                     |
+| --------------------------------- | ------------------------------- | ---------------------------------------------- |
+| Podpora Next.js App Router        | nativní, bez konfigurace        | přes adaptér OpenNext, část funkcí s omezeními |
+| Náhledové deploye pro PR          | ano, automaticky                | ano, ale víc nastavování                       |
+| Region vedle Supabase (Frankfurt) | ano (`fra1`)                    | edge všude, Node runtime omezeně               |
+| Cena pro komerční pilot           | plán Pro (Hobby nesmí komerčně) | velmi levné                                    |
 
 **Původní návrh: Vercel. Rozhodnutí Jiřího: Cloudflare** (placený účet už existuje). Důsledky:
 
@@ -194,16 +194,24 @@ Součást je JSON popis, ne síť trojúhelníků:
 // ilustrační tvar, ne finální kód
 type PartSpec = {
   id: string
-  base: { kind: 'block'; size: [number, number, number] }   // celá čísla v mm
-  features: Feature[]                                       // aplikují se v pořadí
+  base: { kind: 'block'; size: [number, number, number] } // celá čísla v mm
+  features: Feature[] // aplikují se v pořadí
 }
 type Feature =
-  | { kind: 'hole'; through: boolean; diameter: number; depth?: number; axis: 'x'|'y'|'z'; at: [number, number]; face: FaceRef }
-  | { kind: 'slot'; width: number; depth: number; along: 'x'|'y'; face: FaceRef; offset: number }  // drážka
-  | { kind: 'step'; edge: EdgeRef; width: number; height: number }                                 // osazení
-  | { kind: 'chamfer'; edge: EdgeRef; size: number }                                               // zkosení
-  | { kind: 'cutout'; face: FaceRef; rect: [number, number, number, number]; depth: number }       // výřez / kapsa
-  | { kind: 'rib'; from: FaceRef; thickness: number; height: number; length: number }              // žebro
+  | {
+      kind: 'hole'
+      through: boolean
+      diameter: number
+      depth?: number
+      axis: 'x' | 'y' | 'z'
+      at: [number, number]
+      face: FaceRef
+    }
+  | { kind: 'slot'; width: number; depth: number; along: 'x' | 'y'; face: FaceRef; offset: number } // drážka
+  | { kind: 'step'; edge: EdgeRef; width: number; height: number } // osazení
+  | { kind: 'chamfer'; edge: EdgeRef; size: number } // zkosení
+  | { kind: 'cutout'; face: FaceRef; rect: [number, number, number, number]; depth: number } // výřez / kapsa
+  | { kind: 'rib'; from: FaceRef; thickness: number; height: number; length: number } // žebro
 ```
 
 Proč takhle:
@@ -330,14 +338,14 @@ Průmyslový standard (takhle to dělá např. FreeCAD TechDraw): `HLRBRep` nad 
 
 ### Srovnání
 
-| Kritérium | A: GPU depth | B: CPU analyticky | C: OpenCascade HLR |
-|---|---|---|---|
-| Spolehlivost skrytých hran | střední (z-fighting, rozlišení) | **vysoká** (s laděním tolerancí) | nejvyšší |
-| Vektorový SVG výstup | ne / složitě | **ano** | ano |
-| Testy v Node, stabilní snapshoty | ne | **ano** | ano (pomalé) |
-| Velikost pro prohlížeč | nic navíc | malá | desítky MB |
-| Pracnost | nízká | střední | vysoká |
-| Kružnice a válce | mnohoúhelníky | přesné díky metadatům prvků | přesné |
+| Kritérium                        | A: GPU depth                    | B: CPU analyticky                | C: OpenCascade HLR |
+| -------------------------------- | ------------------------------- | -------------------------------- | ------------------ |
+| Spolehlivost skrytých hran       | střední (z-fighting, rozlišení) | **vysoká** (s laděním tolerancí) | nejvyšší           |
+| Vektorový SVG výstup             | ne / složitě                    | **ano**                          | ano                |
+| Testy v Node, stabilní snapshoty | ne                              | **ano**                          | ano (pomalé)       |
+| Velikost pro prohlížeč           | nic navíc                       | malá                             | desítky MB         |
+| Pracnost                         | nízká                           | střední                          | vysoká             |
+| Kružnice a válce                 | mnohoúhelníky                   | přesné díky metadatům prvků      | přesné             |
 
 **Volba: B pro 2D výkres + A jen pro živý „rentgen“ ve 3D prohlížeči.** C necháme jako možnost pro
 budoucí import složitých STEP součástí (případně až na serveru).
@@ -362,14 +370,14 @@ očekávaný výkres a vizuální snapshot. Tyto výkresy ti ukážu před pokra
 
 ### 5.2 Šest typů cvičení
 
-| # | Cvičení | Fáze | Poznámka k implementaci |
-|---|---|---|---|
-| 1 | Přiřaď pohledy (drag & drop na pozice evropského promítání) | 2 | dnd-kit, ovládání klávesnicí; chyba „americké rozmístění“ rozpoznaná zvlášť |
-| 2 | Najdi chybějící pohled (1 ze 4) | 2 | nejtěžší distraktory jsou ty, které se shodují ve dvou daných pohledech |
-| 3 | Výkres → model (1 ze 4 modelů) | 2 | 4 malé 3D náhledy; distraktor musí mít jiný aspoň jeden ze 3 pohledů |
-| 4 | Najdi chybu ve výkresu | 3 | mutace výkresu (ne tělesa): chybějící/přebytečná hrana, plná místo čárkované, špatné umístění pohledu; klikací oblasti |
-| 5 | Řez: vyber správný řez A–A, nebo umísti rovinu řezu | 3 | plný řez v MVP, poloviční řez připravený v datovém modelu |
-| 6 | Odečti kótu | 3 | kóty z prvků `PartSpec`; odpověď číslem, tolerance 0 (kóty jsou celá čísla) |
+| #   | Cvičení                                                     | Fáze | Poznámka k implementaci                                                                                                |
+| --- | ----------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | Přiřaď pohledy (drag & drop na pozice evropského promítání) | 2    | dnd-kit, ovládání klávesnicí; chyba „americké rozmístění“ rozpoznaná zvlášť                                            |
+| 2   | Najdi chybějící pohled (1 ze 4)                             | 2    | nejtěžší distraktory jsou ty, které se shodují ve dvou daných pohledech                                                |
+| 3   | Výkres → model (1 ze 4 modelů)                              | 2    | 4 malé 3D náhledy; distraktor musí mít jiný aspoň jeden ze 3 pohledů                                                   |
+| 4   | Najdi chybu ve výkresu                                      | 3    | mutace výkresu (ne tělesa): chybějící/přebytečná hrana, plná místo čárkované, špatné umístění pohledu; klikací oblasti |
+| 5   | Řez: vyber správný řez A–A, nebo umísti rovinu řezu         | 3    | plný řez v MVP, poloviční řez připravený v datovém modelu                                                              |
+| 6   | Odečti kótu                                                 | 3    | kóty z prvků `PartSpec`; odpověď číslem, tolerance 0 (kóty jsou celá čísla)                                            |
 
 ### 5.3 Generátor distraktorů
 
@@ -431,21 +439,21 @@ s animací rozložení. Běží čistě v prohlížeči, nic se neukládá. Odka
 
 ### 6.2 Tabulky
 
-| Tabulka | Klíčové sloupce | Účel |
-|---|---|---|
-| `organizations` | `id`, `name`, `kind` (`company`/`school`), `join_code` (unikátní), `seat_limit`, `license_valid_until`, `created_at` | firma nebo škola |
-| `profiles` | `id` (= `auth.users.id`), `display_name`, `locale`, `created_at` | minimum osobních údajů |
-| `memberships` | `user_id`, `org_id`, `role` (`participant`/`trainer`/`org_admin`), `created_at`; unikátní (`user_id`, `org_id`) | role v organizaci |
-| `invitations` | `id`, `org_id`, `email` (volitelně), `role`, `group_id` (volitelně), `token_hash`, `expires_at`, `accepted_at`, `created_by` | pozvánky |
-| `groups` | `id`, `org_id`, `name`, `created_by`, `archived_at` | skupina/třída |
-| `group_members` | `group_id`, `user_id`, `role` (`trainer`/`participant`) | kdo je ve skupině, kdo ji vede |
-| `assignments` | `id`, `group_id`, `module_slug`, `lesson_slug`, `due_at`, `created_by` | přiřazené lekce |
-| `attempts` | `id`, `user_id`, `org_id` (nullable pro budoucí B2C), `module_slug`, `lesson_slug`, `exercise_type`, `difficulty`, `seed`, `engine_version`, `answer` (jsonb), `is_correct`, `score`, `error_codes` (text[]), `duration_ms`, `created_at` | každý pokus; jen přidávání |
-| `lesson_progress` (view, `security_invoker`) | odvozeno z `attempts` | stav lekcí pro účastníka i přehled školitele |
-| `certificates` | `id`, `user_id`, `org_id`, `module_slug`, `score`, `holder_name` a `org_name` (snímek v době vydání), `verification_code`, `issued_at` | certifikát PDF |
-| `pilot_requests` | `id`, `name`, `company`, `email`, `headcount`, `segment` (`company`/`school`), `message`, `consent_at`, `created_at` | formulář „Chci pilot“ |
-| `platform_admins` | `user_id` | ty: zakládání organizací, licence |
-| `usage_counters` (volitelně) | `day`, `event`, `count` | anonymní analytika bez osobních údajů |
+| Tabulka                                      | Klíčové sloupce                                                                                                                                                                                                                           | Účel                                         |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `organizations`                              | `id`, `name`, `kind` (`company`/`school`), `join_code` (unikátní), `seat_limit`, `license_valid_until`, `created_at`                                                                                                                      | firma nebo škola                             |
+| `profiles`                                   | `id` (= `auth.users.id`), `display_name`, `locale`, `created_at`                                                                                                                                                                          | minimum osobních údajů                       |
+| `memberships`                                | `user_id`, `org_id`, `role` (`participant`/`trainer`/`org_admin`), `created_at`; unikátní (`user_id`, `org_id`)                                                                                                                           | role v organizaci                            |
+| `invitations`                                | `id`, `org_id`, `email` (volitelně), `role`, `group_id` (volitelně), `token_hash`, `expires_at`, `accepted_at`, `created_by`                                                                                                              | pozvánky                                     |
+| `groups`                                     | `id`, `org_id`, `name`, `created_by`, `archived_at`                                                                                                                                                                                       | skupina/třída                                |
+| `group_members`                              | `group_id`, `user_id`, `role` (`trainer`/`participant`)                                                                                                                                                                                   | kdo je ve skupině, kdo ji vede               |
+| `assignments`                                | `id`, `group_id`, `module_slug`, `lesson_slug`, `due_at`, `created_by`                                                                                                                                                                    | přiřazené lekce                              |
+| `attempts`                                   | `id`, `user_id`, `org_id` (nullable pro budoucí B2C), `module_slug`, `lesson_slug`, `exercise_type`, `difficulty`, `seed`, `engine_version`, `answer` (jsonb), `is_correct`, `score`, `error_codes` (text[]), `duration_ms`, `created_at` | každý pokus; jen přidávání                   |
+| `lesson_progress` (view, `security_invoker`) | odvozeno z `attempts`                                                                                                                                                                                                                     | stav lekcí pro účastníka i přehled školitele |
+| `certificates`                               | `id`, `user_id`, `org_id`, `module_slug`, `score`, `holder_name` a `org_name` (snímek v době vydání), `verification_code`, `issued_at`                                                                                                    | certifikát PDF                               |
+| `pilot_requests`                             | `id`, `name`, `company`, `email`, `headcount`, `segment` (`company`/`school`), `message`, `consent_at`, `created_at`                                                                                                                      | formulář „Chci pilot“                        |
+| `platform_admins`                            | `user_id`                                                                                                                                                                                                                                 | ty: zakládání organizací, licence            |
+| `usage_counters` (volitelně)                 | `day`, `event`, `count`                                                                                                                                                                                                                   | anonymní analytika bez osobních údajů        |
 
 Klíčové funkce (`security definer`, `set search_path = ''`):
 
@@ -456,18 +464,18 @@ Klíčové funkce (`security definer`, `set search_path = ''`):
 
 ### 6.3 Politiky RLS (přehled)
 
-| Tabulka | SELECT | INSERT | UPDATE / DELETE |
-|---|---|---|---|
-| `organizations` | členové org | jen platform admin (server) | `org_admin` (název), licence jen platform admin |
-| `profiles` | sám sebe; školitel/admin vidí jméno členů své org | trigger při registraci | sám sebe |
-| `memberships` | vlastní řádky; `org_admin` celé org; školitel členy svých skupin | jen přes funkce | `org_admin` mění role; uživatel může org opustit |
-| `invitations` | `org_admin` a školitelé dané org | `org_admin`, školitel (jen role `participant`) | tvůrce nebo `org_admin` |
-| `groups` | školitelé a admin dané org; členové skupiny | školitel/admin dané org | vedoucí skupiny nebo admin |
-| `group_members` | sám sebe; vedoucí skupiny; admin org | vedoucí skupiny nebo admin | vedoucí skupiny nebo admin |
-| `assignments` | členové a vedoucí skupiny | vedoucí skupiny | vedoucí skupiny |
-| `attempts` | vlastní; vedoucí skupiny, kde je uživatel, **a zároveň `attempt.org_id` = org skupiny**; `org_admin` dané org | jen vlastní (`user_id = auth.uid()`) a jen pro org, kde je členem | nikdo (jen kaskáda při smazání účtu) |
-| `certificates` | vlastní; školitel/admin dané org; veřejné ověření kódu jen přes funkci s minimem údajů | jen server po ověření skóre | nikdo |
-| `pilot_requests` | nikdo z klientů | jen serverová akce (service role) s validací a ochranou proti spamu | nikdo |
+| Tabulka          | SELECT                                                                                                        | INSERT                                                              | UPDATE / DELETE                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
+| `organizations`  | členové org                                                                                                   | jen platform admin (server)                                         | `org_admin` (název), licence jen platform admin  |
+| `profiles`       | sám sebe; školitel/admin vidí jméno členů své org                                                             | trigger při registraci                                              | sám sebe                                         |
+| `memberships`    | vlastní řádky; `org_admin` celé org; školitel členy svých skupin                                              | jen přes funkce                                                     | `org_admin` mění role; uživatel může org opustit |
+| `invitations`    | `org_admin` a školitelé dané org                                                                              | `org_admin`, školitel (jen role `participant`)                      | tvůrce nebo `org_admin`                          |
+| `groups`         | školitelé a admin dané org; členové skupiny                                                                   | školitel/admin dané org                                             | vedoucí skupiny nebo admin                       |
+| `group_members`  | sám sebe; vedoucí skupiny; admin org                                                                          | vedoucí skupiny nebo admin                                          | vedoucí skupiny nebo admin                       |
+| `assignments`    | členové a vedoucí skupiny                                                                                     | vedoucí skupiny                                                     | vedoucí skupiny                                  |
+| `attempts`       | vlastní; vedoucí skupiny, kde je uživatel, **a zároveň `attempt.org_id` = org skupiny**; `org_admin` dané org | jen vlastní (`user_id = auth.uid()`) a jen pro org, kde je členem   | nikdo (jen kaskáda při smazání účtu)             |
+| `certificates`   | vlastní; školitel/admin dané org; veřejné ověření kódu jen přes funkci s minimem údajů                        | jen server po ověření skóre                                         | nikdo                                            |
+| `pilot_requests` | nikdo z klientů                                                                                               | jen serverová akce (service role) s validací a ochranou proti spamu | nikdo                                            |
 
 `auth.uid()` se v politikách obaluje jako `(select auth.uid())` (doporučení Supabase kvůli výkonu).
 
@@ -522,14 +530,14 @@ Klíčové funkce (`security definer`, `set search_path = ''`):
 
 ## 8. Testovací strategie a CI
 
-| Úroveň | Nástroj | Co testuje |
-|---|---|---|
-| Odborná pravidla | Vitest | konstanty, rozmístění pohledů, styly čar, formát kót |
-| Engine | Vitest | generátor (objem, uzavřenost sítě, rozměry), viditelnost hran na známých součástech, textové snapshoty SVG |
-| Cvičení | Vitest + fast-check | pro tisíce seedů: distraktory odlišné, vždy jedna správná odpověď, hodnocení a kódy chyb |
-| Databáze | pgTAP | RLS izolace organizací a rolí, funkce připojení a pozvánek |
-| UI a hlavní cesty | Playwright | demo, přihlášení, připojení kódem, cvičení, dashboard, export CSV, certifikát |
-| Vizuální snapshoty | Playwright | 10 testovacích výkresů (PNG), klíčové obrazovky; běží v Docker obrazu Playwright, aby se nelišily podle OS |
+| Úroveň             | Nástroj             | Co testuje                                                                                                 |
+| ------------------ | ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Odborná pravidla   | Vitest              | konstanty, rozmístění pohledů, styly čar, formát kót                                                       |
+| Engine             | Vitest              | generátor (objem, uzavřenost sítě, rozměry), viditelnost hran na známých součástech, textové snapshoty SVG |
+| Cvičení            | Vitest + fast-check | pro tisíce seedů: distraktory odlišné, vždy jedna správná odpověď, hodnocení a kódy chyb                   |
+| Databáze           | pgTAP               | RLS izolace organizací a rolí, funkce připojení a pozvánek                                                 |
+| UI a hlavní cesty  | Playwright          | demo, přihlášení, připojení kódem, cvičení, dashboard, export CSV, certifikát                              |
+| Vizuální snapshoty | Playwright          | 10 testovacích výkresů (PNG), klíčové obrazovky; běží v Docker obrazu Playwright, aby se nelišily podle OS |
 
 CI (GitHub Actions) na každý PR: lint → typecheck → Vitest → pgTAP (Supabase CLI) → build → Playwright.
 Cloudflare Workers Builds k tomu vytvoří náhledový deploy.
@@ -540,14 +548,14 @@ Cloudflare Workers Builds k tomu vytvoří náhledový deploy.
 
 Odhady jsou hrubé, v pracovních dnech vývoje (já + tvoje kontroly), a nejvíc nejistá je fáze 1.
 
-| Fáze | Obsah | Složitost | Odhad | Co potřebuju od tebe |
-|---|---|---|---|---|
-| **0** | Monorepo, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt (EU), deploy prázdné aplikace na Cloudflare, next-intl kostra, CLAUDE.md | S | 1 den | napojení repa v Cloudflare, doména |
-| **1** | Engine: prototyp CSG (manifold vs. three-bvh-csg), `PartSpec` + generátor, extrakce hran, viditelnost (přístup B), SVG výkres se styly čar a osami, 3D prohlížeč s kostkou orientace, animace rozložení, 10 testovacích součástí se snapshoty | **XL** | 8–12 dní | **kontrola 10 výkresů** před pokračováním, odpovědi na `TODO(norma)` |
-| **2** | Cvičení 1–3, generátor distraktorů s kontrolou odlišnosti, hodnocení s vysvětlením chyb, výklad k lekcím 1–5, demo režim, nasazení na doménu | L | 6–8 dní | zpětná vazba k vysvětlivkám a obtížnostem |
-| **3** | Cvičení 4–6, interaktivní řez (stencil + šrafy), 2D řez se stopou A–A, kótování z prvků, lekce 6–9, adaptivita | L | 7–9 dní | kontrola řezů a kót |
-| **4** | Auth, organizace, role, kód organizace a pozvánky, skupiny, přiřazení lekcí, dashboard školitele, CSV, certifikát PDF, smazání účtu, RLS testy | L | 6–8 dní | text certifikátu, pravidla licencí |
-| **5** | Landing (Pro firmy / Pro školy, živá 3D ukázka), formulář „Chci pilot“ + e-mail, zásady zpracování, ladění výkonu na slabém HW, přístupnost | M | 3–5 dní | texty a kontakt, test na reálném školním/firemním PC |
+| Fáze  | Obsah                                                                                                                                                                                                                                         | Složitost | Odhad    | Co potřebuju od tebe                                                 |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- | -------------------------------------------------------------------- |
+| **0** | Monorepo, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt (EU), deploy prázdné aplikace na Cloudflare, next-intl kostra, CLAUDE.md                                                                                                  | S         | 1 den    | napojení repa v Cloudflare, doména                                   |
+| **1** | Engine: prototyp CSG (manifold vs. three-bvh-csg), `PartSpec` + generátor, extrakce hran, viditelnost (přístup B), SVG výkres se styly čar a osami, 3D prohlížeč s kostkou orientace, animace rozložení, 10 testovacích součástí se snapshoty | **XL**    | 8–12 dní | **kontrola 10 výkresů** před pokračováním, odpovědi na `TODO(norma)` |
+| **2** | Cvičení 1–3, generátor distraktorů s kontrolou odlišnosti, hodnocení s vysvětlením chyb, výklad k lekcím 1–5, demo režim, nasazení na doménu                                                                                                  | L         | 6–8 dní  | zpětná vazba k vysvětlivkám a obtížnostem                            |
+| **3** | Cvičení 4–6, interaktivní řez (stencil + šrafy), 2D řez se stopou A–A, kótování z prvků, lekce 6–9, adaptivita                                                                                                                                | L         | 7–9 dní  | kontrola řezů a kót                                                  |
+| **4** | Auth, organizace, role, kód organizace a pozvánky, skupiny, přiřazení lekcí, dashboard školitele, CSV, certifikát PDF, smazání účtu, RLS testy                                                                                                | L         | 6–8 dní  | text certifikátu, pravidla licencí                                   |
+| **5** | Landing (Pro firmy / Pro školy, živá 3D ukázka), formulář „Chci pilot“ + e-mail, zásady zpracování, ladění výkonu na slabém HW, přístupnost                                                                                                   | M         | 3–5 dní  | texty a kontakt, test na reálném školním/firemním PC                 |
 
 Celkem zhruba **31–43 pracovních dní**.
 
@@ -562,15 +570,15 @@ Po každé fázi se zastavím a napíšu: co je hotové, jak to vyzkoušíš (ko
 
 ## 10. Rizika
 
-| Riziko | Dopad | Zmírnění |
-|---|---|---|
-| Chyby ve viditelnosti hran v hraničních případech | vysoký: chybné úlohy | testovací součásti se známým výsledkem, property testy, tvá kontrola výkresů ve fázi 1 |
-| Odborná nepřesnost (norma) | vysoký: ztráta důvěry u škol a firem | vše v `drafting-standards`, `TODO(norma)`, ideálně kontrola učitelem technické dokumentace |
-| Výkon na slabém HW | střední | vykreslování na vyžádání, worker, fallback bez 3D, test na reálném HW |
-| Robustnost boolovských operací | střední | prototyp v prvních dnech fáze 1, celočíselné rozměry, validace prvků |
-| Automatické rozmístění kót je složité | střední | kótovat jen to, co cvičení potřebuje (prvky z `PartSpec`), ne obecné auto-kótování |
-| Uživatelé bez e-mailu (operátoři, agenturní pracovníci) | střední: bariéra pilotu | viz otázka 3 |
-| Rozšiřování rozsahu | střední | fáze s jasným „hotovo“, nové nápady do backlogu |
+| Riziko                                                  | Dopad                                | Zmírnění                                                                                   |
+| ------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Chyby ve viditelnosti hran v hraničních případech       | vysoký: chybné úlohy                 | testovací součásti se známým výsledkem, property testy, tvá kontrola výkresů ve fázi 1     |
+| Odborná nepřesnost (norma)                              | vysoký: ztráta důvěry u škol a firem | vše v `drafting-standards`, `TODO(norma)`, ideálně kontrola učitelem technické dokumentace |
+| Výkon na slabém HW                                      | střední                              | vykreslování na vyžádání, worker, fallback bez 3D, test na reálném HW                      |
+| Robustnost boolovských operací                          | střední                              | prototyp v prvních dnech fáze 1, celočíselné rozměry, validace prvků                       |
+| Automatické rozmístění kót je složité                   | střední                              | kótovat jen to, co cvičení potřebuje (prvky z `PartSpec`), ne obecné auto-kótování         |
+| Uživatelé bez e-mailu (operátoři, agenturní pracovníci) | střední: bariéra pilotu              | viz otázka 3                                                                               |
+| Rozšiřování rozsahu                                     | střední                              | fáze s jasným „hotovo“, nové nápady do backlogu                                            |
 
 ---
 
@@ -622,4 +630,4 @@ Po každé fázi se zastavím a napíšu: co je hotové, jak to vyzkoušíš (ko
 
 ---
 
-*Po schválení začnu fází 0. Změny v plánu zapíšu sem a důvody do `docs/decisions.md`.*
+_Po schválení začnu fází 0. Změny v plánu zapíšu sem a důvody do `docs/decisions.md`._

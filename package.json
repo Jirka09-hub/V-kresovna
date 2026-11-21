@@ -1,0 +1,34 @@
+{
+  "name": "vykresovna",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "db:start": "supabase start",
+    "db:test": "supabase test db",
+    "db:types": "supabase gen types typescript --project-id lzzbnvqkwbcjsbmktelm > apps/web/lib/supabase/database.types.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.4.6",
+    "eslint-plugin-i18next": "6.1.5",
+    "globals": "^17.14.0",
+    "prettier": "3.10.1",
+    "supabase": "3.2.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vitest": "5.1.1"
+  }
+}

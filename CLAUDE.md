@@ -6,8 +6,10 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 
 ## Stav projektu
 
-- Krok 1 (plán) hotový jako návrh: `docs/plan.md`. **Čeká na schválení Jiřím**, teprve pak fáze 0.
-- Aplikační kód zatím neexistuje. Příkazy níže jsou plánované a doplní se ve fázi 0.
+- Plán schválen 2026-11-21 (`docs/plan.md`), hosting změněn na Cloudflare (D-011).
+- Fáze 0 hotová: monorepo, Next.js + next-intl, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt,
+  konfigurace OpenNext pro Cloudflare Workers.
+- Další: fáze 1 (engine). Výkresy 10 testovacích součástí ukázat Jiřímu před fází 2.
 
 ## Jak pracujeme
 
@@ -33,19 +35,19 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 
 ## Terminologie (UI česky, identifikátory v kódu anglicky)
 
-| Česky | V kódu |
-|---|---|
-| nárys (pohled zepředu) | `front` |
-| půdorys (pohled shora) | `top` |
-| bokorys (pohled zleva) | `left` |
-| pohled zprava / zdola / zezadu | `right` / `bottom` / `rear` |
-| řez | `section` |
-| průřez | `crossSection` |
-| stopa roviny řezu | `cuttingPlaneLine` |
-| kóta | `dimension` |
-| šrafování | `hatching` |
-| osa | `centerLine` |
-| viditelná / skrytá hrana | `visibleEdge` / `hiddenEdge` |
+| Česky                                        | V kódu                                             |
+| -------------------------------------------- | -------------------------------------------------- |
+| nárys (pohled zepředu)                       | `front`                                            |
+| půdorys (pohled shora)                       | `top`                                              |
+| bokorys (pohled zleva)                       | `left`                                             |
+| pohled zprava / zdola / zezadu               | `right` / `bottom` / `rear`                        |
+| řez                                          | `section`                                          |
+| průřez                                       | `crossSection`                                     |
+| stopa roviny řezu                            | `cuttingPlaneLine`                                 |
+| kóta                                         | `dimension`                                        |
+| šrafování                                    | `hatching`                                         |
+| osa                                          | `centerLine`                                       |
+| viditelná / skrytá hrana                     | `visibleEdge` / `hiddenEdge`                       |
 | díra, drážka, osazení, zkosení, výřez, žebro | `hole`, `slot`, `step`, `chamfer`, `cutout`, `rib` |
 
 ## Architektura (plánovaná)
@@ -69,14 +71,32 @@ Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm (viz D-008).
 - Distraktor musí mít jiný 2D otisk než správná odpověď (jinak se zahodí).
 - Žádné trackery třetích stran, minimum osobních údajů.
 
-## Příkazy (doplní se ve fázi 0)
+## Příkazy
 
 ```bash
 pnpm install
-pnpm dev            # Next.js vývojový server
-pnpm lint
-pnpm typecheck
-pnpm test           # Vitest
-pnpm test:e2e       # Playwright
-pnpm db:test        # pgTAP testy RLS (vyžaduje Supabase CLI + Docker)
+pnpm dev                       # Next.js vývojový server (http://localhost:3000/cs)
+pnpm lint                      # ESLint (včetně zákazu textů natvrdo a hranic balíčků)
+pnpm format                    # Prettier
+pnpm typecheck                 # tsc ve všech balíčcích
+pnpm test                      # Vitest (balíčky + aplikace)
+pnpm build && pnpm test:e2e    # Playwright proti produkčnímu buildu (next start)
+pnpm --filter web cf:build     # build pro Cloudflare Workers (OpenNext)
+pnpm --filter web cf:preview   # build + lokální běh ve workerd (wrangler)
+pnpm db:start && pnpm db:test  # lokální Supabase (Docker) + pgTAP testy RLS
 ```
+
+## Infrastruktura
+
+- Supabase projekt `vykresovna`, ref `lzzbnvqkwbcjsbmktelm`, region eu-central-1 (plán Free; před pilotem Pro).
+  Migrace v `supabase/migrations/`; na vzdálený projekt se zatím aplikují přes Supabase MCP a soubor
+  se pojmenuje podle verze, kterou vrátí `list_migrations`, aby lokál a produkce seděly.
+- Veřejné hodnoty Supabase jsou v `apps/web/.env` (publishable klíč je určený pro prohlížeč). Tajné klíče jen
+  do `.env.local` / Cloudflare secrets.
+- Cloudflare Workers přes `@opennextjs/cloudflare`, konfigurace `apps/web/wrangler.jsonc`. Deploy přes
+  Cloudflare Workers Builds napojené na GitHub (postup v `README.md`).
+- Poptávky z formuláře „Chci pilot“ chodí na e-mail, který zadal Jiří (viz projektová paměť), přes Cloudflare
+  Email Routing.
+- ESLint zůstává na v9: pluginy `eslint-config-next` zatím v10 nepodporují.
+- Next.js 16 hlásí, že `middleware.ts` je zastaralý (nově `proxy.ts`). Zůstáváme u `middleware.ts`, protože
+  OpenNext na Cloudflare podporuje jen edge middleware.

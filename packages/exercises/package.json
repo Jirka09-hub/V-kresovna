@@ -1,0 +1,16 @@
+{
+  "name": "@vykresovna/exercises",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generátory úloh, distraktory, hodnocení a adaptivita. Bez UI.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@vykresovna/engine": "workspace:*"
+  }
+}
