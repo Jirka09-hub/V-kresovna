@@ -11,7 +11,7 @@ import {
   type PartSpec,
   type SolidMesh,
 } from '@vykresovna/engine'
-import { applyDrawingMutation, generateTask } from '@vykresovna/exercises'
+import { applyDrawingMutation, evaluate, generateTask } from '@vykresovna/exercises'
 import type { EngineCall, EngineRequest, EngineResponse, ViewsSvg } from '@/lib/engine/protocol'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
@@ -62,6 +62,8 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
       }
       return { result, transfer: [] }
     }
+    case 'evaluate':
+      return { result: evaluate(call.task, call.answer), transfer: [] }
   }
 }
 

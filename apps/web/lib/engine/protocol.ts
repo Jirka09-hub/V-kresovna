@@ -4,7 +4,14 @@
  */
 import type { ViewName } from '@vykresovna/drafting-standards'
 import type { PartRenderData, PartSpec } from '@vykresovna/engine'
-import type { Difficulty, DrawingMutation, ExerciseKind, Task } from '@vykresovna/exercises'
+import type {
+  Answer,
+  Difficulty,
+  DrawingMutation,
+  ExerciseKind,
+  Task,
+  TaskResult,
+} from '@vykresovna/exercises'
 
 /** SVG jednoho nebo více pohledů s rozměry výkresu v mm (kvůli stejnému měřítku vedle sebe). */
 export type ViewsSvg = {
@@ -29,6 +36,8 @@ export type EngineCall =
       readonly mutation?: DrawingMutation
       readonly svgTitle?: string
     }
+  /** Hodnocení odpovědi (kód `exercises` importuje engine, proto taky ve workeru). */
+  | { readonly type: 'evaluate'; readonly task: Task; readonly answer: Answer }
 
 /** Výsledek podle typu požadavku. */
 export type EngineResult<C extends EngineCall> = C extends { type: 'render-part' }
@@ -37,7 +46,9 @@ export type EngineResult<C extends EngineCall> = C extends { type: 'render-part'
     ? Task
     : C extends { type: 'render-views' }
       ? ViewsSvg
-      : never
+      : C extends { type: 'evaluate' }
+        ? TaskResult
+        : never
 
 export type EngineRequest = { readonly id: number; readonly call: EngineCall }
 

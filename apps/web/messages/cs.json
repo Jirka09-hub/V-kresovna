@@ -11,7 +11,12 @@
     "forCompaniesText": "Zaučení operátorů CNC, montážníků a kontrolorů kvality bez prezenčního školení.",
     "forSchools": "Pro školy",
     "forSchoolsText": "Technická dokumentace na SPŠ a SOU: úlohy s okamžitou zpětnou vazbou.",
-    "status": "Stav: vývoj, fáze 0"
+    "status": "Stav: vývoj, fáze 2 (cvičení a demo)",
+    "ctaDemo": "Vyzkoušet demo",
+    "ctaDemoText": "Pět krátkých úloh bez registrace. Zabere to asi pět minut.",
+    "ctaLessons": "Projít lekce",
+    "ctaLessonsText": "Pilotní modul: pohledy, skryté hrany, díry a čtení výkresu.",
+    "tryTitle": "Vyzkoušejte si to"
   },
   "drafting": {
     "view": {
@@ -66,5 +71,287 @@
       "center": "osa"
     },
     "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu."
+  },
+  "nav": {
+    "label": "Hlavní navigace",
+    "home": "Výkresovna",
+    "demo": "Demo",
+    "lessons": "Lekce",
+    "skip": "Přeskočit na obsah"
+  },
+  "common": {
+    "loading": "Načítám…",
+    "error": "Něco se nepovedlo: {message}",
+    "retry": "Zkusit znovu"
+  },
+  "model3d": {
+    "reset": "Výchozí pohled",
+    "xray": "Rentgen (skryté hrany)",
+    "loading": "Načítám 3D model…",
+    "dragHint": "Model otočíte tažením myší nebo prstem."
+  },
+  "exercises": {
+    "kind": {
+      "assignViews": "Přiřaď pohledy",
+      "missingView": "Najdi chybějící pohled",
+      "drawingToModel": "Výkres → model"
+    },
+    "instructions": {
+      "assignViews": "Nárys je pevně uprostřed. Přetáhněte každou kartu s pohledem na místo, kam podle evropského promítání patří.",
+      "missingView": "Jeden pohled ve výkresu chybí. Vyberte z možností ten, který patří do prázdného rámečku.",
+      "drawingToModel": "Prohlédněte si výkres a vyberte 3D model, který mu odpovídá."
+    },
+    "difficulty": "Obtížnost {level} z 5",
+    "loading": "Připravuji úlohu…",
+    "check": "Zkontrolovat",
+    "checking": "Kontroluji…",
+    "next": "Další úloha",
+    "finish": "Zobrazit shrnutí",
+    "skip": "Přeskočit úlohu",
+    "optionLetter": "Možnost {letter}",
+    "chosen": "vaše volba",
+    "correctOption": "správná odpověď",
+    "noWebgl": "Tato úloha potřebuje 3D zobrazení, které tento počítač neumí (chybí WebGL). Úlohu můžete přeskočit.",
+    "result": {
+      "correct": "Správně!",
+      "incorrect": "Tohle není správně.",
+      "correctText": "Výborně, odpověď je správná.",
+      "partial": "Správně máte {ok} z {total}.",
+      "errorsTitle": "Proč to není správně",
+      "showCorrect": "Správná odpověď"
+    },
+    "errors": {
+      "LAYOUT_THIRD_ANGLE": "Pohledy jsou rozložené po americku. U nás platí evropské promítání: každý pohled leží na opačné straně nárysu, než ze které se na součást díváte, takže pohled shora patří dolů a pohled zleva doprava.",
+      "TOP_SIDE_SWAPPED": "Půdorys a bokorys jsou prohozené. Půdorys (pohled shora) je stejně široký jako nárys a patří pod něj; bokorys (pohled zleva) je stejně vysoký jako nárys a patří vpravo vedle něj.",
+      "VIEW_MISPLACED": "Tento pohled je na špatném místě. Pomůcka: pohled se kreslí na opačnou stranu nárysu, než ze které se na součást díváte.",
+      "VIEW_MISSING": "Některá karta zůstala nepoložená. Každý pohled má na výkrese svoje místo.",
+      "HIDDEN_AS_VISIBLE": "Hrana, která je z tohoto směru schovaná za materiálem, je nakreslená plnou čarou. Neviditelné hrany se kreslí tenkou čárkovanou čarou.",
+      "VISIBLE_AS_HIDDEN": "Hrana, kterou z tohoto směru normálně vidíte, je nakreslená čárkovaně. Viditelné hrany se kreslí plnou tlustou čarou.",
+      "MISSING_EDGE": "Ve výkresu chybí hrana. Každá hrana součásti, viditelná i schovaná, se v pohledu musí objevit.",
+      "EXTRA_EDGE": "Ve výkresu je čára navíc, které na součásti neodpovídá žádná hrana.",
+      "MIRRORED": "Součást je zrcadlově obrácená: co má být vlevo, je vpravo. Podívejte se, na které straně nárysu prvky leží.",
+      "FEATURE_SHIFTED": "Prvek je posunutý na jiné místo. Sledujte, jak daleko od okrajů součásti leží v obou pohledech.",
+      "FEATURE_MISSING": "Této možnosti chybí prvek, který na výkrese je, třeba díra, drážka nebo výřez.",
+      "FEATURE_EXTRA": "Tato možnost má prvek navíc, který na výkrese není.",
+      "FEATURE_RESIZED": "Prvek má jiný rozměr: je větší nebo menší, než ukazuje výkres.",
+      "THROUGH_VS_BLIND": "Záměna průchozí a slepé díry. Průchozí díra vede skrz celou součást, slepá končí uvnitř a má kuželové dno od špičky vrtáku."
+    },
+    "assign": {
+      "model": "3D model součásti",
+      "modelLabel": "3D model součásti, kterou kreslíme",
+      "grid": "Výkres",
+      "gridLabel": "Místa pro pohledy kolem nárysu",
+      "front": "nárys",
+      "fixed": "pevně",
+      "tray": "Karty s pohledy",
+      "trayEmpty": "Všechny karty jsou rozmístěné.",
+      "returnHere": "Kartu sem můžete vrátit.",
+      "keyboardHint": "Bez myši: vyberte kartu klávesou Enter nebo mezerníkem, pak stejně vyberte místo.",
+      "card": "Karta {n}",
+      "cardLabel": "Karta {n} s pohledem",
+      "cardSelected": "Karta {n}, vybraná",
+      "cardResult": "Karta {n}: {view}",
+      "selected": "Vybraná karta {n}. Teď vyberte místo, kam ji položit.",
+      "placed": "Karta {n} je {position}.",
+      "returned": "Karta {n} je zpět mezi kartami.",
+      "slot": "Místo {position}",
+      "placeAll": "Rozmístěte všechny karty, pak je zkontrolujte.",
+      "returnToTray": "Vrátit kartu mezi karty",
+      "correctCard": "správně",
+      "wrongCard": "patří jinam",
+      "correctLayout": "Správné rozmístění",
+      "position": {
+        "above": "nad nárysem",
+        "below": "pod nárysem",
+        "left": "vlevo od nárysu",
+        "right": "vpravo od nárysu",
+        "farRight": "úplně vpravo",
+        "other": "na pozici {col}, {row}"
+      }
+    },
+    "missing": {
+      "given": "Výkres",
+      "givenLabel": "Dané pohledy a prázdné místo pro chybějící pohled",
+      "missingFrame": "Chybí: {view}",
+      "options": "Vyberte chybějící pohled",
+      "optionLabel": "Možnost {letter}: návrh chybějícího pohledu",
+      "model": "Součást ve 3D",
+      "modelHint": "Takhle součást vypadá. Zvýrazněný je prvek, kterého se chyba týká."
+    },
+    "toModel": {
+      "drawing": "Výkres",
+      "drawingLabel": "Výkres součásti: nárys, půdorys a bokorys",
+      "options": "Který model odpovídá výkresu?",
+      "optionLabel": "Možnost {letter}: 3D model",
+      "rotate": "Otočit všechny modely",
+      "rotateLeft": "Otočit doleva",
+      "rotateRight": "Otočit doprava",
+      "rotateUp": "Naklonit nahoru",
+      "rotateDown": "Naklonit dolů",
+      "rotateReset": "Výchozí natočení",
+      "rotateHint": "Tažením kteréhokoli modelu otočíte všechny najednou."
+    },
+    "legend": {
+      "visible": "viditelná hrana",
+      "hidden": "skrytá hrana",
+      "center": "osa",
+      "highlight": "zvýrazněný prvek"
+    }
+  },
+  "sequence": {
+    "progressLabel": "Postup v úlohách",
+    "progress": "Úloha {current} z {total}",
+    "stepDone": "Úloha {n}: správně",
+    "stepWrong": "Úloha {n}: s chybou",
+    "stepSkipped": "Úloha {n}: přeskočená",
+    "stepTodo": "Úloha {n}: čeká",
+    "stepCurrent": "Úloha {n}: právě řešíte",
+    "summaryTitle": "Hotovo!",
+    "summaryScore": "Správně {correct} z {total} úloh.",
+    "summaryPerfect": "Bez jediné chyby. Výborně!",
+    "summaryGood": "Dobrá práce. Úlohy s chybou si můžete zkusit znovu s jinými součástmi.",
+    "summaryPractice": "Chce to ještě trochu cviku. Zkuste novou sadu úloh, součásti budou jiné.",
+    "summaryTaskCorrect": "správně",
+    "summaryTaskWrong": "s chybou",
+    "summaryTaskSkipped": "přeskočeno",
+    "commonErrors": "Na co si dát pozor",
+    "restart": "Nová sada úloh"
+  },
+  "demo": {
+    "title": "Demo: čtení výkresů na 3D modelu",
+    "lead": "Krátká ukázka Výkresovny: nejdřív uvidíte, jak z tělesa vznikne výkres, pak si vyzkoušíte pět úloh. Nic se neukládá.",
+    "showcaseTitle": "Jak vznikají pohledy",
+    "showcaseText": "Pusťte animaci: součást se promítne na tři stěny a ty se rozloží do roviny papíru. Tak vzniká výkres v evropském promítání.",
+    "start": "Začít úlohy",
+    "newVariant": "Další varianta",
+    "newVariantHint": "Stejné typy úloh s jinými součástmi.",
+    "summaryText": "Tohle byla jen ochutnávka. V lekcích je ke každému tématu výklad a víc úloh.",
+    "toLessons": "Pokračovat na lekce"
+  },
+  "unfold": {
+    "play": "Přehrát animaci",
+    "pause": "Pozastavit",
+    "replay": "Přehrát znovu",
+    "back": "Krok zpět",
+    "next": "Další krok",
+    "slider": "Průběh animace"
+  },
+  "linked": {
+    "model": "3D model",
+    "drawing": "Výkres",
+    "drawingLabel": "Výkres součásti: nárys, půdorys a bokorys",
+    "modelLabel": "3D model součásti",
+    "hoverHint": "Najeďte myší na čáru ve výkresu nebo na hranu modelu: zvýrazní se na obou stranách.",
+    "features": "Ukázat prvek",
+    "reveal": "Odkrýt 3D model",
+    "revealHint": "Nejdřív si součást zkuste představit jen z výkresu."
+  },
+  "modules": {
+    "pohledy-a-rezy": {
+      "title": "Pohledy a řezy jednoduchých součástí",
+      "summary": "Od toho, jak vznikají pohledy, přes skryté hrany a díry až po čtení celého výkresu."
+    }
+  },
+  "lessons": {
+    "title": "Lekce",
+    "lead": "Každá lekce začíná krátkým výkladem s 3D modelem a pokračuje úlohami s okamžitou zpětnou vazbou. Postup se zatím neukládá.",
+    "lessonNumber": "Lekce {n}",
+    "comingSoon": "připravujeme",
+    "comingSoonText": "Na této lekci pracujeme. Zatím vyzkoušejte lekce 1–5.",
+    "tasksCount": "{count, plural, one {# úloha} few {# úlohy} other {# úloh}}",
+    "start": "Začít lekci",
+    "backToOverview": "Zpět na přehled lekcí",
+    "introProgress": "Výklad {current} z {total}",
+    "prevScreen": "Zpět",
+    "nextScreen": "Dál",
+    "toTasks": "Na úlohy",
+    "skipIntro": "Přeskočit výklad",
+    "summaryText": "Lekce je hotová. Můžete ji zopakovat s jinými součástmi, nebo pokračovat další lekcí.",
+    "nextLesson": "Další lekce: {title}",
+    "repeat": "Zopakovat lekci",
+    "terms": {
+      "throughHole": "průchozí díra",
+      "blindHole": "slepá díra",
+      "slot": "drážka",
+      "step": "osazení",
+      "chamfer": "zkosení",
+      "cutout": "výřez"
+    },
+    "items": {
+      "jak-vznikaji-pohledy": {
+        "title": "Jak vznikají pohledy",
+        "summary": "Proč se kreslí výkres a jak se z tělesa stanou tři pohledy: nárys, půdorys a bokorys.",
+        "intro": {
+          "rozlozeni": {
+            "title": "Součást v rohu tří stěn",
+            "text": "Představte si, že součást stojí v rohu místnosti. Na zadní stěnu, na podlahu a na boční stěnu se promítne, jak vypadá zepředu, shora a zleva. Pusťte animaci: stěny se pak rozloží do jedné roviny a vznikne výkres."
+          },
+          "hrany": {
+            "title": "Každá čára je hrana",
+            "text": "Najeďte myší na čáru ve výkresu a na modelu se rozsvítí hrana, ze které vznikla. Funguje to i obráceně. Všimněte si, že půdorys je pod nárysem a bokorys (pohled zleva) vpravo od něj."
+          }
+        }
+      },
+      "viditelne-a-skryte-hrany": {
+        "title": "Viditelné a skryté hrany",
+        "summary": "Co se kreslí plnou a co čárkovanou čarou a proč výkres ukazuje i to, co není vidět.",
+        "intro": {
+          "rentgen": {
+            "title": "Rentgen ukáže, co je schované",
+            "text": "Výřez vzadu zepředu vidět není, a přesto ho do nárysu nakreslíme, jen tenkou čárkovanou čarou. Rentgen ve 3D ukazuje schované hrany stejně. Najeďte na čárkovanou čáru ve výkresu a uvidíte, které hraně patří."
+          }
+        }
+      },
+      "diry-a-osy": {
+        "title": "Díry a osy",
+        "summary": "Průchozí a slepá díra, kružnice a osy ve výkresu.",
+        "intro": {
+          "diry": {
+            "title": "Každá díra má osu",
+            "text": "Když se do díry díváme, vidíme kružnici a kříž dvou os. Z boku je díra schovaná: její okraje jsou čárkované a uprostřed vede osa, čerchovaná čára. Slepá díra končí uvnitř a má kuželové dno od špičky vrtáku (úhel 120°). Vyzkoušejte tlačítka pod modelem."
+          }
+        }
+      },
+      "drazky-osazeni-zkoseni": {
+        "title": "Drážky, osazení, zkosení",
+        "summary": "Jak ve výkresu poznat běžné prvky součástí.",
+        "intro": {
+          "prvky": {
+            "title": "Tři běžné prvky",
+            "text": "Drážka je kanál vyfrézovaný napříč součástí, osazení je „schod“ na okraji a zkosení je seříznutá hrana. Vyberte prvek a podívejte se, jak vypadá v každém pohledu."
+          }
+        }
+      },
+      "chybejici-pohled-a-model": {
+        "title": "Chybějící pohled a čtení výkresu",
+        "summary": "Ze dvou pohledů domyslet třetí a z výkresu si představit celé těleso.",
+        "intro": {
+          "cteni": {
+            "title": "Nejdřív výkres, pak model",
+            "text": "Zkuste si z výkresu představit těleso. Co je v nárysu nahoře, najdete v půdorysu i v bokorysu. Až budete mít představu, odkryjte 3D model a porovnejte."
+          },
+          "kontrola": {
+            "title": "Každý prvek ve všech pohledech",
+            "text": "Prvek součásti se objeví v každém pohledu, jen pokaždé jinak: jednou jako obrys, jindy jako čárkovaná čára. Vyberte prvek a sledujte, kde ho najdete v nárysu, půdorysu i bokorysu."
+          }
+        }
+      },
+      "chyby-ve-vykresu": {
+        "title": "Chyby ve výkresu",
+        "summary": "Najít, co je na výkrese špatně: chybějící hranu, plnou čáru místo čárkované, pohled na špatném místě."
+      },
+      "rez-a-srafovani": {
+        "title": "Řez a šrafování",
+        "summary": "Jak výkres ukáže vnitřek součásti a co znamenají šrafy."
+      },
+      "koty": {
+        "title": "Kóty: čtení rozměrů",
+        "summary": "Odkud kam kóta měří a jak z výkresu vyčíst rozměry."
+      },
+      "zaverecny-test": {
+        "title": "Závěrečný test",
+        "summary": "Souhrnný test celého modulu, podklad pro certifikát."
+      }
+    }
   }
 }

@@ -2,7 +2,14 @@
 
 import type { ViewName } from '@vykresovna/drafting-standards'
 import type { PartRenderData, PartSpec } from '@vykresovna/engine'
-import type { Difficulty, DrawingMutation, ExerciseKind, Task } from '@vykresovna/exercises'
+import type {
+  Answer,
+  Difficulty,
+  DrawingMutation,
+  ExerciseKind,
+  Task,
+  TaskResult,
+} from '@vykresovna/exercises'
 import type {
   EngineCall,
   EngineRequest,
@@ -84,4 +91,9 @@ export function renderViews(
     ...(options.mutation ? { mutation: options.mutation } : {}),
     ...(options.svgTitle ? { svgTitle: options.svgTitle } : {}),
   })
+}
+
+/** Vyhodnotí odpověď (ve workeru, aby se kód enginu nedostal do hlavního bundlu). */
+export function evaluateAnswer(task: Task, answer: Answer): Promise<TaskResult> {
+  return callEngine({ type: 'evaluate', task, answer })
 }

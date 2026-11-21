@@ -16,3 +16,8 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
 }
+
+/* Zvýrazněný prvek ve výkresu: barva i větší tloušťka (vzor čáry zůstává, čárkovaná je dál čárkovaná). */
+.drawing-svg [data-highlight='true'] {
+  stroke-width: 0.7;
+}
