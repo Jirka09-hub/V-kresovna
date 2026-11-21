@@ -82,3 +82,5 @@ export const TEST_PARTS: readonly PartSpec[] = [
     ],
   },
 ]
+
+export { SECTION_TEST_CASES, type SectionTestCase } from './section-parts'

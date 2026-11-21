@@ -34,3 +34,5 @@ export {
 } from './drawing/fingerprint'
 export { TEST_PARTS } from './fixtures/test-parts'
 export { toRenderData, transferables, type PartRenderData, type RenderEdge } from './render-data'
+export * from './section'
+export { SECTION_TEST_CASES, type SectionTestCase } from './fixtures/section-parts'
