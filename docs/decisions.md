@@ -169,3 +169,21 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   čárkovaně, chybějící hrana) a mutace tělesa, které se shodují aspoň v jednom daném pohledu.
 - Distraktory se vybírají tak, aby měly různé kódy chyb, pokud to jde. Id součástí v možnostech jsou
   neutrální (`<id úlohy>/m1`…), aby z nich nešlo poznat správnou odpověď.
+
+## D-020 Webové UI cvičení (fáze 2)
+
+- Stav: přijato (2026-11-21)
+- Engine i exercises běží jen ve web workeru (`apps/web/workers/engine.worker.ts`): sestavení součásti,
+  generování úlohy, pohledy s mutací, výkres možnosti (`buildOptionDrawing`) i hodnocení (`evaluate`).
+  Hlavní bundle importuje z těchto balíčků jen typy, WASM v něm není (D-016). Výsledky se cachují
+  ve workeru (síť a hrany) i v klientovi (odpovědi podle volání).
+- „Výkres → model“: čtyři modely na jednom plátně (`PartGallery`, drei `View`), `frameloop="demand"`,
+  společné natočení i měřítko. Slabé školní počítače tak drží jeden WebGL kontext místo čtyř a modely jde
+  snadno porovnat. Bez WebGL jde úlohu jen přeskočit.
+- Přiřazování pohledů: `@dnd-kit/core` pro myš a dotyk, plnohodnotná náhrada klávesnicí (vybrat kartu,
+  pak místo; Enter nebo mezerník). Zpětná vazba nikdy jen barvou: ikona, text a vysvětlení podle kódu chyby.
+- Průběh lekcí a dema se zatím drží jen v paměti (bez přihlášení); ukládání přijde s účty.
+- ESLint `i18next/no-literal-string` ignoruje volání `t`, `ta`, `tm`… (překladače z `useTranslations`
+  pro různé jmenné prostory).
+- Pozn. k testům: Playwright snímek celé stránky může u plátna v režimu „na vyžádání“ ukázat starší snímek;
+  snímek samotného prvku je aktuální. Testy proto ověřují stav přes atributy (`data-rotation`), ne pixely.

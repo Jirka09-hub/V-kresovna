@@ -41,6 +41,14 @@ export async function solveAssignViewsWithKeyboard(page: Page) {
 
 /** Výběr 1 ze 4: zvolí první možnost a ověří, že přišla zpětná vazba (obsah se generuje). */
 export async function answerChoice(page: Page, kind: string) {
+  if (kind === 'drawing-to-model') {
+    // všechny modely jsou na jednom plátně a otáčejí se společně (i tlačítky z klávesnice)
+    await expect(page.locator('canvas')).toHaveCount(1)
+    const gallery = page.getByTestId('part-gallery')
+    const before = await gallery.getAttribute('data-rotation')
+    await page.getByRole('button', { name: 'Otočit doprava' }).click()
+    await expect(gallery).not.toHaveAttribute('data-rotation', before!)
+  }
   const option =
     kind === 'missing-view'
       ? page.getByTestId('option').first()

@@ -103,7 +103,13 @@ export function PartGallery({ children, radius, className, controlsRef }: PartGa
 
   return (
     <GalleryContext.Provider value={state}>
-      <div ref={container} className={className} style={{ position: 'relative' }}>
+      <div
+        ref={container}
+        className={className}
+        style={{ position: 'relative' }}
+        data-testid="part-gallery"
+        data-rotation={`${rotation.yaw.toFixed(3)} ${rotation.pitch.toFixed(3)}`}
+      >
         {children}
         <Canvas
           frameloop="demand"
@@ -153,6 +159,25 @@ function OrbitCamera({ rotation, distance }: { rotation: GalleryRotation; distan
   return <PerspectiveCamera ref={ref} makeDefault fov={FOV} near={1} far={5000} />
 }
 
+/**
+ * Obsah pohledů se do plátna dostává přes tunel až po renderu galerie, proto si o nový snímek
+ * řekne až obsah sám (po změně modelu nebo zvýraznění).
+ */
+function InvalidateOnChange({
+  data,
+  highlightedEdgeIds,
+}: {
+  data: PartRenderData
+  highlightedEdgeIds: readonly string[]
+}) {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => invalidate())
+    return () => cancelAnimationFrame(raf)
+  }, [data, highlightedEdgeIds, invalidate])
+  return null
+}
+
 export type PartGalleryViewProps = {
   data: PartRenderData
   highlightedEdgeIds?: readonly string[]
@@ -199,6 +224,7 @@ export function PartGalleryView({
       <View style={{ position: 'absolute', inset: 0 }}>
         <color attach="background" args={['#eef2f7']} />
         <OrbitCamera rotation={gallery.rotation} distance={distance} />
+        <InvalidateOnChange data={data} highlightedEdgeIds={highlightedEdgeIds} />
         <ambientLight intensity={0.55} />
         <hemisphereLight args={['#ffffff', '#94a3b8', 0.6]} />
         <directionalLight position={[120, 200, 160]} intensity={1.4} />

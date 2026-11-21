@@ -12,7 +12,9 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
   snapshoty v `packages/engine/test/__snapshots__/*.svg` a `apps/web/e2e/laborator.spec.ts-snapshots/`.
 - Jiří svěřil odborná rozhodnutí Claudovi (D-017): nejasnosti řeš podle běžné praxe, zapiš do
   `docs/decisions.md` a před pilotem doporuč kontrolu učitelem. Jiřího se na normy neptej.
-- Rozpracováno: fáze 2 (cvičení 1–3, distraktory, demo).
+- Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
+  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
+  Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
 
 ## Jak pracujeme
 
