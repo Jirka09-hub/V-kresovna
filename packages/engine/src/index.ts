@@ -26,5 +26,11 @@ export {
 } from './projection/hlr'
 export * from './drawing/drawing'
 export { drawingToSvg, type SvgOptions } from './drawing/svg'
+export {
+  canonicalView,
+  drawingFingerprint,
+  viewFingerprint,
+  FINGERPRINT_PRECISION_MM,
+} from './drawing/fingerprint'
 export { TEST_PARTS } from './fixtures/test-parts'
 export { toRenderData, transferables, type PartRenderData, type RenderEdge } from './render-data'
