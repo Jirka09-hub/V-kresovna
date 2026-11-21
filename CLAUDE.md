@@ -15,6 +15,11 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
   (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
   Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
+- Řez (D-021): `createDrawing(spec, mesh, { section: { spec: { axis, at, label }, view } })`, kód
+  v `packages/engine/src/section/` (bez WASM, podmodul `@vykresovna/engine/section`), pravidla
+  v `packages/drafting-standards/src/section.ts`, testovací řezy `SECTION_TEST_CASES`
+  (`packages/engine/src/fixtures/section-parts.ts`, snapshoty `rez-*.svg`). 3D: `PartViewer`
+  s `sectionPlane` + `onSectionChange`. V laboratoři přepínač „Řez“ a posuvník roviny.
 
 ## Jak pracujeme
 
