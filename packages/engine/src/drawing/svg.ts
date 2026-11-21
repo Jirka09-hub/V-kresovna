@@ -4,6 +4,7 @@ import {
   LINE_WIDTH_MM,
   type LineKind,
 } from '@vykresovna/drafting-standards'
+import { dimensionStyleRules, renderDimensions } from '../dimensions/svg'
 import type { EdgeVisibility, Vec2 } from '../projection/hlr'
 import type { Drawing, DrawingView, ViewCircle } from './drawing'
 
@@ -33,7 +34,7 @@ const KIND_BY_VISIBILITY: Record<EdgeVisibility, LineKind> = {
   hidden: 'hiddenEdge',
 }
 
-function styleBlock(): string {
+function styleBlock(withDimensions = false): string {
   const kinds: LineKind[] = ['visibleEdge', 'hiddenEdge', 'centerLine']
   const rules = kinds.map((k) => {
     const dash = dashArrayMm(k)
@@ -44,6 +45,7 @@ function styleBlock(): string {
     'path,circle,line{fill:none;stroke:var(--drawing-ink,#111);stroke-linecap:butt;stroke-linejoin:round}',
     ...rules,
     '[data-highlight="true"]{stroke:var(--drawing-highlight,#1d4ed8)}',
+    ...(withDimensions ? [dimensionStyleRules()] : []),
   ].join('')
 }
 
@@ -179,6 +181,7 @@ function renderView(v: DrawingView, opts: SvgOptions): string {
       )
     }
   }
+  if (v.dimensions?.length) out.push(renderDimensions(v.dimensions, tx))
   return `<g data-view="${v.view}">${out.join('')}</g>`
 }
 
@@ -190,7 +193,7 @@ export function drawingToSvg(drawing: Drawing, opts: SvgOptions = {}): string {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg"${opts.id ? ` id="${escapeXml(opts.id)}"` : ''} viewBox="0 0 ${w} ${h}" width="${w}mm" height="${h}mm" data-part="${escapeXml(drawing.partId)}" data-layout="${drawing.layout}"${opts.title ? ' role="img"' : ''}>`,
     title,
-    `<style>${styleBlock()}</style>`,
+    `<style>${styleBlock(drawing.views.some((v) => v.dimensions?.length))}</style>`,
     ...drawing.views.map((v) => renderView(v, opts)),
     '</svg>',
   ].join('')

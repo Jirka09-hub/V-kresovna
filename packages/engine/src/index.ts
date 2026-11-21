@@ -33,4 +33,5 @@ export {
   FINGERPRINT_PRECISION_MM,
 } from './drawing/fingerprint'
 export { TEST_PARTS } from './fixtures/test-parts'
+export * from './dimensions'
 export { toRenderData, transferables, type PartRenderData, type RenderEdge } from './render-data'
