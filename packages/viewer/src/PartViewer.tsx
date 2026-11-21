@@ -6,6 +6,8 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { boundsOf, ENGINE_TO_THREE_ROTATION, ISO_DIRECTION, type Bounds } from './coords'
 import { DEFAULT_COLORS, PartModel, type ViewerColors } from './PartModel'
+import { cutPlaneOfState, type SectionPlaneState } from './section'
+import { SectionStage } from './SectionStage'
 import { frontCameraTarget, UnfoldStage } from './UnfoldStage'
 import { unfoldPhase } from './unfold'
 
@@ -33,6 +35,15 @@ export type PartViewerProps = {
   className?: string
   /** Popis plátna pro čtečky obrazovky. */
   ariaLabel?: string
+  /**
+   * Interaktivní řez: rovina kolmá na osu (souřadnice enginu, mm). Materiál před rovinou se skryje,
+   * plocha řezu se vyšrafuje. null / undefined = bez řezu.
+   */
+  sectionPlane?: SectionPlaneState | null
+  /** Tažení úchytu roviny řezu (nová poloha v mm). Bez něj je rovina pevná. */
+  onSectionChange?: (at: number) => void
+  /** Krok polohy roviny při tažení (mm, výchozí 0,5). */
+  sectionStep?: number
 }
 
 export type PartViewerHandle = {
@@ -91,6 +102,9 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
     colors: colorOverrides,
     className,
     ariaLabel,
+    sectionPlane = null,
+    onSectionChange,
+    sectionStep = 0.5,
   },
   ref,
 ) {
@@ -101,6 +115,17 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
   useImperativeHandle(ref, () => ({ reset: () => setResetToken((t) => t + 1) }), [])
 
   const phase = unfoldProgress === undefined ? null : unfoldPhase(unfoldProgress)
+  // rovina se mění jen s osou, polohou a stranou (ne s identitou objektu v props)
+  const sAxis = sectionPlane?.axis
+  const sAt = sectionPlane?.at
+  const sFrom = sectionPlane?.viewFrom
+  const clip = useMemo(
+    () =>
+      sAxis !== undefined && sAt !== undefined
+        ? cutPlaneOfState({ axis: sAxis, at: sAt, ...(sFrom ? { viewFrom: sFrom } : {}) })
+        : null,
+    [sAxis, sAt, sFrom],
+  )
   const faces = [
     cubeLabels.right,
     cubeLabels.left,
@@ -117,6 +142,10 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
         dpr={dpr}
         camera={{ fov: 32, near: 1, far: 5000, position: [200, 200, 260] }}
         gl={{ antialias: true, powerPreference: 'default' }}
+        onCreated={({ gl }) => {
+          // ořezávací roviny jednotlivých materiálů (interaktivní řez)
+          gl.localClippingEnabled = true
+        }}
       >
         <PerformanceMonitor
           onDecline={() => setDpr(1)}
@@ -137,7 +166,19 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
             highlightedEdgeIds={highlightedEdgeIds}
             edgeWidth={dpr > 1.2 ? 1.8 : 1.4}
             {...(onHoverEdge ? { onHoverEdge } : {})}
+            clip={clip}
           />
+          {sectionPlane && clip ? (
+            <SectionStage
+              data={data}
+              bounds={bounds}
+              colors={colors}
+              state={sectionPlane}
+              plane={clip}
+              step={sectionStep}
+              {...(onSectionChange ? { onChange: onSectionChange } : {})}
+            />
+          ) : null}
           {unfoldProgress !== undefined ? (
             <UnfoldStage data={data} bounds={bounds} progress={unfoldProgress} colors={colors} />
           ) : null}
