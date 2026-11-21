@@ -60,8 +60,9 @@ describe('cvičení „přiřaď pohledy“', () => {
           expect(task.slots.some((s) => s[0] === pos[0] && s[1] === pos[1])).toBe(true)
         }
         const drawing = createDrawing(task.part, buildPart(wasm, task.part), {
-          views: task.cards.map((c) => c.view),
+          views: ['front', ...task.cards.map((c) => c.view)],
         })
+        // karty se liší navzájem i od nárysu
         const fps = drawing.views.map(viewFingerprint)
         expect(new Set(fps).size).toBe(fps.length)
       }

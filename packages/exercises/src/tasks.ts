@@ -228,8 +228,8 @@ function assignViews(
 ): Built<AssignViewsTask> | null {
   const views = assignViewCards(difficulty)
   const rendered = r.render(part)
-  const fps = views.map((v) => rendered.fp(v))
-  // dva stejně vypadající pohledy by uživatel nemohl rozlišit
+  // dva stejně vypadající pohledy (ani karta shodná s nárysem) by uživatel nemohl rozlišit
+  const fps = ['front' as const, ...views].map((v) => rendered.fp(v))
   if (new Set(fps).size !== fps.length) return null
   return {
     kind: 'assign-views',
