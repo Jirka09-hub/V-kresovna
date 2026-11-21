@@ -1,7 +1,7 @@
 'use client'
 
 import type { ViewName } from '@vykresovna/drafting-standards'
-import type { PartRenderData, PartSpec } from '@vykresovna/engine'
+import type { PartRenderData, PartSpec, SectionDrawingOptions } from '@vykresovna/engine'
 import type {
   Answer,
   ChoiceOption,
@@ -84,7 +84,7 @@ export function generateTask(
 export function renderViews(
   spec: PartSpec,
   views: readonly ViewName[],
-  options: { mutation?: DrawingMutation; svgTitle?: string } = {},
+  options: { mutation?: DrawingMutation; svgTitle?: string; section?: SectionDrawingOptions } = {},
 ): Promise<ViewsSvg> {
   return callEngine({
     type: 'render-views',
@@ -92,6 +92,7 @@ export function renderViews(
     views,
     ...(options.mutation ? { mutation: options.mutation } : {}),
     ...(options.svgTitle ? { svgTitle: options.svgTitle } : {}),
+    ...(options.section ? { section: options.section } : {}),
   })
 }
 

@@ -35,3 +35,5 @@ export {
 export { TEST_PARTS } from './fixtures/test-parts'
 export * from './dimensions'
 export { toRenderData, transferables, type PartRenderData, type RenderEdge } from './render-data'
+export * from './section'
+export { SECTION_TEST_CASES, type SectionTestCase } from './fixtures/section-parts'

@@ -51,6 +51,7 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
       const drawing = createDrawing(call.spec, mesh, {
         edges,
         ...(call.dimensions ? { dimensions: true } : {}),
+        ...(call.section ? { section: call.section } : {}),
       })
       const data = toRenderData(mesh, edges, drawing, call.svgTitle)
       return { result: data, transfer: transferables(data) }
@@ -61,7 +62,11 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
     }
     case 'render-views': {
       const { mesh, edges } = await build(call.spec)
-      let drawing = createDrawing(call.spec, mesh, { edges, views: call.views })
+      let drawing = createDrawing(call.spec, mesh, {
+        edges,
+        views: call.views,
+        ...(call.section ? { section: call.section } : {}),
+      })
       if (call.mutation) drawing = applyDrawingMutation(drawing, call.mutation)
       const result: ViewsSvg = {
         svg: drawingToSvg(drawing, call.svgTitle ? { title: call.svgTitle } : {}),

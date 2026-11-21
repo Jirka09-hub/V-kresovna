@@ -3,7 +3,7 @@
  * aby se WASM nedostal do hlavního bundlu (D-016).
  */
 import type { ViewName } from '@vykresovna/drafting-standards'
-import type { PartRenderData, PartSpec } from '@vykresovna/engine'
+import type { PartRenderData, PartSpec, SectionDrawingOptions } from '@vykresovna/engine'
 import type {
   Answer,
   ChoiceOption,
@@ -29,6 +29,8 @@ export type EngineCall =
       readonly svgTitle?: string
       /** Zakótovaný výkres (laboratoř enginu). */
       readonly dimensions?: boolean
+      /** Plný řez: pohled ve výkresu se nahradí řezem (3D síť zůstává celá). */
+      readonly section?: SectionDrawingOptions
     }
   | {
       readonly type: 'generate-task'
@@ -42,6 +44,8 @@ export type EngineCall =
       readonly views: readonly ViewName[]
       readonly mutation?: DrawingMutation
       readonly svgTitle?: string
+      /** Plný řez (viz `render-part`). */
+      readonly section?: SectionDrawingOptions
     }
   /** Možnost úlohy tak, jak ji má uživatel vidět (s mutací výkresu), přes `buildOptionDrawing`. */
   | {

@@ -16,6 +16,8 @@ import { extractEdges, type EdgeModel } from '../edges/extract'
 import type { SolidMesh } from '../mesh/types'
 import { AXIS_INDEX, otherAxes, type Axis, type Box, type PartSpec } from '../part/spec'
 import { projectView, viewBasis, type Vec2, type ViewProjection } from '../projection/hlr'
+import type { CuttingPlaneMark, SectionDrawingOptions, SectionViewData } from '../section/types'
+import { fitSectionAnnotations, prepareSection } from '../section/view'
 
 /** Mezera mezi pohledy na výkrese (mm). Není to norma, jen rozvržení. */
 export const VIEW_GAP_MM = 16
@@ -46,6 +48,10 @@ export type DrawingView = {
   readonly size: Vec2
   /** Kóty pohledu (jen s `createDrawing(…, { dimensions: true })`), souřadnice pohledu. */
   readonly dimensions?: readonly DrawingDimension[]
+  /** Pohled je nahrazený řezem (plochy řezu, šrafy, označení A–A). */
+  readonly section?: SectionViewData
+  /** Stopy rovin řezu, které leží v tomto pohledu „na hraně“. */
+  readonly cuttingPlanes?: readonly CuttingPlaneMark[]
 }
 
 export type Drawing = {
@@ -63,6 +69,8 @@ export type DrawingOptions = {
   readonly edges?: EdgeModel
   /** Zakótovat výkres (výchozí ne). Výkres se zvětší, aby se kóty vešly vně pohledů. */
   readonly dimensions?: boolean
+  /** Plný řez: daný pohled se nahradí řezem a do sousedního pohledu se nakreslí stopa roviny řezu. */
+  readonly section?: SectionDrawingOptions
 }
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -281,21 +289,32 @@ export function createDrawing(
     layoutName === 'first-angle' ? FIRST_ANGLE_LAYOUT : THIRD_ANGLE_DEMO_ONLY
   const edges = options.edges ?? extractEdges(mesh)
   const planes = symmetryPlanes(spec, mesh)
+  const section = options.section ? prepareSection(spec, mesh, options.section, viewNames) : null
 
   const parts = viewNames.map((view) => {
-    const projection = projectView(mesh, edges, view)
+    const inSection = section?.view === view
+    const projection = inSection ? section.projection : projectView(mesh, edges, view)
     const holes = holeAnnotations(spec, view)
     const symmetry = symmetryLines(planes, view, projection.bounds)
-    const centerLines = [
+    let centerLines = [
       ...symmetry,
       ...holes.centerLines.filter((cl) => !symmetry.some((s) => containedIn(cl, s))),
     ]
-    const circles = holes.circles
+    let circles = holes.circles
+    if (inSection) {
+      // osy a kružnice prvků, které řez celé odebral, se v pohledu v řezu nekreslí
+      centerLines = centerLines.filter((cl) => section.keepsFeature(cl.featureId))
+      circles = circles.filter((c) => section.keepsFeature(c.featureId))
+    }
     const size: Vec2 = [
       projection.bounds.max[0] - projection.bounds.min[0],
       projection.bounds.max[1] - projection.bounds.min[1],
     ]
-    return { view, projection, centerLines, circles, size, cell: grid[view] }
+    const extra = {
+      ...(inSection ? { section: section.data } : {}),
+      ...(section?.markView === view ? { cuttingPlanes: [section.mark(projection.bounds)] } : {}),
+    }
+    return { view, projection, centerLines, circles, size, cell: grid[view], extra }
   })
 
   // kóty: každá právě v jednom pohledu; okraje, o které kóty přesahují pohled
@@ -350,13 +369,15 @@ export function createDrawing(
     size: p.size,
     origin: [colX.get(p.cell[0])!, rowY.get(p.cell[1])!],
     ...(dims ? { dimensions: dims.get(p.view)?.dimensions ?? [] } : {}),
+    ...p.extra,
   }))
 
-  return {
+  const drawing: Drawing = {
     partId: spec.id,
     views,
     width: x - VIEW_GAP_MM + DRAWING_MARGIN_MM,
     height: y - VIEW_GAP_MM + DRAWING_MARGIN_MM,
     layout: layoutName,
   }
+  return section ? fitSectionAnnotations(drawing, DRAWING_MARGIN_MM) : drawing
 }

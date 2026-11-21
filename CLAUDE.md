@@ -18,6 +18,11 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Kótování (D-022): `createDrawing(spec, mesh, { dimensions: true })`, kód v `packages/engine/src/dimensions/`,
   pravidla v `packages/drafting-standards/src/dimensions.ts`, snapshoty `packages/engine/test/__snapshots__/dims/`.
   V laboratoři přepínač „Kóty“.
+- Řez (D-021): `createDrawing(spec, mesh, { section: { spec: { axis, at, label }, view } })`, kód
+  v `packages/engine/src/section/` (bez WASM, podmodul `@vykresovna/engine/section`), pravidla
+  v `packages/drafting-standards/src/section.ts`, testovací řezy `SECTION_TEST_CASES`
+  (`packages/engine/src/fixtures/section-parts.ts`, snapshoty `rez-*.svg`). 3D: `PartViewer`
+  s `sectionPlane` + `onSectionChange`. V laboratoři přepínač „Řez“ a posuvník roviny.
 
 ## Jak pracujeme
 

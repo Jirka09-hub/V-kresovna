@@ -188,6 +188,44 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
 - Pozn. k testům: Playwright snímek celé stránky může u plátna v režimu „na vyžádání“ ukázat starší snímek;
   snímek samotného prvku je aktuální. Testy proto ověřují stav přes atributy (`data-rotation`), ne pixely.
 
+## D-021 Plný řez: výpočet, kreslení a interaktivní řez ve 3D
+
+- Stav: přijato (2026-11-21). Odborné volby rozhodnuté podle běžné školní praxe (D-017);
+  **před pilotem je má zkontrolovat učitel** (seznam níže).
+- Výpočet: řez rovinou kolmou na hlavní osu počítá engine v čistém TypeScriptu nad sítí trojúhelníků
+  (`packages/engine/src/section/`): trojúhelníky před rovinou se zahodí, protnuté se oříznou, hranice
+  oříznuté sítě dá obrysy plochy řezu (díry v ploše zůstanou dírami) a plocha se uzavře triangulací
+  (ořezávání uší s mosty k dírám). Zbytek součásti je opět uzavřené těleso, takže viditelnost hran za
+  rovinou počítá stávající `projectView`. Manifold (`trimByPlane`, `slice`) jsme nepoužili, protože
+  `createDrawing` dostává jen síť a stejný kód teď běží i v hlavním vlákně ve 3D prohlížeči při tažení
+  roviny (podmodul `@vykresovna/engine/section` je bez WASM, D-016). Rovina přesně ve stěně součásti
+  se posune o 0,0001 mm do zachované části.
+- Výkres: `createDrawing(spec, mesh, { section: { spec: { axis, at, label }, view } })`. Pohled `view`
+  se nahradí řezem (obdélník pohledu zůstává jako u celé součásti, takže pohledy zůstanou zarovnané),
+  stopa roviny řezu se kreslí v prvním vhodném pohledu (nárys, pak půdorys; jde zadat nebo vypnout).
+  Osy děr, které řez celé odebral, se v řezu nekreslí. Popisy se vejdou na výkres posunem všech pohledů.
+  Výkres bez řezu je beze změny (snapshoty se nezměnily).
+- Šrafy jsou přesné úsečky (ne vzor SVG), ukotvené k souřadnicím pohledu, takže všechny plochy jedné
+  součásti mají stejný směr i rozteč. Plochy řezu mají třídu `sectionFace` (v UI lze podbarvit přes
+  `--drawing-section-fill`).
+- 3D: těleso se ořízne ořezávací rovinou three.js, hrany se oříznou na CPU, plocha řezu je přesný
+  mnohoúhelník z enginu se šrafami ve stejném směru jako na výkrese (místo stencil bufferu: jednodušší,
+  přesné a 3D i 2D vždy souhlasí). Rovina se posouvá tažením úchytu nebo posuvníkem; výkres A–A
+  se v laboratoři přepočítá 250 ms po posledním posunu.
+- Poloviční řez: jen typy (`HalfSectionSpec`), implementace později.
+- Ke kontrole učitelem před pilotem:
+  1. Rozteč šraf 2,5 mm (u výkresů 1 : 1), úhel 45° stoupající doprava.
+  2. Stopa roviny řezu: přesah 5 mm za obrys, tlusté konce 6 mm (1 mm zasahují do obrysu), mezi nimi
+     čerchovaná tenká čára přes celý pohled.
+  3. Šipky: začínají na vnějším konci stopy, kolmo na ni, míří ve směru pohledu (ke zbylé části),
+     délka 8 mm, plný hrot 3 mm se štíhlostí 15°. Písmeno (výška 5 mm) stojí vedle šipky na vnější straně.
+  4. Nápis „A–A“ (výška 5 mm) vycentrovaný nad pohledem v řezu, 4 mm nad ním; písmena I, O a Q se
+     nepoužívají.
+  5. V řezu se nekreslí skryté hrany.
+  6. Žebro řezané podélně se nešrafuje, jen ohraničí (i na styku se zbytkem součásti); ve 3D je plocha
+     řezu žebra šrafovaná (ukazuje skutečný materiál).
+  7. Osa díry se v řezu kreslí, pokud z díry po řezu něco zbylo.
+
 ## D-022 Kótování výkresů
 
 - Stav: přijato (2026-11-21), odborné volby podle běžné školní praxe (D-017), **ke kontrole učitelem**.

@@ -69,9 +69,23 @@
     "legend": {
       "visible": "viditelná hrana",
       "hidden": "skrytá hrana",
-      "center": "osa"
+      "center": "osa",
+      "hatching": "šrafování plochy řezu",
+      "cuttingPlane": "stopa roviny řezu"
     },
-    "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu."
+    "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu.",
+    "section": {
+      "title": "Řez",
+      "toggle": "Řez",
+      "axis": "Rovina řezu",
+      "axis_y": "kolmo na Y (řez místo nárysu)",
+      "axis_x": "kolmo na X (řez místo bokorysu)",
+      "axis_z": "kolmo na Z (řez místo půdorysu)",
+      "position": "Poloha roviny: {axis} = {value, number} mm",
+      "slider": "Poloha roviny řezu",
+      "hint": "Rovinu posunete tažením modrého úchytu ve 3D nebo posuvníkem (i šipkami na klávesnici). Výkres s řezem A–A se přepočítá chvilku po puštění.",
+      "error": "Řez se nepodařilo vytvořit: {message}"
+    }
   },
   "nav": {
     "label": "Hlavní navigace",
