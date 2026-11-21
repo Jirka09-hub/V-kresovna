@@ -122,6 +122,35 @@ export function canonicalView(view: DrawingView): string {
     const pb = `${q(b[0])},${q(b[1])}`
     items.push(`A ${pa < pb ? `${pa} ${pb}` : `${pb} ${pa}`}`)
   }
+  // řez: plochy řezu, šrafy, nešrafované části a stopy roviny řezu (u pohledů bez řezu se nic
+  // nepřidá, takže jejich otisk zůstává stejný jako dřív)
+  const pt = (p: Vec2) => {
+    const r = rel(p)
+    return `${q(r[0])},${q(r[1])}`
+  }
+  const seg = (tag: string, a: Vec2, b: Vec2) => {
+    const pa = pt(a)
+    const pb = pt(b)
+    return `${tag} ${pa < pb ? `${pa} ${pb}` : `${pb} ${pa}`}`
+  }
+  const ring = (loop: readonly Vec2[]) => {
+    const pts = loop.map(pt)
+    const variants: string[] = []
+    for (const seq of [pts, [...pts].reverse()]) {
+      for (let i = 0; i < seq.length; i++) {
+        variants.push([...seq.slice(i), ...seq.slice(0, i)].join(' '))
+      }
+    }
+    return variants.sort()[0] ?? ''
+  }
+  if (view.section) {
+    for (const f of view.section.faces) {
+      items.push(`F ${ring(f.outer)}${f.holes.map((h) => ` / ${ring(h)}`).join('')}`)
+    }
+    for (const f of view.section.unhatched ?? []) items.push(`U ${ring(f.outer)}`)
+    for (const h of view.section.hatching) items.push(seg('X', h.a, h.b))
+  }
+  for (const m of view.cuttingPlanes ?? []) items.push(seg(`P${m.label}`, m.line.a, m.line.b))
   items.push(`S ${q(view.size[0])},${q(view.size[1])}`)
   return [...new Set(items)].sort().join(';')
 }

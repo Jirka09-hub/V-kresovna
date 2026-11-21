@@ -35,6 +35,29 @@ const fmt = (n: number) => {
   return Number.isInteger(r) ? String(r) : r.toFixed(3).replace(/0+$/, '')
 }
 
+/**
+ * Třída kořenového `<svg>` výkresu. Všechna pravidla stylu jsou omezená na ni, takže výkres vložený
+ * přímo do stránky (inline SVG) nemění vzhled jiných SVG na stránce.
+ */
+export const DRAWING_ROOT_CLASS = 'vk-drawing'
+
+/** Omezí pravidla CSS na výkres: před každý selektor přidá `.vk-drawing `. */
+export function scopeCss(css: string, scope = DRAWING_ROOT_CLASS): string {
+  return css
+    .split('}')
+    .filter((rule) => rule.trim() !== '')
+    .map((rule) => {
+      const i = rule.indexOf('{')
+      const selectors = rule
+        .slice(0, i)
+        .split(',')
+        .map((sel) => `.${scope} ${sel.trim()}`)
+        .join(',')
+      return `${selectors}${rule.slice(i)}}`
+    })
+    .join('')
+}
+
 const KIND_BY_VISIBILITY: Record<EdgeVisibility, LineKind> = {
   visible: 'visibleEdge',
   hidden: 'hiddenEdge',
@@ -47,13 +70,14 @@ function styleBlock(drawing: Drawing): string {
     const width = LINE_WIDTH_MM[LINE_STYLES[k].weight]
     return `.${k}{stroke-width:${fmt(width)}${dash.length ? `;stroke-dasharray:${dash.map(fmt).join(' ')}` : ''}}`
   })
-  return [
+  const css = [
     'path,circle,line{fill:none;stroke:var(--drawing-ink,#111);stroke-linecap:butt;stroke-linejoin:round}',
     ...rules,
     '[data-highlight="true"]{stroke:var(--drawing-highlight,#1d4ed8)}',
     ...(drawing.views.some((v) => v.dimensions?.length) ? [dimensionStyleRules()] : []),
     ...(hasSections(drawing) ? [sectionStyleRules()] : []),
   ].join('')
+  return scopeCss(css)
 }
 
 type Chain = { points: Vec2[]; closed: boolean; edgeIds: Set<string> }
@@ -205,7 +229,7 @@ export function drawingToSvg(drawing: Drawing, opts: SvgOptions = {}): string {
   const h = fmt(drawing.height)
   const title = opts.title ? `<title>${escapeXml(opts.title)}</title>` : ''
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg"${opts.id ? ` id="${escapeXml(opts.id)}"` : ''} viewBox="0 0 ${w} ${h}" width="${w}mm" height="${h}mm" data-part="${escapeXml(drawing.partId)}" data-layout="${drawing.layout}"${opts.title ? ' role="img"' : ''}>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" class="${DRAWING_ROOT_CLASS}"${opts.id ? ` id="${escapeXml(opts.id)}"` : ''} viewBox="0 0 ${w} ${h}" width="${w}mm" height="${h}mm" data-part="${escapeXml(drawing.partId)}" data-layout="${drawing.layout}"${opts.title ? ' role="img"' : ''}>`,
     title,
     `<style>${styleBlock(drawing)}</style>`,
     ...drawing.views.map((v) => renderView(v, opts)),

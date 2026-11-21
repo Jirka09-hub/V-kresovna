@@ -25,7 +25,7 @@ export {
   type EdgeVisibility,
 } from './projection/hlr'
 export * from './drawing/drawing'
-export { drawingToSvg, type SvgOptions } from './drawing/svg'
+export { drawingToSvg, scopeCss, DRAWING_ROOT_CLASS, type SvgOptions } from './drawing/svg'
 export {
   canonicalView,
   drawingFingerprint,

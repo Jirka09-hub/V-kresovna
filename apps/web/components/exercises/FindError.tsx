@@ -407,10 +407,7 @@ function ViewCells({
 
 const TARGET = '#15803d'
 const HALO = '#22c55e'
-/**
- * Styl čáry vrstvy. Inline styl, protože styly vloženého SVG výkresu (`path{stroke:…}`) platí
- * pro celý dokument a přebily by atributy.
- */
+/** Atributy čáry vrstvy (styly výkresu jsou omezené na jeho `<svg>`, vrstvu neovlivní). */
 const stroke = (color: string, width: number) => ({
   stroke: color,
   strokeWidth: width,
@@ -447,10 +444,10 @@ function Overlay({
       const r = Math.max(1.5, tolerance * 0.6)
       selected = (
         <g data-testid="marker">
-          <circle cx={x} cy={y} r={r} style={stroke(marker, 0.6)} />
+          <circle cx={x} cy={y} r={r} {...stroke(marker, 0.6)} />
           <path
             d={`M${x - r * 1.6} ${y}H${x + r * 1.6}M${x} ${y - r * 1.6}V${y + r * 1.6}`}
-            style={stroke(marker, 0.6)}
+            {...stroke(marker, 0.6)}
           />
         </g>
       )
@@ -462,7 +459,8 @@ function Overlay({
       selected = (
         <rect
           {...r}
-          style={{ ...stroke(marker, 0.6), strokeDasharray: '2 1' }}
+          {...stroke(marker, 0.6)}
+          strokeDasharray="2 1"
           data-testid="marker"
         />
       )
@@ -486,7 +484,9 @@ function Overlay({
               width={p.size[0] + 6}
               height={p.size[1] + 6}
               rx={2}
-              style={{ ...stroke(TARGET, 0.8), fill: TARGET, fillOpacity: 0.08 }}
+              {...stroke(TARGET, 0.8)}
+              fill={TARGET}
+              fillOpacity={0.08}
               data-testid="target-highlight"
             />
           )
@@ -501,14 +501,14 @@ function Overlay({
                 <g key={j}>
                   <path
                     d={d}
-                    style={{ ...stroke(HALO, 3.2), strokeOpacity: 0.45, strokeLinecap: 'round' }}
+                    {...stroke(HALO, 3.2)}
+                    strokeOpacity={0.45}
+                    strokeLinecap="round"
                   />
                   <path
                     d={d}
-                    style={{
-                      ...stroke(TARGET, 0.5),
-                      ...(missing ? { strokeDasharray: '1.5 1' } : {}),
-                    }}
+                    {...stroke(TARGET, 0.5)}
+                    {...(missing ? { strokeDasharray: '1.5 1' } : {})}
                   />
                 </g>
               )

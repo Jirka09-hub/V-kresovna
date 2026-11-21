@@ -18,12 +18,9 @@ export function Legend({ highlight = false }: { highlight?: boolean }) {
         y1="3"
         x2="32"
         y2="3"
-        // inline styl: styly vložených SVG výkresů (`line{stroke:…}`) platí pro celou stránku
-        style={{
-          stroke: props.color ?? '#111',
-          strokeWidth: props.width,
-          strokeDasharray: props.dash,
-        }}
+        stroke={props.color ?? '#111'}
+        strokeWidth={props.width}
+        strokeDasharray={props.dash}
       />
     </svg>
   )

@@ -9,6 +9,9 @@ import {
   projectView,
   symmetryPlanes,
   TEST_PARTS,
+  SECTION_TEST_CASES,
+  DRAWING_ROOT_CLASS,
+  scopeCss,
   type PartSpec,
   type ViewProjection,
 } from '../src'
@@ -160,5 +163,29 @@ describe('stabilita id', () => {
     buildPart(wasm, part('08'))
     expect(keys()).toEqual(first)
     expect(first).toContain('p:0:0')
+  })
+})
+
+describe('styl SVG výkresu', () => {
+  it('každé pravidlo stylu je omezené na kořenovou třídu výkresu (inline SVG nemění zbytek stránky)', () => {
+    const c = SECTION_TEST_CASES[0]!
+    const mesh = buildPart(wasm, c.part)
+    const drawing = createDrawing(c.part, mesh, {
+      dimensions: true,
+      section: { spec: c.section, view: c.view },
+    })
+    const svg = drawingToSvg(drawing)
+    expect(svg).toContain(`<svg xmlns="http://www.w3.org/2000/svg" class="${DRAWING_ROOT_CLASS}"`)
+    const css = /<style>(.*?)<\/style>/.exec(svg)![1]!
+    const selectors = css
+      .split('}')
+      .filter(Boolean)
+      .flatMap((rule) => rule.slice(0, rule.indexOf('{')).split(','))
+    expect(selectors.length).toBeGreaterThan(10)
+    for (const sel of selectors) expect(sel.startsWith(`.${DRAWING_ROOT_CLASS} `), sel).toBe(true)
+  })
+
+  it('scopeCss zachová deklarace a pořadí pravidel', () => {
+    expect(scopeCss('a,b{x:1,2}.c{y:2}', 's')).toBe('.s a,.s b{x:1,2}.s .c{y:2}')
   })
 })

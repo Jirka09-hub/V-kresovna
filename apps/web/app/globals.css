@@ -18,6 +18,6 @@ body {
 }
 
 /* Zvýrazněný prvek ve výkresu: barva i větší tloušťka (vzor čáry zůstává, čárkovaná je dál čárkovaná). */
-.drawing-svg [data-highlight='true'] {
+.drawing-svg .vk-drawing [data-highlight='true'] {
   stroke-width: 0.7;
 }

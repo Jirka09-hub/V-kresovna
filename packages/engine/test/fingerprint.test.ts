@@ -7,6 +7,7 @@ import {
   drawingFingerprint,
   loadManifold,
   TEST_PARTS,
+  SECTION_TEST_CASES,
   viewFingerprint,
   type Drawing,
   type DrawingView,
@@ -115,5 +116,41 @@ describe('otisk pohledu', () => {
     expect(text).toContain('C 30000,20000 6000')
     expect(text).toMatch(/A /)
     expect(text).toMatch(/H |V /)
+  })
+})
+
+describe('otisk pohledu v řezu', () => {
+  const c = SECTION_TEST_CASES[0]!
+  const withSection = (at = c.section.at) =>
+    createDrawing(c.part, buildPart(wasm, c.part), {
+      section: { spec: { ...c.section, at }, view: c.view },
+    })
+
+  it('pohled bez řezu nemá v otisku nic z řezu (otisky starších úloh se nemění)', () => {
+    for (const spec of TEST_PARTS) {
+      for (const v of drawing(spec).views) expect(canonicalView(v)).not.toMatch(/(^|;)(F|U|X|P)/)
+    }
+  })
+
+  it('plochy řezu a šrafy jsou v otisku: bez šraf je otisk jiný', () => {
+    const d = withSection()
+    const sec = view(d, c.view)
+    const text = canonicalView(sec)
+    expect(text).toMatch(/(^|;)F /)
+    expect(text).toMatch(/(^|;)X /)
+    const bare: DrawingView = { ...sec, section: { ...sec.section!, hatching: [] } }
+    expect(viewFingerprint(bare)).not.toBe(viewFingerprint(sec))
+    // stopa roviny řezu je v otisku pohledu, kde leží
+    const marked = d.views.find((v) => v.cuttingPlanes?.length)!
+    expect(canonicalView(marked)).toMatch(/(^|;)PA /)
+  })
+
+  it('jiná poloha roviny dá jiný otisk, stejná stejný', () => {
+    expect(viewFingerprint(view(withSection(), c.view))).toBe(
+      viewFingerprint(view(withSection(), c.view)),
+    )
+    expect(viewFingerprint(view(withSection(10), c.view))).not.toBe(
+      viewFingerprint(view(withSection(), c.view)),
+    )
   })
 })
