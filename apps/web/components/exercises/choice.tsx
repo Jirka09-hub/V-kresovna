@@ -83,7 +83,10 @@ export function OptionCard({
   }
   if (buttonBelow) {
     return (
-      <div {...common} className={`flex flex-col overflow-hidden rounded-lg border-2 bg-white ${border}`}>
+      <div
+        {...common}
+        className={`flex flex-col overflow-hidden rounded-lg border-2 bg-white ${border}`}
+      >
         {children}
         <button
           type="button"

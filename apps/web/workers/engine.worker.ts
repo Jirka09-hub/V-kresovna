@@ -11,7 +11,12 @@ import {
   type PartSpec,
   type SolidMesh,
 } from '@vykresovna/engine'
-import { applyDrawingMutation, evaluate, generateTask } from '@vykresovna/exercises'
+import {
+  applyDrawingMutation,
+  buildOptionDrawing,
+  evaluate,
+  generateTask,
+} from '@vykresovna/exercises'
 import type { EngineCall, EngineRequest, EngineResponse, ViewsSvg } from '@/lib/engine/protocol'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
@@ -57,6 +62,15 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
       if (call.mutation) drawing = applyDrawingMutation(drawing, call.mutation)
       const result: ViewsSvg = {
         svg: drawingToSvg(drawing, call.svgTitle ? { title: call.svgTitle } : {}),
+        width: drawing.width,
+        height: drawing.height,
+      }
+      return { result, transfer: [] }
+    }
+    case 'render-option': {
+      const drawing = buildOptionDrawing(await wasm(), call.option, call.views)
+      const result: ViewsSvg = {
+        svg: drawingToSvg(drawing),
         width: drawing.width,
         height: drawing.height,
       }

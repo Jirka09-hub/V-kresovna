@@ -43,6 +43,8 @@ type Card = AssignViewsTask['cards'][number]
 const TRAY = 'tray'
 const slotId = (p: GridPosition) => `slot:${positionKey(p)}`
 const FRONT: GridPosition = [0, 0]
+/** Řádek s popiskem nad výkresem v buňce (aby popisek nepřekrýval čáry). */
+const LABEL_ROW = 'flex h-5 items-center px-1.5 text-xs font-semibold text-muted'
 /** Kolik výšky okna smí zabrat mřížka pohledů (zbytek je pro karty a ovládání). */
 const GRID_HEIGHT_VH = 44
 
@@ -94,8 +96,7 @@ export function AssignViews({ task, onResult, onNext, nextLabel }: ExerciseProps
   const answered = result !== null
   const allPlaced = task.cards.every((c) => placement[c.id])
   const isCorrect = (c: Card) => samePosition(placement[c.id], FIRST_ANGLE_LAYOUT[c.view])
-  const posText = (p: GridPosition) =>
-    ta(`position.${positionTerm(p)}`, { col: p[0], row: p[1] })
+  const posText = (p: GridPosition) => ta(`position.${positionTerm(p)}`, { col: p[0], row: p[1] })
 
   /** Položí kartu na místo (nebo zpět mezi karty). Obsazené místo: karty se prohodí. */
   const place = (cardId: string, target: GridPosition | null) => {
@@ -104,9 +105,7 @@ export function AssignViews({ task, onResult, onNext, nextLabel }: ExerciseProps
       const next = { ...prev }
       const from = prev[cardId] ?? null
       if (target) {
-        const other = task.cards.find(
-          (c) => c.id !== cardId && samePosition(prev[c.id], target),
-        )
+        const other = task.cards.find((c) => c.id !== cardId && samePosition(prev[c.id], target))
         if (other) next[other.id] = from
       }
       next[cardId] = target
@@ -234,9 +233,9 @@ export function AssignViews({ task, onResult, onNext, nextLabel }: ExerciseProps
             >
               <div
                 style={gridArea(bounds, FRONT)}
-                className="relative flex flex-col rounded-md border border-slate-300 bg-white"
+                className="flex flex-col rounded-md border-2 border-slate-800 bg-white"
               >
-                <span className="absolute top-1 left-1.5 text-xs font-semibold text-muted">
+                <span className={LABEL_ROW}>
                   {ta('front')} ({ta('fixed')})
                 </span>
                 {drawings ? (
@@ -379,7 +378,7 @@ function CardButton({
       data-card-id={card.id}
       data-view={card.view}
       data-in-tray={inTray || undefined}
-      className={`relative flex w-full touch-none flex-col rounded-md border-2 bg-white text-left ${focusRing} ${
+      className={`flex w-full touch-none flex-col rounded-md border-2 bg-white text-left ${focusRing} ${
         selected
           ? 'border-accent ring-2 ring-accent ring-offset-1'
           : status === 'ok'
@@ -389,21 +388,19 @@ function CardButton({
               : 'border-slate-300 hover:border-slate-500'
       } ${isDragging ? 'opacity-30' : ''} ${disabled ? 'cursor-default' : 'cursor-grab'}`}
     >
-      <span className="absolute top-1 left-1.5 z-10 flex items-center gap-1 text-xs font-semibold text-muted">
-        {status === 'ok' ? <CheckIcon className="h-4 w-4 text-green-700" /> : null}
-        {status === 'wrong' ? <CrossIcon className="h-4 w-4 text-red-700" /> : null}
-        {status ? viewLabel : ta('card', { n })}
+      <span className={`${LABEL_ROW} gap-1`}>
+        {status === 'ok' ? <CheckIcon className="h-4 w-4 shrink-0 text-green-700" /> : null}
+        {status === 'wrong' ? <CrossIcon className="h-4 w-4 shrink-0 text-red-700" /> : null}
+        <span className="truncate">{status ? viewLabel : ta('card', { n })}</span>
+        {status === 'wrong' ? (
+          <span className="ml-auto shrink-0 text-red-800">{ta('wrongCard')}</span>
+        ) : null}
       </span>
       {drawing && cell ? (
         <ScaledView drawing={drawing} cell={cell} label={ta('card', { n })} />
       ) : (
         <div className="w-full" style={{ aspectRatio: 1.5 }} />
       )}
-      {status === 'wrong' ? (
-        <span className="absolute right-1.5 bottom-1 text-xs font-semibold text-red-800">
-          {ta('wrongCard')}
-        </span>
-      ) : null}
     </button>
   )
 }
@@ -448,12 +445,17 @@ function Slot({
           disabled={disabled}
           aria-label={ta('slot', { position: label })}
           data-slot-button={positionKey(pos)}
-          className={`flex w-full items-center justify-center rounded-md border-2 border-dashed p-1 text-center text-xs text-muted ${focusRing} ${
+          className={`flex w-full flex-col rounded-md border-2 border-dashed text-xs text-muted ${focusRing} ${
             canPlace ? 'border-accent bg-blue-50/60 text-accent' : 'border-slate-300'
           }`}
-          style={{ aspectRatio: aspect }}
         >
-          {label}
+          <span className={LABEL_ROW} aria-hidden="true" />
+          <span
+            className="flex w-full items-center justify-center px-1 text-center"
+            style={{ aspectRatio: aspect }}
+          >
+            {label}
+          </span>
         </button>
       )}
     </div>
@@ -489,7 +491,10 @@ function Tray({
         {returnButton}
       </div>
       {empty ? (
-        <p className="flex items-center justify-center text-xs text-muted" style={{ minHeight: 40 }}>
+        <p
+          className="flex items-center justify-center text-xs text-muted"
+          style={{ minHeight: 40 }}
+        >
           {emptyText}
         </p>
       ) : (
@@ -528,14 +533,12 @@ function SolutionGrid({
       role="group"
       aria-label={label}
       data-testid="solution"
-      className={`grid max-w-md gap-1 p-1 ${panel}`}
+      className={`grid max-w-sm gap-1 p-1 ${panel}`}
       style={{ gridTemplateColumns: `repeat(${size.cols}, minmax(0, 1fr))` }}
     >
       {items.map((i) => (
-        <div key={i.view} style={gridArea(bounds, FIRST_ANGLE_LAYOUT[i.view])} className="relative">
-          <span className="absolute top-0.5 left-1 text-[11px] font-semibold text-muted">
-            {viewLabel(i.view)}
-          </span>
+        <div key={i.view} style={gridArea(bounds, FIRST_ANGLE_LAYOUT[i.view])}>
+          <span className={LABEL_ROW}>{viewLabel(i.view)}</span>
           <ScaledView drawing={i.drawing} cell={cell} label={viewLabel(i.view)} />
         </div>
       ))}

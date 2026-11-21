@@ -58,9 +58,7 @@ export function Model3D({
   const [webgl] = useState(() => webglSupported())
   const fallback = <NoWebGL text={tv('noWebgl')} />
   return (
-    <div
-      className={`overflow-hidden rounded-lg border border-slate-200 bg-[#eef2f7] ${className}`}
-    >
+    <div className={`overflow-hidden rounded-lg border border-slate-200 bg-[#eef2f7] ${className}`}>
       {!webgl ? (
         fallback
       ) : data ? (

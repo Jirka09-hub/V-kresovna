@@ -2,9 +2,15 @@
 
 import type { ViewName } from '@vykresovna/drafting-standards'
 import type { PartRenderData, PartSpec } from '@vykresovna/engine'
-import type { Difficulty, DrawingMutation, ExerciseKind, Task } from '@vykresovna/exercises'
+import type {
+  ChoiceOption,
+  Difficulty,
+  DrawingMutation,
+  ExerciseKind,
+  Task,
+} from '@vykresovna/exercises'
 import { useEffect, useState } from 'react'
-import { generateTask, renderPart, renderViews } from './client'
+import { generateTask, renderOption, renderPart, renderViews } from './client'
 import type { ViewsSvg } from './protocol'
 
 export type AsyncState<T> = { data: T | null; error: string | null; loading: boolean }
@@ -20,8 +26,9 @@ export function useAsync<T>(key: string | null, factory: () => Promise<T>): Asyn
     let alive = true
     factory()
       .then((data) => alive && setState({ key, data }))
-      .catch((e: unknown) =>
-        alive && setState({ key, error: e instanceof Error ? e.message : String(e) }),
+      .catch(
+        (e: unknown) =>
+          alive && setState({ key, error: e instanceof Error ? e.message : String(e) }),
       )
     return () => {
       alive = false
@@ -38,9 +45,7 @@ export function useAsync<T>(key: string | null, factory: () => Promise<T>): Asyn
 
 /** Úloha ze seedu (generuje se ve workeru). */
 export function useTask(kind: ExerciseKind, seed: number, difficulty: Difficulty) {
-  return useAsync<Task>(`${kind}:${seed}:${difficulty}`, () =>
-    generateTask(kind, seed, difficulty),
-  )
+  return useAsync<Task>(`${kind}:${seed}:${difficulty}`, () => generateTask(kind, seed, difficulty))
 }
 
 /** 3D data a výkres několika součástí (pořadí odpovídá vstupu). */
@@ -50,18 +55,23 @@ export function useRenderParts(parts: readonly PartSpec[] | null) {
   )
 }
 
-export type ViewsRequest = {
-  readonly part: PartSpec
-  readonly views: readonly ViewName[]
-  readonly mutation?: DrawingMutation
-}
+export type ViewsRequest =
+  | {
+      readonly part: PartSpec
+      readonly views: readonly ViewName[]
+      readonly mutation?: DrawingMutation
+    }
+  /** Možnost úlohy (výkres s mutací podle generátoru). */
+  | { readonly option: ChoiceOption; readonly views: readonly ViewName[] }
 
 /** SVG pohledů pro několik požadavků najednou (pořadí odpovídá vstupu). */
 export function useViewsSvgs(requests: readonly ViewsRequest[] | null) {
   return useAsync<ViewsSvg[]>(requests ? JSON.stringify(requests) : null, () =>
     Promise.all(
       (requests ?? []).map((r) =>
-        renderViews(r.part, r.views, r.mutation ? { mutation: r.mutation } : {}),
+        'option' in r
+          ? renderOption(r.option, r.views)
+          : renderViews(r.part, r.views, r.mutation ? { mutation: r.mutation } : {}),
       ),
     ),
   )

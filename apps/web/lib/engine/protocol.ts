@@ -6,6 +6,7 @@ import type { ViewName } from '@vykresovna/drafting-standards'
 import type { PartRenderData, PartSpec } from '@vykresovna/engine'
 import type {
   Answer,
+  ChoiceOption,
   Difficulty,
   DrawingMutation,
   ExerciseKind,
@@ -36,6 +37,12 @@ export type EngineCall =
       readonly mutation?: DrawingMutation
       readonly svgTitle?: string
     }
+  /** Možnost úlohy tak, jak ji má uživatel vidět (s mutací výkresu), přes `buildOptionDrawing`. */
+  | {
+      readonly type: 'render-option'
+      readonly option: ChoiceOption
+      readonly views: readonly ViewName[]
+    }
   /** Hodnocení odpovědi (kód `exercises` importuje engine, proto taky ve workeru). */
   | { readonly type: 'evaluate'; readonly task: Task; readonly answer: Answer }
 
@@ -44,7 +51,7 @@ export type EngineResult<C extends EngineCall> = C extends { type: 'render-part'
   ? PartRenderData
   : C extends { type: 'generate-task' }
     ? Task
-    : C extends { type: 'render-views' }
+    : C extends { type: 'render-views' | 'render-option' }
       ? ViewsSvg
       : C extends { type: 'evaluate' }
         ? TaskResult

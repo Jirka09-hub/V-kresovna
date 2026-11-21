@@ -15,15 +15,18 @@ type Props = {
   summaryActions: ReactNode
   /** Text pod skóre ve shrnutí. */
   summaryText?: string
+  /** Ovládání vpravo vedle ukazatele postupu (např. „Další varianta“). */
+  toolbar?: ReactNode
 }
 
 /** Úlohy jedna po druhé s ukazatelem postupu a shrnutím na konci. Nic se neukládá. */
-export function TaskSequence({ tasks, summaryActions, summaryText }: Props) {
+export function TaskSequence({ tasks, summaryActions, summaryText, toolbar }: Props) {
   const ts = useTranslations('sequence')
   const t = useTranslations('exercises')
   const [index, setIndex] = useState(0)
   const [outcomes, setOutcomes] = useState<Outcome[]>(() => tasks.map(() => null))
   const heading = useRef<HTMLHeadingElement>(null)
+  const top = useRef<HTMLDivElement>(null)
   const first = useRef(true)
   const done = index >= tasks.length
 
@@ -33,8 +36,9 @@ export function TaskSequence({ tasks, summaryActions, summaryText }: Props) {
       first.current = false
       return
     }
-    heading.current?.focus()
-    heading.current?.scrollIntoView({ block: 'start' })
+    // celá úloha (postup + zadání) nahoru na obrazovku, fokus na nadpis kvůli čtečkám a klávesnici
+    top.current?.scrollIntoView({ block: 'start' })
+    heading.current?.focus({ preventScroll: true })
   }, [index])
 
   const next = () => {
@@ -44,15 +48,18 @@ export function TaskSequence({ tasks, summaryActions, summaryText }: Props) {
 
   const current = tasks[index]
   return (
-    <div className="flex flex-col gap-5">
-      <Progress tasks={tasks} outcomes={outcomes} index={index} />
+    <div ref={top} className="flex scroll-mt-2 flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Progress tasks={tasks} outcomes={outcomes} index={index} />
+        {toolbar}
+      </div>
       {!done && current ? (
         <section className="flex flex-col gap-3" aria-labelledby="task-heading">
           <h2
             id="task-heading"
             ref={heading}
             tabIndex={-1}
-            className="scroll-mt-4 text-xl font-bold focus:outline-none"
+            className="text-xl font-bold focus:outline-none"
           >
             {ts('progress', { current: index + 1, total: tasks.length })}
             <span className="font-normal text-muted"> · </span>
@@ -181,7 +188,12 @@ function Summary({
       aria-labelledby="task-heading"
       data-testid="summary"
     >
-      <h2 id="task-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-bold focus:outline-none">
+      <h2
+        id="task-heading"
+        ref={headingRef}
+        tabIndex={-1}
+        className="text-2xl font-bold focus:outline-none"
+      >
         {ts('summaryTitle')}
       </h2>
       <p className="text-lg" role="status">

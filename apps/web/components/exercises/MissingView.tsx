@@ -27,11 +27,7 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
   const requests = useMemo(
     () => [
       ...task.givenViews.map((v) => ({ part: task.part, views: [v] })),
-      ...task.options.map((o) => ({
-        part: o.part,
-        views: [task.missingView],
-        ...(o.drawingMutation ? { mutation: o.drawingMutation } : {}),
-      })),
+      ...task.options.map((o) => ({ option: o, views: [task.missingView] })),
     ],
     [task],
   )
@@ -56,7 +52,8 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
     const ids = new Set<string>()
     const data = o.id === chosen?.id ? rendered.data[0] : o === correct ? rendered.data[1] : null
     if (featureId && data) for (const id of featureDrawingIds(data.edges, featureId)) ids.add(id)
-    if (o.id === chosen?.id && o.drawingMutation) for (const id of o.drawingMutation.edgeIds) ids.add(id)
+    if (o.id === chosen?.id && o.drawingMutation)
+      for (const id of o.drawingMutation.edgeIds) ids.add(id)
     return ids.size ? ids : null
   }
 
@@ -103,8 +100,8 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
             data-testid="given-views"
           >
             {task.givenViews.map((v, i) => (
-              <div key={v} style={gridArea(bounds, FIRST_ANGLE_LAYOUT[v])} className="relative">
-                <span className="absolute top-0.5 left-1 text-xs font-semibold text-muted">
+              <div key={v} style={gridArea(bounds, FIRST_ANGLE_LAYOUT[v])}>
+                <span className="flex h-5 items-center px-1.5 text-xs font-semibold text-muted">
                   {td(v)}
                 </span>
                 {given && cell ? (
@@ -116,13 +113,13 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
             ))}
             <div
               style={gridArea(bounds, FIRST_ANGLE_LAYOUT[task.missingView])}
-              className={`relative rounded-md border-2 border-dashed ${
+              className={`rounded-md border-2 border-dashed ${
                 state ? 'border-green-700' : 'border-accent'
               }`}
               data-testid="missing-frame"
               data-slot={positionKey(FIRST_ANGLE_LAYOUT[task.missingView])}
             >
-              <span className="absolute top-0.5 left-1 text-xs font-semibold text-accent">
+              <span className="flex h-5 items-center px-1.5 text-xs font-semibold text-accent">
                 {tm('missingFrame', { view: td(task.missingView) })}
               </span>
               {state && options && cell ? (

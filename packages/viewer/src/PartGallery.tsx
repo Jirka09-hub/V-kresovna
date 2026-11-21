@@ -137,6 +137,19 @@ function OrbitCamera({ rotation, distance }: { rotation: GalleryRotation; distan
     cam.updateMatrixWorld()
     invalidate()
   }, [rotation, distance, invalidate])
+  // Pohled (drei View) se připojí až po prvním snímku a kamera se nastaví jako výchozí až po
+  // efektech; s frameloop="demand" je proto potřeba po připojení vyžádat další snímky.
+  useEffect(() => {
+    let raf = requestAnimationFrame(() => {
+      invalidate()
+      raf = requestAnimationFrame(() => invalidate())
+    })
+    const timer = setTimeout(() => invalidate(), 150)
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+    }
+  }, [invalidate])
   return <PerspectiveCamera ref={ref} makeDefault fov={FOV} near={1} far={5000} />
 }
 

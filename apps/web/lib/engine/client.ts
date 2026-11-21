@@ -4,19 +4,14 @@ import type { ViewName } from '@vykresovna/drafting-standards'
 import type { PartRenderData, PartSpec } from '@vykresovna/engine'
 import type {
   Answer,
+  ChoiceOption,
   Difficulty,
   DrawingMutation,
   ExerciseKind,
   Task,
   TaskResult,
 } from '@vykresovna/exercises'
-import type {
-  EngineCall,
-  EngineRequest,
-  EngineResponse,
-  EngineResult,
-  ViewsSvg,
-} from './protocol'
+import type { EngineCall, EngineRequest, EngineResponse, EngineResult, ViewsSvg } from './protocol'
 
 let worker: Worker | null = null
 let nextId = 1
@@ -91,6 +86,11 @@ export function renderViews(
     ...(options.mutation ? { mutation: options.mutation } : {}),
     ...(options.svgTitle ? { svgTitle: options.svgTitle } : {}),
   })
+}
+
+/** SVG možnosti úlohy tak, jak ji má uživatel vidět (mutace výkresu použitá generátorem). */
+export function renderOption(option: ChoiceOption, views: readonly ViewName[]): Promise<ViewsSvg> {
+  return callEngine({ type: 'render-option', option, views })
 }
 
 /** Vyhodnotí odpověď (ve workeru, aby se kód enginu nedostal do hlavního bundlu). */

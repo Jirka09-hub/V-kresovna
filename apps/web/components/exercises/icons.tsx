@@ -19,12 +19,7 @@ export function CrossIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" className={className} aria-hidden="true" focusable="false">
       <rect x="1" y="1" width="18" height="18" rx="3" fill="currentColor" />
-      <path
-        d="M6.5 6.5l7 7M13.5 6.5l-7 7"
-        stroke="#fff"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M6.5 6.5l7 7M13.5 6.5l-7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }
