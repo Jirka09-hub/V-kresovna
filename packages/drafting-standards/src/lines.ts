@@ -48,3 +48,38 @@ export const LINE_WIDTH_MM: Readonly<Record<LineWeight, number>> = {
 
 /** Šrafování plochy řezu: tenké čáry pod úhlem 45° (měřeno od vodorovné osy výkresu). */
 export const HATCH_ANGLE_DEG = 45
+
+/**
+ * Vzory přerušovaných čar jako násobky tloušťky čáry d (délka čárky, mezera, …), stejně jako
+ * SVG stroke-dasharray. Odvozeno z doporučených poměrů ISO 128 pro čárkovanou (čárka 12d, mezera 3d)
+ * a čerchovanou čáru (dlouhá čárka 24d, mezera 3d, tečka ≤ 0,5d, mezera 3d).
+ */
+// TODO(norma): ověřit, zda školy a firmy v ČR nepoužívají delší čárky a mezery (výukové výkresy na obrazovce).
+export const DASH_PATTERN_IN_D: Readonly<Record<LinePattern, readonly number[]>> = {
+  continuous: [],
+  dashed: [12, 3],
+  chain: [24, 3, 0.5, 3],
+}
+
+/** Vzor čárkování v mm pro daný druh čáry (prázdné pole = plná čára). */
+export function dashArrayMm(kind: LineKind): number[] {
+  const style = LINE_STYLES[kind]
+  const d = LINE_WIDTH_MM[style.weight]
+  return DASH_PATTERN_IN_D[style.pattern].map((k) => k * d)
+}
+
+/** O kolik osa (čerchovaná) přesahuje obrys díry nebo prvku. */
+// TODO(norma): potvrdit přesah osy přes obrys (navrženo 3 mm).
+export const CENTER_LINE_OVERHANG_MM = 3
+
+/**
+ * Když se v pohledu kryje více čar, kreslí se ta s nejvyšší předností (nižší číslo = vyšší přednost).
+ * Viditelná hrana přebije skrytou, skrytá přebije osu.
+ */
+// TODO(norma): potvrdit pořadí přednosti čar (navrženo: viditelná, skrytá, stopa řezu, osa).
+export const LINE_PRIORITY: Readonly<Partial<Record<LineKind, number>>> = {
+  visibleEdge: 1,
+  hiddenEdge: 2,
+  cuttingPlaneLine: 3,
+  centerLine: 4,
+}
