@@ -1,5 +1,5 @@
 /**
- * Generátor úloh (cvičení 1–3). Úloha je deterministická ze (seed, obtížnost, typ). Každý distraktor
+ * Generátor úloh (cvičení 1–4; „najdi chybu“ je v find-error.ts). Úloha je deterministická ze (seed, obtížnost, typ). Každý distraktor
  * se ověří otiskem výkresu: musí se viditelně lišit od správné odpovědi i od ostatních distraktorů.
  * Když se pro součást nedaří najít dost distraktorů, vezme se další součást ze stejného proudu
  * náhodných čísel.
@@ -25,6 +25,7 @@ import {
   drawingMutationCandidates,
   edgeFeatureLookup,
 } from './drawing-mutations'
+import { buildFindErrorTask } from './find-error'
 import { generatePart, generatePartWith } from './generator'
 import { partMutations, type PartMutation } from './part-mutations'
 import { createRng, deriveSeed, type Rng } from './rng'
@@ -35,6 +36,7 @@ import {
   type Difficulty,
   type DrawingMutation,
   type DrawingToModelTask,
+  type ErrorCode,
   type ExerciseKind,
   type MissingViewTask,
   type Task,
@@ -429,6 +431,12 @@ function drawingToModel(
   return { kind: 'drawing-to-model', part, options }
 }
 
+/** Volitelné vstupy generátoru (ukládají se spolu se seedem). */
+export type GenerateTaskOptions = {
+  /** Upřednostněný druh chyby (adaptivita); zatím ho používá jen „najdi chybu“. */
+  readonly focus?: ErrorCode
+}
+
 /**
  * Úloha daného typu ze seedu. Deterministická: stejné vstupy dají stejnou (deep-equal) úlohu.
  * Součást úlohy je obvykle `generatePart(seed, difficulty)`; když pro ni nejde úlohu sestavit
@@ -439,12 +447,18 @@ export function generateTask(
   kind: ExerciseKind,
   seed: number,
   difficulty: Difficulty,
+  options: GenerateTaskOptions = {},
 ): Task {
   const rng = createRng(deriveSeed(seed, difficulty, EXERCISE_KINDS.indexOf(kind) + 1, 0x7a5c))
   const views: readonly ViewName[] =
     kind === 'assign-views' ? ['front', ...assignViewCards(difficulty)] : STANDARD_VIEWS
   const renderer = new Renderer(wasm, views)
-  const meta = { seed, difficulty, engineVersion: ENGINE_VERSION }
+  const meta = {
+    seed,
+    difficulty,
+    engineVersion: ENGINE_VERSION,
+    ...(options.focus ? { focus: options.focus } : {}),
+  }
   for (let attempt = 0; attempt < MAX_PARTS; attempt++) {
     const part =
       attempt === 0
@@ -463,6 +477,11 @@ export function generateTask(
       }
       case 'drawing-to-model': {
         const t = drawingToModel(renderer, rng, part, difficulty)
+        if (t) return { ...meta, ...t }
+        break
+      }
+      case 'find-error': {
+        const t = buildFindErrorTask(wasm, rng, part, difficulty, options.focus)
         if (t) return { ...meta, ...t }
         break
       }

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Generátory úloh, distraktory, hodnocení a adaptivita. Bez UI.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./adaptivity": "./src/adaptivity.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

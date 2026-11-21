@@ -1,9 +1,10 @@
 /**
- * Mutace výkresu (ne tělesa): skrytá hrana nakreslená plnou čarou, viditelná čárkovaně, chybějící hrana.
- * Hrany se vybírají podle id logických hran (`ViewSegment.edgeIds`).
+ * Mutace výkresu (ne tělesa): skrytá hrana nakreslená plnou čarou, viditelná čárkovaně, chybějící hrana,
+ * čára navíc. Hrany se vybírají podle id logických hran (`ViewSegment.edgeIds`).
  */
 import type { ViewName } from '@vykresovna/drafting-standards'
 import type { Drawing, DrawingView, EdgeModel, SolidMesh, ViewSegment } from '@vykresovna/engine'
+import { collinear } from './geometry2d'
 import { MIN_FEATURE_MM } from './layout'
 import type { DrawingMutation, ErrorCode } from './types'
 
@@ -11,27 +12,36 @@ export const DRAWING_MUTATION_ERROR: Readonly<Record<DrawingMutation['kind'], Er
   'hidden-as-visible': 'HIDDEN_AS_VISIBLE',
   'visible-as-hidden': 'VISIBLE_AS_HIDDEN',
   'remove-edge': 'MISSING_EDGE',
+  'add-edge': 'EXTRA_EDGE',
 }
 
-const touches = (seg: ViewSegment, ids: ReadonlySet<string>) =>
-  seg.edgeIds.some((id) => ids.has(id))
+/** Týká se mutace úseku? (Id hrany, případně i přímka `onLine`.) */
+export function mutationTouches(seg: ViewSegment, mutation: DrawingMutation): boolean {
+  if (!seg.edgeIds.some((id) => mutation.edgeIds.includes(id))) return false
+  return mutation.kind === 'add-edge' || !mutation.onLine || collinear(seg, mutation.onLine)
+}
 
 function mutateSegments(
   segments: readonly ViewSegment[],
   mutation: DrawingMutation,
 ): ViewSegment[] {
-  const ids = new Set(mutation.edgeIds)
+  const touches = (s: ViewSegment) => mutationTouches(s, mutation)
   switch (mutation.kind) {
     case 'hidden-as-visible':
       return segments.map((s) =>
-        s.visibility === 'hidden' && touches(s, ids) ? { ...s, visibility: 'visible' } : s,
+        s.visibility === 'hidden' && touches(s) ? { ...s, visibility: 'visible' } : s,
       )
     case 'visible-as-hidden':
       return segments.map((s) =>
-        s.visibility === 'visible' && touches(s, ids) ? { ...s, visibility: 'hidden' } : s,
+        s.visibility === 'visible' && touches(s) ? { ...s, visibility: 'hidden' } : s,
       )
     case 'remove-edge':
-      return segments.filter((s) => !touches(s, ids))
+      return segments.filter((s) => !touches(s))
+    case 'add-edge':
+      return [
+        ...segments,
+        ...mutation.segments.map((s) => ({ ...s, edgeIds: [...mutation.edgeIds] })),
+      ]
   }
 }
 
@@ -112,7 +122,7 @@ export function drawingMutationCandidates(
   const name: ViewName = view.view
   for (const s of view.projection.segments) {
     if (segLength(s) < MIN_FEATURE_MM || s.edgeIds.length === 0) continue
-    const kinds: DrawingMutation['kind'][] =
+    const kinds: Exclude<DrawingMutation['kind'], 'add-edge'>[] =
       s.visibility === 'hidden'
         ? ['hidden-as-visible', 'remove-edge']
         : ['visible-as-hidden', 'remove-edge']

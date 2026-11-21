@@ -4,13 +4,22 @@ import type { ErrorCode, TaskResult } from '@vykresovna/exercises'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { panel } from '@/components/ui'
+import { recordAttempt } from '@/lib/session-history'
 import { ExerciseRunner, KIND_KEY, type TaskRef } from './ExerciseRunner'
 import { CheckIcon, CrossIcon } from './icons'
 
 type Outcome = TaskResult | 'skipped' | null
 
+/** Místo pro úlohu, která se vybere adaptivně až ve chvíli, kdy na ni přijde řada. */
+export type AdaptiveSlot = { readonly adaptiveSlot: true; readonly seed: number }
+export type SequenceItem = TaskRef | AdaptiveSlot
+
+const isSlot = (x: SequenceItem): x is AdaptiveSlot => 'adaptiveSlot' in x
+
 type Props = {
-  tasks: readonly TaskRef[]
+  tasks: readonly SequenceItem[]
+  /** Výběr adaptivní úlohy (podle dosavadní historie); povinné, když `tasks` obsahují místa. */
+  resolveAdaptive?: (seed: number) => TaskRef
   /** Tlačítka pod shrnutím (nová sada, další lekce…). */
   summaryActions: ReactNode
   /** Text pod skóre ve shrnutí. */
@@ -20,15 +29,31 @@ type Props = {
 }
 
 /** Úlohy jedna po druhé s ukazatelem postupu a shrnutím na konci. Nic se neukládá. */
-export function TaskSequence({ tasks, summaryActions, summaryText, toolbar }: Props) {
+export function TaskSequence({
+  tasks: items,
+  resolveAdaptive,
+  summaryActions,
+  summaryText,
+  toolbar,
+}: Props) {
   const ts = useTranslations('sequence')
   const t = useTranslations('exercises')
+  const resolve = (item: SequenceItem | undefined): TaskRef | null => {
+    if (!item) return null
+    if (!isSlot(item)) return item
+    if (!resolveAdaptive) throw new Error('chybí výběr adaptivní úlohy')
+    return resolveAdaptive(item.seed)
+  }
+  // adaptivní úlohy se vybírají až při přechodu na ně (podle výsledků předchozích úloh)
+  const [resolved, setResolved] = useState<(TaskRef | null)[]>(() =>
+    items.map((item, i) => (isSlot(item) ? (i === 0 ? resolve(item) : null) : item)),
+  )
   const [index, setIndex] = useState(0)
-  const [outcomes, setOutcomes] = useState<Outcome[]>(() => tasks.map(() => null))
+  const [outcomes, setOutcomes] = useState<Outcome[]>(() => items.map(() => null))
   const heading = useRef<HTMLHeadingElement>(null)
   const top = useRef<HTMLDivElement>(null)
   const first = useRef(true)
-  const done = index >= tasks.length
+  const done = index >= items.length
 
   // při přechodu na další úlohu (ne při prvním zobrazení) přesunout fokus na nadpis
   useEffect(() => {
@@ -41,12 +66,18 @@ export function TaskSequence({ tasks, summaryActions, summaryText, toolbar }: Pr
     heading.current?.focus({ preventScroll: true })
   }, [index])
 
+  const tasks = items.map((item, i) => resolved[i] ?? item)
   const next = () => {
     setOutcomes((o) => o.map((x, i) => (i === index && x === null ? 'skipped' : x)))
-    setIndex((i) => i + 1)
+    const n = index + 1
+    if (n < items.length && !resolved[n]) {
+      const picked = resolve(items[n])
+      setResolved((r) => r.map((x, i) => (i === n ? picked : x)))
+    }
+    setIndex(n)
   }
 
-  const current = tasks[index]
+  const current = resolved[index]
   return (
     <div ref={top} className="flex scroll-mt-2 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,17 +99,25 @@ export function TaskSequence({ tasks, summaryActions, summaryText, toolbar }: Pr
               {t('difficulty', { level: current.difficulty })}
             </span>
           </h2>
+          {current.adaptive === 'weakness' ? (
+            <p className="text-sm text-accent" data-testid="adaptive-hint">
+              {ts('adaptiveHint')}
+            </p>
+          ) : null}
           <ExerciseRunner
-            key={`${index}:${current.kind}:${current.seed}`}
+            key={`${index}:${current.kind}:${current.seed}:${current.focus ?? ''}`}
             task={current}
-            onResult={(r) => setOutcomes((o) => o.map((x, i) => (i === index ? r : x)))}
+            onResult={(r) => {
+              recordAttempt(current, r)
+              setOutcomes((o) => o.map((x, i) => (i === index ? r : x)))
+            }}
             onNext={next}
             nextLabel={index === tasks.length - 1 ? t('finish') : t('next')}
           />
         </section>
       ) : (
         <Summary
-          tasks={tasks}
+          tasks={resolved.filter((x): x is TaskRef => x !== null)}
           outcomes={outcomes}
           headingRef={heading}
           text={summaryText}
@@ -102,7 +141,7 @@ function Progress({
   outcomes,
   index,
 }: {
-  tasks: readonly TaskRef[]
+  tasks: readonly SequenceItem[]
   outcomes: readonly Outcome[]
   index: number
 }) {

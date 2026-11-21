@@ -1,4 +1,4 @@
-import { expandPlan, PILOT_MODULE } from '@vykresovna/content'
+import { lessonTaskCount, PILOT_MODULE } from '@vykresovna/content'
 import type { Metadata } from 'next'
 import { useTranslations } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -34,7 +34,7 @@ export default function LessonsPage({ params }: { params: Promise<{ locale: stri
       <ol className="grid gap-3 sm:grid-cols-2" data-testid="lesson-list">
         {mod.lessons.map((lesson, i) => {
           const available = lesson.status === 'available'
-          const count = expandPlan(lesson.plan).length
+          const count = lessonTaskCount(lesson)
           const body = (
             <>
               <span className="flex items-center justify-between gap-2 text-sm">

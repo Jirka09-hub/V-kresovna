@@ -13,9 +13,11 @@ import {
 } from '@vykresovna/engine'
 import {
   applyDrawingMutation,
+  buildFindErrorDrawing,
   buildOptionDrawing,
   evaluate,
   generateTask,
+  viewPlacements,
 } from '@vykresovna/exercises'
 import type { EngineCall, EngineRequest, EngineResponse, ViewsSvg } from '@/lib/engine/protocol'
 
@@ -57,7 +59,13 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
       return { result: data, transfer: transferables(data) }
     }
     case 'generate-task': {
-      const task = generateTask(await wasm(), call.kind, call.seed, call.difficulty)
+      const task = generateTask(
+        await wasm(),
+        call.kind,
+        call.seed,
+        call.difficulty,
+        call.focus ? { focus: call.focus } : {},
+      )
       return { result: task, transfer: [] }
     }
     case 'render-views': {
@@ -81,6 +89,16 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
         svg: drawingToSvg(drawing),
         width: drawing.width,
         height: drawing.height,
+      }
+      return { result, transfer: [] }
+    }
+    case 'render-find-error': {
+      const drawing = buildFindErrorDrawing(await wasm(), call.task, { correct: !!call.correct })
+      const result: ViewsSvg = {
+        svg: drawingToSvg(drawing),
+        width: drawing.width,
+        height: drawing.height,
+        placements: viewPlacements(drawing),
       }
       return { result, transfer: [] }
     }

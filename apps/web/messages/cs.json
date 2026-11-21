@@ -109,12 +109,14 @@
     "kind": {
       "assignViews": "Přiřaď pohledy",
       "missingView": "Najdi chybějící pohled",
-      "drawingToModel": "Výkres → model"
+      "drawingToModel": "Výkres → model",
+      "findError": "Najdi chybu ve výkresu"
     },
     "instructions": {
       "assignViews": "Nárys je pevně uprostřed. Přetáhněte každou kartu s pohledem na místo, kam podle evropského promítání patří.",
       "missingView": "Jeden pohled ve výkresu chybí. Vyberte z možností ten, který patří do prázdného rámečku.",
-      "drawingToModel": "Prohlédněte si výkres a vyberte 3D model, který mu odpovídá."
+      "drawingToModel": "Prohlédněte si výkres a vyberte 3D model, který mu odpovídá.",
+      "findError": "Ve výkresu je právě jedna chyba. Porovnejte ho s 3D modelem a klikněte na místo, kde chyba je. Když jsou celé pohledy na špatných místech, stiskněte tlačítko „Rozmístění pohledů je špatně“."
     },
     "difficulty": "Obtížnost {level} z 5",
     "loading": "Připravuji úlohu…",
@@ -149,7 +151,8 @@
       "FEATURE_MISSING": "Této možnosti chybí prvek, který na výkrese je, třeba díra, drážka nebo výřez.",
       "FEATURE_EXTRA": "Tato možnost má prvek navíc, který na výkrese není.",
       "FEATURE_RESIZED": "Prvek má jiný rozměr: je větší nebo menší, než ukazuje výkres.",
-      "THROUGH_VS_BLIND": "Záměna průchozí a slepé díry. Průchozí díra vede skrz celou součást, slepá končí uvnitř a má kuželové dno od špičky vrtáku."
+      "THROUGH_VS_BLIND": "Záměna průchozí a slepé díry. Průchozí díra vede skrz celou součást, slepá končí uvnitř a má kuželové dno od špičky vrtáku.",
+      "MISSED_ERROR": "Na tomhle místě chyba není. Zkuste projít hrany modelu jednu po druhé a u každé zkontrolovat, jak je nakreslená v každém pohledu."
     },
     "assign": {
       "model": "3D model součásti",
@@ -211,6 +214,40 @@
       "hidden": "skrytá hrana",
       "center": "osa",
       "highlight": "zvýrazněný prvek"
+    },
+    "findError": {
+      "drawing": "Výkres s chybou",
+      "drawingLabel": "Výkres součásti s jednou chybou: nárys, půdorys a bokorys",
+      "correctDrawing": "Správný výkres",
+      "correctDrawingLabel": "Správný výkres součásti: nárys, půdorys a bokorys",
+      "model": "Součást ve 3D",
+      "modelLabel": "3D model součásti, podle které výkres kontrolujete",
+      "modelHint": "Model můžete otáčet tažením.",
+      "keyboardHint": "Bez myši: tabulátorem přejděte na pohled, šipkami vyberte část pohledu a potvrďte Enterem.",
+      "layoutWrong": "Rozmístění pohledů je špatně",
+      "nothingSelected": "Zatím nic nevybráno. Klikněte do výkresu na místo s chybou.",
+      "selectedPoint": "Vybráno místo v pohledu: {view}. Můžete kliknout jinam, nebo odpověď zkontrolovat.",
+      "selectedCell": "Vybráno: {view}, {cell}.",
+      "selectedLayout": "Vybráno: rozmístění pohledů je špatně.",
+      "outside": "Tohle místo je mimo pohledy. Klikněte do některého pohledu.",
+      "cellLabel": "{view}: {cell}",
+      "cell": {
+        "topLeft": "vlevo nahoře",
+        "top": "nahoře uprostřed",
+        "topRight": "vpravo nahoře",
+        "left": "vlevo uprostřed",
+        "center": "uprostřed",
+        "right": "vpravo uprostřed",
+        "bottomLeft": "vlevo dole",
+        "bottom": "dole uprostřed",
+        "bottomRight": "vpravo dole"
+      },
+      "whereView": "Chyba je v tomto pohledu: {view}.",
+      "whereLayout": "Chyba je v rozmístění pohledů.",
+      "youChose": "Vy jste ukázali na pohled: {view}.",
+      "highlightHint": "Místo chyby je ve výkresu orámované zeleně a na modelu, pokud tam ta hrana je, zvýrazněné modře. Tlačítkem pod výkresem si můžete zobrazit správný výkres.",
+      "showCorrect": "Ukázat správný výkres",
+      "showTask": "Ukázat výkres s chybou"
     }
   },
   "sequence": {
@@ -230,7 +267,8 @@
     "summaryTaskWrong": "s chybou",
     "summaryTaskSkipped": "přeskočeno",
     "commonErrors": "Na co si dát pozor",
-    "restart": "Nová sada úloh"
+    "restart": "Nová sada úloh",
+    "adaptiveHint": "Úloha vybraná podle vašich chyb"
   },
   "demo": {
     "title": "Demo: čtení výkresů na 3D modelu",
@@ -272,7 +310,7 @@
     "lead": "Každá lekce začíná krátkým výkladem s 3D modelem a pokračuje úlohami s okamžitou zpětnou vazbou. Postup se zatím neukládá.",
     "lessonNumber": "Lekce {n}",
     "comingSoon": "připravujeme",
-    "comingSoonText": "Na této lekci pracujeme. Zatím vyzkoušejte lekce 1–5.",
+    "comingSoonText": "Na této lekci pracujeme. Zatím vyzkoušejte lekce 1–6.",
     "tasksCount": "{count, plural, one {# úloha} few {# úlohy} other {# úloh}}",
     "start": "Začít lekci",
     "backToOverview": "Zpět na přehled lekcí",
@@ -353,7 +391,17 @@
       },
       "chyby-ve-vykresu": {
         "title": "Chyby ve výkresu",
-        "summary": "Najít, co je na výkrese špatně: chybějící hranu, plnou čáru místo čárkované, pohled na špatném místě."
+        "summary": "Najít, co je na výkrese špatně: chybějící hranu, plnou čáru místo čárkované, pohled na špatném místě.",
+        "intro": {
+          "postup": {
+            "title": "Jak výkres zkontrolovat",
+            "text": "Chyba se nejlépe hledá postupně. Vezměte jednu hranu modelu a najděte ji v nárysu, půdorysu i bokorysu. Je z té strany vidět? Pak má být plná. Je schovaná? Pak čárkovaná. Najeďte myší na čáru a model ukáže, ke které hraně patří. Nakonec zkontrolujte, jestli je půdorys pod nárysem a bokorys vpravo od něj."
+          },
+          "ukazka": {
+            "title": "Najdete chybu?",
+            "text": "V tomto výkresu je jedna chyba. Porovnejte ho s modelem, pak si ji nechte ukázat. V úlohách pak na chybu kliknete přímo ve výkresu."
+          }
+        }
       },
       "rez-a-srafovani": {
         "title": "Řez a šrafování",
@@ -368,5 +416,14 @@
         "summary": "Souhrnný test celého modulu, podklad pro certifikát."
       }
     }
+  },
+  "errorExample": {
+    "model": "3D model součásti z ukázky",
+    "wrongLabel": "Výkres s jednou chybou",
+    "correctLabel": "Správný výkres",
+    "reveal": "Ukázat chybu",
+    "showCorrect": "Správný výkres",
+    "hint": "Najdete chybu sami? Porovnejte čáry v nárysu s modelem, pak si chybu nechte ukázat.",
+    "explanation": "Spodní hrana výřezu vzadu je zepředu schovaná za materiálem. V nárysu je ale nakreslená plnou čarou, a měla by být čárkovaná."
   }
 }

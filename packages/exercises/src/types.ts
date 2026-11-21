@@ -4,14 +4,22 @@
  * vygenerovat ze seedu.
  */
 import type { GridPosition, ViewName } from '@vykresovna/drafting-standards'
-import type { PartSpec } from '@vykresovna/engine'
+import type { PartSpec, Vec2 } from '@vykresovna/engine'
 
 /** Obtížnost 1–5 (1 = kvádr s jedním výřezem, 5 = více prvků a distraktory lišící se jedinou hranou). */
 export type Difficulty = 1 | 2 | 3 | 4 | 5
 export const DIFFICULTIES: readonly Difficulty[] = [1, 2, 3, 4, 5]
 
-/** Typy cvičení. Fáze 2: první tři; fáze 3 přidá 'find-error', 'section', 'dimension'. */
-export const EXERCISE_KINDS = ['assign-views', 'missing-view', 'drawing-to-model'] as const
+/**
+ * Typy cvičení. Fáze 2: první tři; fáze 3 přidává 'find-error' (D-023), pak 'section', 'dimension'.
+ * Nové typy se přidávají na konec (pořadí vstupuje do seedu úlohy).
+ */
+export const EXERCISE_KINDS = [
+  'assign-views',
+  'missing-view',
+  'drawing-to-model',
+  'find-error',
+] as const
 export type ExerciseKind = (typeof EXERCISE_KINDS)[number]
 
 /**
@@ -34,6 +42,8 @@ export const ERROR_CODES = [
   'FEATURE_EXTRA', // prvek je navíc
   'FEATURE_RESIZED', // prvek má jiný rozměr
   'THROUGH_VS_BLIND', // průchozí díra místo slepé nebo naopak
+  // hledání chyby ve výkresu
+  'MISSED_ERROR', // uživatel ukázal na místo, kde chyba není
 ] as const
 export type ErrorCode = (typeof ERROR_CODES)[number]
 
@@ -43,21 +53,57 @@ export type TaskMeta = {
   readonly difficulty: Difficulty
   /** Verze enginu, se kterou byla úloha vygenerovaná (ENGINE_VERSION). */
   readonly engineVersion: string
+  /**
+   * Upřednostněný druh chyby (adaptivita, D-023). Je součástí vstupu generátoru: ukládá se spolu se
+   * seedem. Zatím ho používá jen „najdi chybu“, ostatní typy ho ignorují.
+   */
+  readonly focus?: ErrorCode
 }
 
-/** Mutace výkresu (ne tělesa): mění jen čáry pohledu. Hrany se vybírají podle id logických hran. */
+/** Úsek čáry v souřadnicích pohledu (mm; u doprava, v nahoru), stejných jako `ViewSegment`. */
+export type LineSegment2 = { readonly a: Vec2; readonly b: Vec2 }
+
+/**
+ * Mutace výkresu (ne tělesa): mění jen čáry pohledu. Hrany se vybírají podle id logických hran.
+ * `onLine` (volitelně) omezí změnu na úseky ležící na této přímce: např. jen jeden ze dvou obrysů
+ * díry, které mají stejné id `sil:cyl:<díra>`.
+ */
 export type DrawingMutation =
   | {
       readonly kind: 'hidden-as-visible'
       readonly view: ViewName
       readonly edgeIds: readonly string[]
+      readonly onLine?: LineSegment2
     }
   | {
       readonly kind: 'visible-as-hidden'
       readonly view: ViewName
       readonly edgeIds: readonly string[]
+      readonly onLine?: LineSegment2
     }
-  | { readonly kind: 'remove-edge'; readonly view: ViewName; readonly edgeIds: readonly string[] }
+  | {
+      readonly kind: 'remove-edge'
+      readonly view: ViewName
+      readonly edgeIds: readonly string[]
+      readonly onLine?: LineSegment2
+    }
+  /** Čára navíc (např. hrana prvku zrcadlená na druhou stranu pohledu). `edgeIds` = id přidaných čar. */
+  | {
+      readonly kind: 'add-edge'
+      readonly view: ViewName
+      readonly edgeIds: readonly string[]
+      readonly segments: readonly (LineSegment2 & { readonly visibility: 'visible' | 'hidden' })[]
+    }
+
+/** Chyba rozmístění celého výkresu (ne jednoho pohledu). */
+export type LayoutMutation =
+  /** Pohledy rozmístěné podle amerického promítání (jen jako chyba k nalezení). */
+  | { readonly kind: 'third-angle-layout' }
+  /** Půdorys a bokorys prohozené. */
+  | { readonly kind: 'swap-top-left' }
+
+/** Chyba ve výkresu pro cvičení „najdi chybu“: jedna mutace pohledu, nebo rozmístění. */
+export type FindErrorMutation = DrawingMutation | LayoutMutation
 
 /** Možnost ve výběru 1 ze 4. Správná má `errorCode: null`. */
 export type ChoiceOption = {
@@ -100,7 +146,42 @@ export type DrawingToModelTask = TaskMeta & {
   readonly options: readonly ChoiceOption[]
 }
 
-export type Task = AssignViewsTask | MissingViewTask | DrawingToModelTask
+/**
+ * Místo, kde je chyba: čáry v pohledu (u chybějící hrany místo, kde by měla být), nebo celý pohled
+ * (u chyby rozmístění).
+ */
+export type FindErrorTarget =
+  | {
+      readonly kind: 'lines'
+      readonly view: ViewName
+      readonly segments: readonly LineSegment2[]
+      /** Id čar ve výkresu (pro zvýraznění ve 2D a 3D). */
+      readonly edgeIds: readonly string[]
+    }
+  | { readonly kind: 'view'; readonly view: ViewName }
+
+/**
+ * Cvičení 4: výkres (nárys, půdorys, bokorys) má právě jednu záměrnou chybu, uživatel na ni ukáže
+ * (klik do výkresu, oblast z klávesnice, nebo tlačítko „rozmístění pohledů je špatně“).
+ */
+export type FindErrorTask = TaskMeta & {
+  readonly kind: 'find-error'
+  readonly part: PartSpec
+  readonly views: readonly ViewName[]
+  readonly mutation: FindErrorMutation
+  /** Kód chyby, kterou výkres obsahuje. */
+  readonly errorCode: ErrorCode
+  /** Prvek, kterého se chyba týká (pro zvýraznění ve 3D). */
+  readonly featureId?: string
+  /** Místa, která se počítají jako správná odpověď. */
+  readonly targets: readonly FindErrorTarget[]
+  /** Je správnou odpovědí i tlačítko „rozmístění pohledů je špatně“? */
+  readonly layoutError: boolean
+  /** Jak daleko od čáry (mm ve výkresu) se klik ještě počítá. */
+  readonly toleranceMm: number
+}
+
+export type Task = AssignViewsTask | MissingViewTask | DrawingToModelTask | FindErrorTask
 
 export type AssignViewsAnswer = {
   readonly kind: 'assign-views'
@@ -111,7 +192,29 @@ export type ChoiceAnswer = {
   readonly kind: 'missing-view' | 'drawing-to-model'
   readonly optionId: string
 }
-export type Answer = AssignViewsAnswer | ChoiceAnswer
+/** Obdélník v souřadnicích pohledu (mm). */
+export type Area2 = { readonly min: Vec2; readonly max: Vec2 }
+
+/**
+ * Odpověď na „najdi chybu“: bod v pohledu (klik myší nebo prstem), oblast pohledu (výběr
+ * z klávesnice), nebo „rozmístění pohledů je špatně“.
+ */
+export type FindErrorAnswer =
+  | {
+      readonly kind: 'find-error'
+      readonly pick: 'point'
+      readonly view: ViewName
+      readonly point: Vec2
+    }
+  | {
+      readonly kind: 'find-error'
+      readonly pick: 'area'
+      readonly view: ViewName
+      readonly area: Area2
+    }
+  | { readonly kind: 'find-error'; readonly pick: 'layout' }
+
+export type Answer = AssignViewsAnswer | ChoiceAnswer | FindErrorAnswer
 
 export type TaskError = {
   readonly code: ErrorCode

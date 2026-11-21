@@ -4,6 +4,7 @@ import {
   THIRD_ANGLE_DEMO_ONLY,
   type GridPosition,
 } from '@vykresovna/drafting-standards'
+import { evaluateFindError } from './find-error'
 import type {
   Answer,
   AssignViewsAnswer,
@@ -56,6 +57,10 @@ export function evaluate(task: Task, answer: Answer): TaskResult {
   if (task.kind === 'assign-views') {
     if (answer.kind !== 'assign-views') throw new Error('odpověď neodpovídá typu úlohy')
     return evaluateAssignViews(task, answer)
+  }
+  if (task.kind === 'find-error') {
+    if (answer.kind !== 'find-error') throw new Error('odpověď neodpovídá typu úlohy')
+    return evaluateFindError(task, answer)
   }
   if (answer.kind !== task.kind) throw new Error('odpověď neodpovídá typu úlohy')
   const option = task.options.find((o) => o.id === answer.optionId)

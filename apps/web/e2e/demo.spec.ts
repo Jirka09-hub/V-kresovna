@@ -5,7 +5,7 @@ import { currentKind, solveCurrent } from './helpers'
 test.describe('demo', () => {
   test.setTimeout(120_000)
 
-  test('3D ukázka, pět úloh všech tří typů a shrnutí', async ({ page }) => {
+  test('3D ukázka, pět úloh všech čtyř typů a shrnutí', async ({ page }) => {
     await page.goto('/cs/demo')
     await expect(page.getByTestId('showcase')).toBeVisible()
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 20_000 })
@@ -23,7 +23,9 @@ test.describe('demo', () => {
       )
       await page.getByTestId('next').click()
     }
-    expect(kinds).toEqual(new Set(['assign-views', 'missing-view', 'drawing-to-model']))
+    expect(kinds).toEqual(
+      new Set(['assign-views', 'missing-view', 'drawing-to-model', 'find-error']),
+    )
 
     const summary = page.getByTestId('summary')
     await expect(summary).toBeVisible()

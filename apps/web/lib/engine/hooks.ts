@@ -6,6 +6,7 @@ import type {
   ChoiceOption,
   Difficulty,
   DrawingMutation,
+  ErrorCode,
   ExerciseKind,
   Task,
 } from '@vykresovna/exercises'
@@ -44,8 +45,15 @@ export function useAsync<T>(key: string | null, factory: () => Promise<T>): Asyn
 }
 
 /** Úloha ze seedu (generuje se ve workeru). */
-export function useTask(kind: ExerciseKind, seed: number, difficulty: Difficulty) {
-  return useAsync<Task>(`${kind}:${seed}:${difficulty}`, () => generateTask(kind, seed, difficulty))
+export function useTask(
+  kind: ExerciseKind,
+  seed: number,
+  difficulty: Difficulty,
+  focus?: ErrorCode,
+) {
+  return useAsync<Task>(`${kind}:${seed}:${difficulty}:${focus ?? ''}`, () =>
+    generateTask(kind, seed, difficulty, focus),
+  )
 }
 
 /** 3D data a výkres několika součástí (pořadí odpovídá vstupu). */

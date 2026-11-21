@@ -2,7 +2,13 @@
  * Typy obsahu: modul → lekce → úvodní obrazovky a plán úloh. Jen data, žádné texty: texty jsou
  * v aplikaci (`messages/*.json`) pod klíči odvozenými ze slugů a id.
  */
-import type { AssignViewsTask, Difficulty, ExerciseKind } from '@vykresovna/exercises'
+import type {
+  AssignViewsTask,
+  Difficulty,
+  DrawingMutation,
+  ErrorCode,
+  ExerciseKind,
+} from '@vykresovna/exercises'
 
 /** Popis součásti (typ z kontraktu úloh, aby obsah nezávisel přímo na enginu). */
 export type PartSpec = AssignViewsTask['part']
@@ -31,6 +37,11 @@ export type IntroDemo =
       readonly reveal?: boolean
       readonly features?: readonly IntroFeature[]
     }
+  /**
+   * 3D model a výkres s jednou chybou (`mutation`). Tlačítko chybu ukáže a přepínač ukáže
+   * správný výkres.
+   */
+  | { readonly kind: 'error-example'; readonly mutation: DrawingMutation }
 
 export type IntroScreen = {
   /** Id obrazovky v rámci lekce (texty: `lessons.items.<slug>.intro.<id>.title|text`). */
@@ -46,6 +57,18 @@ export type TaskPlanItem = {
   readonly count: number
 }
 
+/**
+ * Úlohy na konci lekce vybírané adaptivně podle chyb uživatele (`pickNextTask`, D-023):
+ * `count` úloh z typů `kinds` v rozsahu obtížnosti. Výchozí obtížnost = obtížnost poslední
+ * pevné úlohy plánu.
+ */
+export type AdaptiveSlots = {
+  readonly count: number
+  readonly kinds: readonly ExerciseKind[]
+  readonly minDifficulty: Difficulty
+  readonly maxDifficulty: Difficulty
+}
+
 export type LessonStatus = 'available' | 'coming-soon'
 
 export type Lesson = {
@@ -54,6 +77,8 @@ export type Lesson = {
   readonly status: LessonStatus
   readonly intro: readonly IntroScreen[]
   readonly plan: readonly TaskPlanItem[]
+  /** Adaptivní úlohy po pevném plánu (volitelné). */
+  readonly adaptive?: AdaptiveSlots
 }
 
 export type Module = {
@@ -67,4 +92,6 @@ export type FixedTask = {
   readonly kind: ExerciseKind
   readonly seed: number
   readonly difficulty: Difficulty
+  /** Upřednostněný druh chyby (vstup generátoru, ukládá se se seedem). */
+  readonly focus?: ErrorCode
 }
