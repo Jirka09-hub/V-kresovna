@@ -1,5 +1,7 @@
 import {
   CENTER_LINE_OVERHANG_MM,
+  drillPointHeight,
+  SYMMETRY_AXIS_REQUIRES_FEATURE,
   FIRST_ANGLE_LAYOUT,
   STANDARD_VIEWS,
   THIRD_ANGLE_DEMO_ONLY,
@@ -9,7 +11,7 @@ import {
 } from '@vykresovna/drafting-standards'
 import { extractEdges, type EdgeModel } from '../edges/extract'
 import type { SolidMesh } from '../mesh/types'
-import { AXIS_INDEX, otherAxes, type PartSpec } from '../part/spec'
+import { AXIS_INDEX, otherAxes, type Axis, type Box, type PartSpec } from '../part/spec'
 import { projectView, viewBasis, type Vec2, type ViewProjection } from '../projection/hlr'
 
 /** Mezera mezi pohledy na výkrese (mm). Není to norma, jen rozvržení. */
@@ -75,8 +77,10 @@ function holeAnnotations(spec: PartSpec, view: ViewName) {
     let start = 0
     let end = extent
     if (f.depth !== undefined) {
-      start = f.from === 'max' ? extent - f.depth : 0
-      end = f.from === 'max' ? extent : f.depth
+      // osa slepé díry sahá až do vrcholu kuželového dna
+      const tip = drillPointHeight(f.diameter)
+      start = f.from === 'max' ? extent - f.depth - tip : 0
+      end = f.from === 'max' ? extent : f.depth + tip
     }
     const point = (t: number): Vec3 => {
       const p: [number, number, number] = [0, 0, 0]
@@ -109,6 +113,155 @@ function holeAnnotations(spec: PartSpec, view: ViewName) {
   return { centerLines, circles }
 }
 
+const AXES: readonly Axis[] = ['x', 'y', 'z']
+
+/** Obalový kvádr prvku oříznutý na základ (pro test, zda prvek leží uvnitř součásti). */
+function featureBox(f: PartSpec['features'][number], size: Vec3): Box {
+  switch (f.kind) {
+    case 'hole': {
+      const ai = AXIS_INDEX[f.axis]
+      const [a, b] = otherAxes(f.axis)
+      const r = f.diameter / 2
+      const min: [number, number, number] = [0, 0, 0]
+      const max: [number, number, number] = [size[0], size[1], size[2]]
+      if (f.depth !== undefined) {
+        const reach = f.depth + drillPointHeight(f.diameter)
+        if (f.from === 'max') min[ai] = size[ai] - reach
+        else max[ai] = reach
+      }
+      min[AXIS_INDEX[a]] = f.at[0] - r
+      max[AXIS_INDEX[a]] = f.at[0] + r
+      min[AXIS_INDEX[b]] = f.at[1] - r
+      max[AXIS_INDEX[b]] = f.at[1] + r
+      return { min, max }
+    }
+    case 'chamfer': {
+      const [a, b] = otherAxes(f.along)
+      const min: [number, number, number] = [0, 0, 0]
+      const max: [number, number, number] = [size[0], size[1], size[2]]
+      for (const [axis, side] of [
+        [a, f.edge[0]],
+        [b, f.edge[1]],
+      ] as const) {
+        const i = AXIS_INDEX[axis]
+        if (side === 'min') max[i] = f.size
+        else min[i] = size[i] - f.size
+      }
+      return { min, max }
+    }
+    default:
+      return f.box
+  }
+}
+
+/** Je množina vrcholů sítě souměrná podle roviny kolmé na osu `ai` v souřadnici `c`? */
+function isMirrorSymmetric(mesh: SolidMesh, ai: number, c: number): boolean {
+  const TOL = 1e-3
+  const CELL = 0.01
+  const n = mesh.positions.length / 3
+  const cells = new Map<string, number[]>()
+  const cellKey = (x: number, y: number, z: number) => `${x},${y},${z}`
+  for (let i = 0; i < n; i++) {
+    const k = cellKey(
+      Math.floor(mesh.positions[i * 3]! / CELL),
+      Math.floor(mesh.positions[i * 3 + 1]! / CELL),
+      Math.floor(mesh.positions[i * 3 + 2]! / CELL),
+    )
+    const list = cells.get(k)
+    if (list) list.push(i)
+    else cells.set(k, [i])
+  }
+  for (let i = 0; i < n; i++) {
+    const p = [mesh.positions[i * 3]!, mesh.positions[i * 3 + 1]!, mesh.positions[i * 3 + 2]!]
+    p[ai] = 2 * c - p[ai]!
+    const g = p.map((v) => Math.floor(v / CELL))
+    let found = false
+    search: for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          for (const j of cells.get(cellKey(g[0]! + dx, g[1]! + dy, g[2]! + dz)) ?? []) {
+            if (
+              Math.abs(mesh.positions[j * 3]! - p[0]!) < TOL &&
+              Math.abs(mesh.positions[j * 3 + 1]! - p[1]!) < TOL &&
+              Math.abs(mesh.positions[j * 3 + 2]! - p[2]!) < TOL
+            ) {
+              found = true
+              break search
+            }
+          }
+        }
+      }
+    }
+    if (!found) return false
+  }
+  return true
+}
+
+export type SymmetryPlane = { readonly axis: Axis; readonly at: number }
+
+/**
+ * Roviny souměrnosti součásti, pro které se kreslí osa souměrnosti: těleso je podle roviny souměrné
+ * a aspoň jeden prvek leží uvnitř součásti (nedotýká se obou konců), takže souměrnost je pro čtení
+ * výkresu podstatná.
+ */
+export function symmetryPlanes(spec: PartSpec, mesh: SolidMesh): SymmetryPlane[] {
+  const planes: SymmetryPlane[] = []
+  const size = spec.base.size
+  for (const axis of AXES) {
+    const ai = AXIS_INDEX[axis]
+    const lo = mesh.bbox.min[ai]
+    const hi = mesh.bbox.max[ai]
+    const c = (lo + hi) / 2
+    if (SYMMETRY_AXIS_REQUIRES_FEATURE) {
+      const inner = spec.features.some((f) => {
+        const box = featureBox(f, size)
+        return box.min[ai]! > lo + 1e-6 && box.max[ai]! < hi - 1e-6
+      })
+      if (!inner) continue
+    }
+    if (isMirrorSymmetric(mesh, ai, c)) planes.push({ axis, at: c })
+  }
+  return planes
+}
+
+/** Osy souměrnosti v pohledu: rovina kolmá na pohled se promítne do čerchované čáry přes celý pohled. */
+function symmetryLines(
+  planes: readonly SymmetryPlane[],
+  view: ViewName,
+  bounds: ViewProjection['bounds'],
+): CenterLine[] {
+  const basis = viewBasis(view)
+  const o = CENTER_LINE_OVERHANG_MM
+  const lines: CenterLine[] = []
+  for (const plane of planes) {
+    const ai = AXIS_INDEX[plane.axis]
+    if (Math.abs(basis.dir[ai]) > 0.5) continue // rovina rovnoběžná s nákresnou se nepromítne do čáry
+    const featureId = `symmetry:${plane.axis}`
+    if (Math.abs(basis.right[ai]) > 0.5) {
+      const u = plane.at * basis.right[ai] + 0
+      lines.push({ a: [u, bounds.min[1] - o], b: [u, bounds.max[1] + o], featureId })
+    } else {
+      const v = plane.at * basis.up[ai] + 0
+      lines.push({ a: [bounds.min[0] - o, v], b: [bounds.max[0] + o, v], featureId })
+    }
+  }
+  return lines
+}
+
+/** Leží osa `inner` celá na ose `outer`? (Osa díry splývající s osou souměrnosti se nekreslí dvakrát.) */
+function containedIn(inner: CenterLine, outer: CenterLine): boolean {
+  const EPS = 1e-6
+  const dx = outer.b[0] - outer.a[0]
+  const dy = outer.b[1] - outer.a[1]
+  const len = Math.hypot(dx, dy)
+  const onLine = (p: Vec2) => {
+    const cross = (p[0] - outer.a[0]) * dy - (p[1] - outer.a[1]) * dx
+    const t = ((p[0] - outer.a[0]) * dx + (p[1] - outer.a[1]) * dy) / (len * len)
+    return Math.abs(cross / len) < EPS && t > -EPS && t < 1 + EPS
+  }
+  return onLine(inner.a) && onLine(inner.b)
+}
+
 /** Vytvoří výkres součásti: pohledy se skrytými hranami, osami a rozmístěním podle promítání. */
 export function createDrawing(
   spec: PartSpec,
@@ -120,10 +273,17 @@ export function createDrawing(
   const grid: Readonly<Record<ViewName, GridPosition>> =
     layoutName === 'first-angle' ? FIRST_ANGLE_LAYOUT : THIRD_ANGLE_DEMO_ONLY
   const edges = options.edges ?? extractEdges(mesh)
+  const planes = symmetryPlanes(spec, mesh)
 
   const parts = viewNames.map((view) => {
     const projection = projectView(mesh, edges, view)
-    const { centerLines, circles } = holeAnnotations(spec, view)
+    const holes = holeAnnotations(spec, view)
+    const symmetry = symmetryLines(planes, view, projection.bounds)
+    const centerLines = [
+      ...symmetry,
+      ...holes.centerLines.filter((cl) => !symmetry.some((s) => containedIn(cl, s))),
+    ]
+    const circles = holes.circles
     const size: Vec2 = [
       projection.bounds.max[0] - projection.bounds.min[0],
       projection.bounds.max[1] - projection.bounds.min[1],

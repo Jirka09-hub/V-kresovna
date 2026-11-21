@@ -131,3 +131,59 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   podmoduly (`@vykresovna/engine/projection`, `@vykresovna/engine/fixtures`), aby se WASM nedostal do
   hlavního bundlu.
 - `.npmrc` vytahuje `@types/*` do kořene, jinak typy three.js nevidí `@react-three/fiber`.
+
+## D-017 Odborné otázky z fáze 1 rozhodnuty podle běžné praxe
+
+- Stav: přijato (2026-11-21). Jiří svěřil odborná rozhodnutí Claudovi („udělej to správně dle
+  nejlepšího uvážení“). **Před pilotem doporučujeme, aby výkresy prohlédl učitel technického kreslení.**
+- Slepá díra je vrtaná: dno je kužel s vrcholovým úhlem 120° (`DRILL_POINT_ANGLE_DEG`). Hloubka v popisu
+  součásti je hloubka válcové části, kužel je navíc; validace hlídá, aby dno neprorazilo protější stěnu.
+  Ve výkresu jsou vidět dvě šikmé skryté čáry do vrcholu a osa díry sahá až za vrchol.
+- Osy souměrnosti: kreslí se, když je součást souměrná podle střední roviny a aspoň jeden prvek leží
+  uvnitř (nedotýká se obou konců). Holý kvádr ani prvek přes celou délku osu nevyvolá. Osa jde přes celý
+  pohled s přesahem; osa díry, která na ní leží, se nekreslí podruhé.
+- Skupina čar 0,5 (0,5 / 0,25 mm), poměry čárkování podle ISO 128 (čárka 12d, mezera 3d; čerchovaná
+  24d / 3d / 0,5d / 3d), přesah os 3 mm a přednost čar viditelná > skrytá > stopa řezu > osa zůstávají.
+  Značky `TODO(norma)` jsou odstraněné.
+
+## D-018 Stabilní klíče ploch
+
+- Stav: přijato (2026-11-21)
+- Rozhodnutí: v klíči rovinné plochy `p:<n>:<faceID>` je místo `originalID` z manifoldu pořadí prvku
+  (0 = základní kvádr, 1… = prvky v pořadí popisu).
+- Proč: `originalID` je globální počítadlo instance WASM, takže id hran záviselo na tom, co se stavělo dřív.
+  Distraktory, hodnocení a snapshoty potřebují stejná id při každém sestavení.
+
+## D-019 Generátor úloh a otisk výkresu
+
+- Stav: přijato (2026-11-21)
+- Otisk pohledu (`viewFingerprint` v enginu): kanonický popis čar relativně k průmětu tělesa, zaokrouhlený
+  na 0,001 mm, se sloučenými úseky na stejné přímce; skrytá čára pod viditelnou se nepočítá (není vidět).
+  Obsahuje i kružnice a osy. Dva pohledy se stejným otiskem uživatel nerozliší.
+- Generátor součástí: zamítací vzorkování s pravidly čitelnosti (`packages/exercises/src/layout.ts`):
+  materiál i mezera mezi prvky aspoň 3 mm, prvek aspoň 4 mm, díry Ø 6–16 mm, prvky se nepřekrývají
+  ani nedotýkají. Nejsou to normy, jen parametry generátoru, proto nejsou v `drafting-standards`.
+- „Chybějící pohled“: distraktor z mutace tělesa, který má **oba dané pohledy stejné** jako správná
+  součást, se zahazuje: jeho chybějící pohled by byl druhou správnou odpovědí. Nejtěžší distraktory
+  (obtížnost 4–5) jsou proto chybné výkresy správné součásti (skrytá hrana plnou čarou, viditelná
+  čárkovaně, chybějící hrana) a mutace tělesa, které se shodují aspoň v jednom daném pohledu.
+- Distraktory se vybírají tak, aby měly různé kódy chyb, pokud to jde. Id součástí v možnostech jsou
+  neutrální (`<id úlohy>/m1`…), aby z nich nešlo poznat správnou odpověď.
+
+## D-020 Webové UI cvičení (fáze 2)
+
+- Stav: přijato (2026-11-21)
+- Engine i exercises běží jen ve web workeru (`apps/web/workers/engine.worker.ts`): sestavení součásti,
+  generování úlohy, pohledy s mutací, výkres možnosti (`buildOptionDrawing`) i hodnocení (`evaluate`).
+  Hlavní bundle importuje z těchto balíčků jen typy, WASM v něm není (D-016). Výsledky se cachují
+  ve workeru (síť a hrany) i v klientovi (odpovědi podle volání).
+- „Výkres → model“: čtyři modely na jednom plátně (`PartGallery`, drei `View`), `frameloop="demand"`,
+  společné natočení i měřítko. Slabé školní počítače tak drží jeden WebGL kontext místo čtyř a modely jde
+  snadno porovnat. Bez WebGL jde úlohu jen přeskočit.
+- Přiřazování pohledů: `@dnd-kit/core` pro myš a dotyk, plnohodnotná náhrada klávesnicí (vybrat kartu,
+  pak místo; Enter nebo mezerník). Zpětná vazba nikdy jen barvou: ikona, text a vysvětlení podle kódu chyby.
+- Průběh lekcí a dema se zatím drží jen v paměti (bez přihlášení); ukládání přijde s účty.
+- ESLint `i18next/no-literal-string` ignoruje volání `t`, `ta`, `tm`… (překladače z `useTranslations`
+  pro různé jmenné prostory).
+- Pozn. k testům: Playwright snímek celé stránky může u plátna v režimu „na vyžádání“ ukázat starší snímek;
+  snímek samotného prvku je aktuální. Testy proto ověřují stav přes atributy (`data-rotation`), ne pixely.

@@ -26,7 +26,7 @@ export const TEST_PARTS: readonly PartSpec[] = [
   },
   {
     id: '04-dira-slepa',
-    note: 'Slepá díra shora s plochým dnem: skryté obrysy končí ve hloubce 18 mm.',
+    note: 'Slepá (vrtaná) díra shora: skryté obrysy končí v hloubce 18 mm, dno je kužel 120°.',
     base: { kind: 'block', size: [60, 40, 30] },
     features: [
       { kind: 'hole', id: 'd1', axis: 'z', at: [20, 20], diameter: 10, depth: 18, from: 'max' },

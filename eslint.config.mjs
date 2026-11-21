@@ -48,7 +48,8 @@ export default tseslint.config(
         {
           mode: 'jsx-only',
           'jsx-attributes': { include: ['alt', 'aria-label', 'title', 'placeholder'] },
-          callees: { exclude: ['t', 'tv', 'require'] },
+          // překladové funkce next-intl: t, tv, ta, tm… (useTranslations s různými jmennými prostory)
+          callees: { exclude: ['t[a-z]{0,2}', 'require'] },
         },
       ],
     },

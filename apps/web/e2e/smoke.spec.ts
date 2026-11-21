@@ -6,6 +6,8 @@ test('kořen přesměruje na českou verzi a zobrazí úvod', async ({ page }) =
   await expect(page.locator('html')).toHaveAttribute('lang', 'cs')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('technické výkresy')
   await expect(page.getByTestId('status')).toBeVisible()
+  await expect(page.getByTestId('cta-demo')).toHaveAttribute('href', '/cs/demo')
+  await expect(page.getByTestId('cta-lessons')).toHaveAttribute('href', '/cs/lekce')
 })
 
 test('health endpoint odpovídá a hlásí evropské promítání', async ({ request }) => {

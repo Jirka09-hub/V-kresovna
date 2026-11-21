@@ -8,9 +8,13 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 
 - Plán schválen 2026-11-21 (`docs/plan.md`), hosting změněn na Cloudflare (D-011).
 - Fáze 0 hotová a nasazená (PR #1).
-- Fáze 1 (engine) hotová a čeká na Jiřího kontrolu 10 výkresů: stránka `/cs/laborator`,
+- Fáze 1 (engine) hotová (PR #2), Jiří výkresy schválil. Laboratoř enginu: `/cs/laborator`,
   snapshoty v `packages/engine/test/__snapshots__/*.svg` a `apps/web/e2e/laborator.spec.ts-snapshots/`.
-- Další: fáze 2 (cvičení 1–3, distraktory, demo) až po schválení výkresů.
+- Jiří svěřil odborná rozhodnutí Claudovi (D-017): nejasnosti řeš podle běžné praxe, zapiš do
+  `docs/decisions.md` a před pilotem doporuč kontrolu učitelem. Jiřího se na normy neptej.
+- Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
+  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
+  Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
 
 ## Jak pracujeme
 
@@ -32,7 +36,9 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Všechna pravidla jen v `packages/drafting-standards` (konstanty + testy). Nikde jinde žádná „magická čísla“
   z norem.
 - **Nekopírovat text norem.** Vysvětlivky psát vlastními slovy.
-- Když si nejsem jistý pravidlem: zeptat se Jiřího a označit v kódu `// TODO(norma)`. Nehádat.
+- Když si nejsem jistý pravidlem: rozhodnout podle běžné praxe, zapsat do `docs/decisions.md` a dát na
+  seznam ke kontrole učitelem před pilotem (Jiří tak rozhodl, viz D-017).
+- Slepá díra = vrtaná, kuželové dno 120°. Osy souměrnosti jen u souměrně umístěných prvků.
 
 ## Terminologie (UI česky, identifikátory v kódu anglicky)
 
@@ -68,7 +74,8 @@ Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm (viz D-008).
 
 - `buildPart(wasm, spec)` → `SolidMesh` (síť + původ ploch), `extractEdges` → logické hrany,
   `projectView` → viditelné/skryté úseky pohledu, `createDrawing` → rozmístění + osy, `drawingToSvg` → SVG.
-- Id hran: `<plocha>|<plocha>#n` (např. `cyl:d1|p:2:3#0`), obrys válce `sil:cyl:d1`, osa `feature:d1`.
+- Id hran: `<plocha>|<plocha>#n` (např. `cyl:d1|p:0:3#0`; `p:<pořadí prvku>:<faceID>`, 0 = základ),
+  obrys válce `sil:cyl:d1`, kuželové dno `cone:d1`, osa díry `feature:d1`, osa souměrnosti `feature:symmetry:x`.
   Propojení 3D ↔ 2D řeší `apps/web/lib/engine/highlight.ts`.
 - Nové testovací součásti patří do `packages/engine/src/fixtures/test-parts.ts`; po změně výkresu
   `pnpm test -u` a `pnpm --filter web test:e2e --update-snapshots`, změnu snapshotu vždy prohlédnout.

@@ -19,3 +19,23 @@ export function isRelated(id: string, hoverId: string | null): boolean {
   if (!key) return false
   return id === `sil:${key}` || id.split('|').some((part) => part.replace(/#\d+$/, '') === key)
 }
+
+type EdgeLike = { readonly id: string; readonly featureIds: readonly string[] }
+
+/** Hrany 3D modelu, které patří k prvku (díra, drážka…), podle původu ploch. */
+export function featureEdgeIds(edges: readonly EdgeLike[], featureId: string): string[] {
+  return edges.filter((e) => e.featureIds.includes(featureId)).map((e) => e.id)
+}
+
+/**
+ * Id čar ve výkresu, které patří k prvku: jeho logické hrany, obrysy válce a kuželového dna
+ * (`sil:cyl:<id>`, `sil:cone:<id>`) a osa (`feature:<id>`).
+ */
+export function featureDrawingIds(edges: readonly EdgeLike[], featureId: string): Set<string> {
+  return new Set([
+    ...featureEdgeIds(edges, featureId),
+    `feature:${featureId}`,
+    `sil:cyl:${featureId}`,
+    `sil:cone:${featureId}`,
+  ])
+}

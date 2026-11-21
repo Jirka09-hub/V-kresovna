@@ -2,7 +2,7 @@
  * Engine Výkresovny: parametrické součásti, boolovské operace, projekce, viditelnost hran, SVG výkres.
  * Nesmí importovat React, Next.js, DOM ani Supabase (běží v prohlížeči, workeru i Node).
  */
-export const ENGINE_VERSION = '0.1.0'
+export const ENGINE_VERSION = '0.2.0'
 
 export * from './part/spec'
 export * from './part/validate'
@@ -26,5 +26,11 @@ export {
 } from './projection/hlr'
 export * from './drawing/drawing'
 export { drawingToSvg, type SvgOptions } from './drawing/svg'
+export {
+  canonicalView,
+  drawingFingerprint,
+  viewFingerprint,
+  FINGERPRINT_PRECISION_MM,
+} from './drawing/fingerprint'
 export { TEST_PARTS } from './fixtures/test-parts'
 export { toRenderData, transferables, type PartRenderData, type RenderEdge } from './render-data'
