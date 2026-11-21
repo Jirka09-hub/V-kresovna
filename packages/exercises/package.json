@@ -11,6 +11,10 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@vykresovna/engine": "workspace:*"
+    "@vykresovna/engine": "workspace:*",
+    "@vykresovna/drafting-standards": "workspace:*"
+  },
+  "devDependencies": {
+    "manifold-3d": "3.5.5"
   }
 }

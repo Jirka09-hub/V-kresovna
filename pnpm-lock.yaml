@@ -128,9 +128,16 @@ importers:
 
   packages/exercises:
     dependencies:
+      '@vykresovna/drafting-standards':
+        specifier: workspace:*
+        version: link:../drafting-standards
       '@vykresovna/engine':
         specifier: workspace:*
         version: link:../engine
+    devDependencies:
+      manifold-3d:
+        specifier: 3.5.5
+        version: 3.5.5(@gltf-transform/core@4.5.1)(@gltf-transform/extensions@4.5.1)(@gltf-transform/functions@4.5.1(@types/node@22.20.5))(esbuild-wasm@0.27.7)
 
   packages/viewer:
     dependencies:
