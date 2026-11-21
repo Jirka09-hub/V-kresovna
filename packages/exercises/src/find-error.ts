@@ -357,13 +357,11 @@ function viewCandidates(
         interior: changed.some((s) => !onOutline(s, view)),
       })
     }
-    // chybějící hrana: viditelná čára zmizí (pod ní může vykouknout skrytá), skrytá jen když ji nic nezakrývá
-    push(
-      'remove-edge',
-      unit.pieces.filter((p) =>
-        p.visibility === 'visible' ? !coveredBy(p, otherVisible) : !coveredBy(p, others),
-      ),
-    )
+    // chybějící hrana: jen když na jejím místě nezůstane jiná čára (jinak by z plné čáry byla
+    // čárkovaná a chyba by vypadala jako záměna viditelnosti)
+    if (unit.pieces.every((p) => others.every((o) => collinearOverlap(p, o) < 0.5))) {
+      push('remove-edge', unit.pieces)
+    }
     push(
       'hidden-as-visible',
       unit.pieces.filter((p) => p.visibility === 'hidden' && !coveredBy(p, otherVisible)),
