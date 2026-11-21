@@ -57,11 +57,18 @@ export function callEngine<C extends EngineCall>(call: C): Promise<EngineResult<
   return promise as Promise<EngineResult<C>>
 }
 
-/** Postaví součást a celý výkres (3D síť, hrany, SVG). */
-export function renderPart(spec: PartSpec, svgTitle?: string): Promise<PartRenderData> {
-  return callEngine(
-    svgTitle ? { type: 'render-part', spec, svgTitle } : { type: 'render-part', spec },
-  )
+/** Postaví součást a celý výkres (3D síť, hrany, SVG), volitelně s kótami. */
+export function renderPart(
+  spec: PartSpec,
+  svgTitle?: string,
+  options: { dimensions?: boolean } = {},
+): Promise<PartRenderData> {
+  return callEngine({
+    type: 'render-part',
+    spec,
+    ...(svgTitle ? { svgTitle } : {}),
+    ...(options.dimensions ? { dimensions: true } : {}),
+  })
 }
 
 /** Vygeneruje úlohu ze seedu (generátor potřebuje WASM, proto běží ve workeru). */

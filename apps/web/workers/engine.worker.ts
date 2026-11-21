@@ -48,7 +48,10 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
   switch (call.type) {
     case 'render-part': {
       const { mesh, edges } = await build(call.spec)
-      const drawing = createDrawing(call.spec, mesh, { edges })
+      const drawing = createDrawing(call.spec, mesh, {
+        edges,
+        ...(call.dimensions ? { dimensions: true } : {}),
+      })
       const data = toRenderData(mesh, edges, drawing, call.svgTitle)
       return { result: data, transfer: transferables(data) }
     }

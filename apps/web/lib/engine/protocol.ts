@@ -23,7 +23,13 @@ export type ViewsSvg = {
 }
 
 export type EngineCall =
-  | { readonly type: 'render-part'; readonly spec: PartSpec; readonly svgTitle?: string }
+  | {
+      readonly type: 'render-part'
+      readonly spec: PartSpec
+      readonly svgTitle?: string
+      /** Zakótovaný výkres (laboratoř enginu). */
+      readonly dimensions?: boolean
+    }
   | {
       readonly type: 'generate-task'
       readonly kind: ExerciseKind

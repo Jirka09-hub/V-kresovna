@@ -15,6 +15,17 @@ test.describe('laboratoř enginu', () => {
   })
 })
 
+test('zaškrtnutí „Kóty“ zobrazí kótovaný výkres', async ({ page }) => {
+  await page.goto('/cs/laborator')
+  await page.getByRole('button', { name: '05-drazka', exact: true }).click()
+  const svg = page.locator('svg[data-part="05-drazka"]')
+  await expect(svg).toBeVisible({ timeout: 20_000 })
+  await expect(svg.locator('[data-dimension-id]')).toHaveCount(0)
+  await page.getByRole('checkbox', { name: 'Kóty' }).check()
+  await expect(svg.locator('[data-dimension-id]').first()).toBeVisible({ timeout: 20_000 })
+  await expect(svg.locator('[data-dimension-id="dim:s1:size:x"] text')).toHaveText('20')
+})
+
 // Vizuální snapshoty výkresů 10 testovacích součástí (jen desktop, výkres je stejný na všech zařízeních).
 test.describe('výkresy testovacích součástí', () => {
   test.skip(({ browserName, isMobile }) => browserName !== 'chromium' || !!isMobile)

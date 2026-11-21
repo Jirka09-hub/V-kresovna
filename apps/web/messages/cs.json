@@ -61,6 +61,7 @@
     "partsLabel": "Testovací součásti",
     "model": "3D model",
     "drawing": "Výkres",
+    "dimensions": "Kóty",
     "loading": "Načítám model…",
     "modelLabel": "3D model součásti {id}",
     "drawingTitle": "Výkres součásti {id}: nárys, půdorys a bokorys",

@@ -22,6 +22,7 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
   } | null>(null)
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [xray, setXray] = useState(false)
+  const [dimensions, setDimensions] = useState(false)
   const [unfold, setUnfold] = useState<number | undefined>(undefined)
   const [playing, setPlaying] = useState(false)
   const viewer = useRef<PartViewerHandle>(null)
@@ -30,13 +31,13 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
 
   useEffect(() => {
     let alive = true
-    renderPart(spec, t('drawingTitle', { id: spec.id }))
+    renderPart(spec, t('drawingTitle', { id: spec.id }), { dimensions })
       .then((d) => alive && setResult({ id: spec.id, data: d }))
       .catch((e: Error) => alive && setResult({ id: spec.id, error: e.message }))
     return () => {
       alive = false
     }
-  }, [spec, t])
+  }, [spec, t, dimensions])
   const data = result?.id === spec.id ? (result.data ?? null) : null
   const error = result?.id === spec.id ? (result.error ?? null) : null
 
@@ -215,9 +216,20 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
         </section>
 
         <section className="flex flex-col gap-3" aria-labelledby="lab-2d">
-          <h2 id="lab-2d" className="text-lg font-semibold">
-            {t('drawing')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="lab-2d" className="text-lg font-semibold">
+              {t('drawing')}
+            </h2>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={dimensions}
+                onChange={(e) => setDimensions(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+              {t('dimensions')}
+            </label>
+          </div>
           <div className="aspect-[4/3] w-full rounded-lg border border-slate-200 bg-white p-2">
             {data ? (
               <DrawingPanel
