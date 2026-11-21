@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Geometrie součástí, projekce, viditelnost hran a SVG výkres. Bez Reactu a DOM.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./projection": "./src/projection/hlr.ts",
+    "./fixtures": "./src/fixtures/test-parts.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

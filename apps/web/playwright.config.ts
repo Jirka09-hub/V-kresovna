@@ -12,7 +12,10 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'off',
+    // WebGL bez GPU (CI): softwarové vykreslování
+    launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
   },
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.002 } },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'tablet', use: { ...devices['iPad (gen 7) landscape'], browserName: 'chromium' } },
