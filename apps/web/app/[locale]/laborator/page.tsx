@@ -1,4 +1,4 @@
-import { TEST_PARTS } from '@vykresovna/engine/fixtures'
+import { SECTION_TEST_CASES, TEST_PARTS } from '@vykresovna/engine/fixtures'
 import type { Metadata } from 'next'
 import { useTranslations } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
@@ -18,7 +18,7 @@ export default function LabPage({ params }: { params: Promise<{ locale: string }
         <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
         <p className="max-w-3xl text-muted">{t('intro')}</p>
       </header>
-      <EngineLabLoader parts={TEST_PARTS} />
+      <EngineLabLoader parts={TEST_PARTS} sections={SECTION_TEST_CASES} />
     </main>
   )
 }
