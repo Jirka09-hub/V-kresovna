@@ -1,18 +1,18 @@
 /**
  * Generátory úloh, distraktory a hodnocení s kódy chyb. Bez UI, bez DOM.
  *
- * POZOR: generátor je zatím jen dočasná náhrada (vybírá z testovacích součástí), aby se dalo stavět UI.
- * Skutečný generátor součástí a distraktorů s kontrolou odlišnosti nahradí `generateTask`
- * a `generatePart` se stejnými signaturami.
+ * POZOR: `generateTask` je zatím dočasná náhrada (distraktory z testovacích součástí); skutečný
+ * generátor s kontrolou odlišnosti ho nahradí se stejnou signaturou.
  */
 import { FIRST_ANGLE_LAYOUT, type GridPosition } from '@vykresovna/drafting-standards'
-import { ENGINE_VERSION, TEST_PARTS, type Drawing, type PartSpec } from '@vykresovna/engine'
+import { ENGINE_VERSION, TEST_PARTS } from '@vykresovna/engine'
+import { generatePart } from './generator'
+import { createRng } from './rng'
 import type { ManifoldToplevel } from 'manifold-3d'
 import type {
   Answer,
   ChoiceOption,
   Difficulty,
-  DrawingMutation,
   ExerciseKind,
   Task,
   TaskError,
@@ -21,36 +21,21 @@ import type {
 
 export * from './types'
 
-/** Deterministický generátor náhodných čísel (mulberry32). */
-export function createRng(seed: number) {
-  let a = seed >>> 0
-  const next = () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-  return {
-    next,
-    int: (min: number, max: number) => min + Math.floor(next() * (max - min + 1)),
-    pick: <T>(items: readonly T[]): T => items[Math.floor(next() * items.length)]!,
-    shuffle: <T>(items: readonly T[]): T[] => {
-      const out = [...items]
-      for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(next() * (i + 1))
-        ;[out[i], out[j]] = [out[j]!, out[i]!]
-      }
-      return out
-    },
-  }
-}
-export type Rng = ReturnType<typeof createRng>
-
-/** DOČASNÉ: součást podle seedu z testovacích součástí. */
-export function generatePart(seed: number, _difficulty: Difficulty): PartSpec {
-  return TEST_PARTS[Math.abs(seed) % TEST_PARTS.length]!
-}
+export { createRng, deriveSeed, type Rng } from './rng'
+export { generatePart, generatePartWith, type FeatureRecipe } from './generator'
+export { layoutOk, MIN_FEATURE_MM, MIN_WALL_MM, HOLE_DIAMETERS } from './layout'
+export {
+  partMutations,
+  mirrorPart,
+  type PartMutation,
+  type PartMutationKind,
+} from './part-mutations'
+export {
+  applyDrawingMutation,
+  drawingMutationCandidates,
+  DRAWING_MUTATION_ERROR,
+  type DrawingMutationCandidate,
+} from './drawing-mutations'
 
 /** Místa kolem nárysu v mřížce. */
 const AROUND_FRONT: readonly GridPosition[] = [
@@ -128,9 +113,4 @@ export function evaluate(task: Task, answer: Answer): TaskResult {
     ? { code: option.errorCode, featureId: option.featureId }
     : { code: option.errorCode }
   return { correct: false, score: 0, errors: [error] }
-}
-
-/** Použije mutaci výkresu na pohled (DOČASNÉ: zatím beze změny). */
-export function applyDrawingMutation(drawing: Drawing, _mutation: DrawingMutation): Drawing {
-  return drawing
 }
