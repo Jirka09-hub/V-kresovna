@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { dashArrayMm, HATCH_ANGLE_DEG, LINE_PRIORITY, LINE_STYLES, LINE_WIDTH_MM } from './lines'
+import {
+  dashArrayMm,
+  drillPointHeight,
+  DRILL_POINT_ANGLE_DEG,
+  HATCH_ANGLE_DEG,
+  LINE_PRIORITY,
+  LINE_STYLES,
+  LINE_WIDTH_MM,
+} from './lines'
 
 describe('typy čar', () => {
   it('viditelné hrany jsou plné tlusté, skryté čárkované tenké', () => {
@@ -36,5 +44,15 @@ describe('vzory čárkování', () => {
   it('viditelná hrana má přednost před skrytou a skrytá před osou', () => {
     expect(LINE_PRIORITY.visibleEdge!).toBeLessThan(LINE_PRIORITY.hiddenEdge!)
     expect(LINE_PRIORITY.hiddenEdge!).toBeLessThan(LINE_PRIORITY.centerLine!)
+  })
+})
+
+describe('kuželové dno vrtané díry', () => {
+  it('má vrcholový úhel 120°', () => {
+    expect(DRILL_POINT_ANGLE_DEG).toBe(120)
+  })
+  it('výška dna odpovídá úhlu: tan(60°) = r / h', () => {
+    expect(drillPointHeight(10)).toBeCloseTo(5 / Math.sqrt(3), 9)
+    expect(drillPointHeight(12) / 6).toBeCloseTo(1 / Math.tan(Math.PI / 3), 9)
   })
 })

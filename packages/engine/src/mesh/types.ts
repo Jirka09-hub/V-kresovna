@@ -10,7 +10,8 @@ export type CylinderInfo = {
 }
 
 export type SurfaceInfo = {
-  /** Stabilní klíč plochy (rovinná plocha `p:<originalID>:<faceID>`, válec `cyl:<featureId>`). */
+  /** Stabilní klíč plochy (rovinná plocha `p:<pořadí prvku>:<faceID>`, 0 = základ, válec `cyl:<featureId>`,
+   *  kuželové dno slepé díry `cone:<featureId>`). */
   readonly key: string
   /** Prvek, ze kterého plocha vznikla; null = základní kvádr. */
   readonly featureId: string | null

@@ -1,3 +1,4 @@
+import { drillPointHeight } from '@vykresovna/drafting-standards'
 import { AXIS_INDEX, otherAxes, type Box, type PartSpec } from './spec'
 
 export type ValidationIssue = { readonly featureId: string | null; readonly message: string }
@@ -49,10 +50,12 @@ export function validatePart(spec: PartSpec): ValidationIssue[] {
           issues.push({ featureId: f.id, message: 'díra musí ležet celá uvnitř stěny' })
         }
         if (f.depth !== undefined) {
-          if (!isPositiveInt(f.depth) || f.depth >= size[AXIS_INDEX[f.axis]]) {
+          // kuželové dno nesmí prorazit protější stěnu (necháme aspoň 1 mm materiálu)
+          const bottom = f.depth + drillPointHeight(f.diameter)
+          if (!isPositiveInt(f.depth) || bottom > size[AXIS_INDEX[f.axis]] - 1) {
             issues.push({
               featureId: f.id,
-              message: 'hloubka slepé díry musí být menší než tloušťka',
+              message: 'slepá díra i s kuželovým dnem musí být menší než tloušťka',
             })
           }
           if (!f.from) issues.push({ featureId: f.id, message: 'slepá díra potřebuje stranu from' })

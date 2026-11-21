@@ -7,6 +7,7 @@ import {
   extractEdges,
   loadManifold,
   projectView,
+  symmetryPlanes,
   TEST_PARTS,
   type PartSpec,
   type ViewProjection,
@@ -60,9 +61,16 @@ describe('viditelnost hran na známých případech', () => {
     expect(lines(p, 'hidden')).toEqual(['-14,0→-14,20', '-26,0→-26,20'])
   })
 
-  it('slepá díra: skryté obrysy v nárysu končí ve hloubce 18 mm a dno je skrytá čára', () => {
+  it('slepá díra: obrysy končí v hloubce 18 mm, pak kuželové dno 120° (vše skryté)', () => {
     const p = project(part('04'), 'front')
-    expect(lines(p, 'hidden')).toEqual(['15,12→15,30', '15,12→25,12', '25,12→25,30'])
+    const tip = Number((30 - 18 - 5 / Math.sqrt(3)).toFixed(4))
+    expect(lines(p, 'hidden')).toEqual([
+      '15,12→15,30',
+      '15,12→25,12',
+      `20,${tip}→15,12`,
+      `20,${tip}→25,12`,
+      '25,12→25,30',
+    ])
   })
 
   it('drážka: v bokorysu zleva je dno drážky skrytá vodorovná hrana', () => {
@@ -89,6 +97,36 @@ describe('viditelnost hran na známých případech', () => {
   })
 })
 
+describe('osy souměrnosti', () => {
+  const planes = (id: string) => {
+    const spec = part(id)
+    return symmetryPlanes(spec, buildPart(wasm, spec)).map((pl) => `${pl.axis}=${pl.at}`)
+  }
+
+  it('holý kvádr ani součást bez souměrně umístěného prvku osy souměrnosti nemá', () => {
+    expect(planes('01')).toEqual([])
+    expect(planes('02')).toEqual([])
+    expect(planes('06')).toEqual([])
+    expect(planes('07')).toEqual([])
+  })
+
+  it('souměrně umístěná díra nebo drážka dává osu souměrnosti', () => {
+    expect(planes('03')).toEqual(['x=30', 'y=20'])
+    expect(planes('04')).toEqual(['y=20'])
+    expect(planes('05')).toEqual(['x=40'])
+    expect(planes('09')).toEqual(['x=40'])
+  })
+
+  it('osa díry splývající s osou souměrnosti se nekreslí podruhé', () => {
+    const spec = part('03')
+    const d = createDrawing(spec, buildPart(wasm, spec))
+    const top = d.views.find((v) => v.view === 'top')!
+    expect(top.centerLines.map((c) => c.featureId)).toEqual(['symmetry:x', 'symmetry:y'])
+    const front = d.views.find((v) => v.view === 'front')!
+    expect(front.centerLines).toEqual([{ a: [30, -3], b: [30, 23], featureId: 'symmetry:x' }])
+  })
+})
+
 describe('rozmístění pohledů na výkrese', () => {
   it('půdorys leží pod nárysem a bokorys vpravo od nárysu (evropské promítání)', () => {
     const spec = part('02')
@@ -111,5 +149,16 @@ describe('rozmístění pohledů na výkrese', () => {
     expect(d.layout).toBe('third-angle-demo')
     expect(top.origin[1]).toBeLessThan(front.origin[1])
     expect(left.origin[0]).toBeLessThan(front.origin[0])
+  })
+})
+
+describe('stabilita id', () => {
+  it('klíče ploch nezávisí na tom, co se v instanci WASM stavělo dřív', () => {
+    const spec = part('05')
+    const keys = () => buildPart(wasm, spec).surfaces.map((s) => s.key)
+    const first = keys()
+    buildPart(wasm, part('08'))
+    expect(keys()).toEqual(first)
+    expect(first).toContain('p:0:0')
   })
 })

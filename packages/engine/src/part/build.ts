@@ -1,5 +1,5 @@
 import type { Manifold, ManifoldToplevel } from 'manifold-3d'
-import type { Vec3 } from '@vykresovna/drafting-standards'
+import { drillPointHeight, type Vec3 } from '@vykresovna/drafting-standards'
 import { CIRCULAR_SEGMENTS } from '../csg/manifold'
 import type { SolidMesh, SurfaceInfo } from '../mesh/types'
 import {
@@ -51,12 +51,21 @@ function holeTool(wasm: ManifoldToplevel, f: HoleFeature, size: Vec3): Manifold 
     end = f.depth
   }
   const r = f.diameter / 2
-  let cyl = wasm.Manifold.cylinder(end - start, r, r, CIRCULAR_SEGMENTS)
-  // válec manifoldu leží podél osy Z; natočíme ho do osy díry
-  if (f.axis === 'x') cyl = cyl.rotate([0, 90, 0])
-  if (f.axis === 'y') cyl = cyl.rotate([-90, 0, 0])
+  // válec manifoldu leží podél osy Z, od 0 do výšky; slepá díra má navíc kuželové dno (hrot vrtáku)
+  let tool = wasm.Manifold.cylinder(end - start, r, r, CIRCULAR_SEGMENTS)
+  if (f.depth !== undefined) {
+    const h = drillPointHeight(f.diameter)
+    const apexZ = f.from === 'max' ? -h : end - start + h
+    // obal válce a vrcholu = válec + kužel bez vnitřní plochy na jejich styku
+    const cyl = tool
+    tool = wasm.Manifold.hull([cyl, [0, 0, apexZ]])
+    cyl.delete()
+  }
+  // natočení do osy díry
+  if (f.axis === 'x') tool = tool.rotate([0, 90, 0])
+  if (f.axis === 'y') tool = tool.rotate([-90, 0, 0])
   const [a, b] = otherAxes(f.axis)
-  return cyl.translate(vec({ [f.axis]: start, [a]: f.at[0], [b]: f.at[1] }))
+  return tool.translate(vec({ [f.axis]: start, [a]: f.at[0], [b]: f.at[1] }))
 }
 
 function chamferTool(wasm: ManifoldToplevel, f: ChamferFeature, size: Vec3): Manifold {
@@ -102,6 +111,11 @@ export function buildPart(wasm: ManifoldToplevel, spec: PartSpec): SolidMesh {
   let solid = keep(wasm.Manifold.cube([size[0], size[1], size[2]]).asOriginal())
   /** originalID nástroje → prvek */
   const featureByOriginal = new Map<number, string>()
+  /**
+   * originalID je globální počítadlo instance WASM (závisí na tom, co se stavělo dřív), proto ho v klíčích
+   * ploch nahradíme pořadím: 0 = základ, 1… = prvky v pořadí. Klíče jsou tak stejné při každém sestavení.
+   */
+  const ordinalByOriginal = new Map<number, number>([[solid.originalID(), 0]])
   const holeByOriginal = new Map<number, HoleFeature>()
 
   for (const f of spec.features) {
@@ -122,6 +136,7 @@ export function buildPart(wasm: ManifoldToplevel, spec: PartSpec): SolidMesh {
     }
     tool = keep(tool.asOriginal())
     featureByOriginal.set(tool.originalID(), f.id)
+    ordinalByOriginal.set(tool.originalID(), ordinalByOriginal.size)
     if (f.kind === 'hole') holeByOriginal.set(tool.originalID(), f)
     solid = keep(f.kind === 'rib' ? solid.add(tool) : solid.subtract(tool))
   }
@@ -178,8 +193,8 @@ export function buildPart(wasm: ManifoldToplevel, spec: PartSpec): SolidMesh {
     let info: SurfaceInfo
     if (hole) {
       const ai = AXIS_INDEX[hole.axis]
-      const onMantle = Math.abs(triNormals[t * 3 + ai]!) < 1e-6
-      if (onMantle) {
+      const along = Math.abs(triNormals[t * 3 + ai]!)
+      if (along < 1e-6) {
         const [a, b] = otherAxes(hole.axis)
         info = {
           key: `cyl:${hole.id}`,
@@ -190,12 +205,18 @@ export function buildPart(wasm: ManifoldToplevel, spec: PartSpec): SolidMesh {
             radius: hole.diameter / 2,
           },
         }
+      } else if (along < 1 - 1e-6) {
+        // kuželové dno slepé díry
+        info = { key: `cone:${hole.id}`, featureId: hole.id }
       } else {
-        info = { key: `p:${orig}:${mesh.faceID[t]}`, featureId: hole.id }
+        info = {
+          key: `p:${ordinalByOriginal.get(orig) ?? orig}:${mesh.faceID[t]}`,
+          featureId: hole.id,
+        }
       }
     } else {
       info = {
-        key: `p:${orig}:${mesh.faceID[t]}`,
+        key: `p:${ordinalByOriginal.get(orig) ?? orig}:${mesh.faceID[t]}`,
         featureId: featureByOriginal.get(orig) ?? null,
       }
     }

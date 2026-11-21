@@ -131,3 +131,25 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   podmoduly (`@vykresovna/engine/projection`, `@vykresovna/engine/fixtures`), aby se WASM nedostal do
   hlavního bundlu.
 - `.npmrc` vytahuje `@types/*` do kořene, jinak typy three.js nevidí `@react-three/fiber`.
+
+## D-017 Odborné otázky z fáze 1 rozhodnuty podle běžné praxe
+
+- Stav: přijato (2026-11-21). Jiří svěřil odborná rozhodnutí Claudovi („udělej to správně dle
+  nejlepšího uvážení“). **Před pilotem doporučujeme, aby výkresy prohlédl učitel technického kreslení.**
+- Slepá díra je vrtaná: dno je kužel s vrcholovým úhlem 120° (`DRILL_POINT_ANGLE_DEG`). Hloubka v popisu
+  součásti je hloubka válcové části, kužel je navíc; validace hlídá, aby dno neprorazilo protější stěnu.
+  Ve výkresu jsou vidět dvě šikmé skryté čáry do vrcholu a osa díry sahá až za vrchol.
+- Osy souměrnosti: kreslí se, když je součást souměrná podle střední roviny a aspoň jeden prvek leží
+  uvnitř (nedotýká se obou konců). Holý kvádr ani prvek přes celou délku osu nevyvolá. Osa jde přes celý
+  pohled s přesahem; osa díry, která na ní leží, se nekreslí podruhé.
+- Skupina čar 0,5 (0,5 / 0,25 mm), poměry čárkování podle ISO 128 (čárka 12d, mezera 3d; čerchovaná
+  24d / 3d / 0,5d / 3d), přesah os 3 mm a přednost čar viditelná > skrytá > stopa řezu > osa zůstávají.
+  Značky `TODO(norma)` jsou odstraněné.
+
+## D-018 Stabilní klíče ploch
+
+- Stav: přijato (2026-11-21)
+- Rozhodnutí: v klíči rovinné plochy `p:<n>:<faceID>` je místo `originalID` z manifoldu pořadí prvku
+  (0 = základní kvádr, 1… = prvky v pořadí popisu).
+- Proč: `originalID` je globální počítadlo instance WASM, takže id hran záviselo na tom, co se stavělo dřív.
+  Distraktory, hodnocení a snapshoty potřebují stejná id při každém sestavení.

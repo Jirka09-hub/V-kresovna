@@ -38,9 +38,9 @@ export const LINE_STYLES: Readonly<Record<LineKind, LineStyle>> = {
 
 /**
  * Skupina čar 0,5: tlustá 0,5 mm, tenká 0,25 mm (poměr 2 : 1).
- * Odsouhlaseno Jiřím jako výchozí návrh 2026-11-21.
+ * Jiří odsouhlasil jako výchozí návrh 2026-11-21.
  */
-// TODO(norma): potvrdit odborníkem skupinu čar 0,5 pro výukové výkresy na obrazovce i v tisku.
+// Rozhodnuto v D-017: skupina 0,5 je běžná volba pro výkresy formátu A4/A3; před pilotem ověří učitel.
 export const LINE_WIDTH_MM: Readonly<Record<LineWeight, number>> = {
   thick: 0.5,
   thin: 0.25,
@@ -54,7 +54,7 @@ export const HATCH_ANGLE_DEG = 45
  * SVG stroke-dasharray. Odvozeno z doporučených poměrů ISO 128 pro čárkovanou (čárka 12d, mezera 3d)
  * a čerchovanou čáru (dlouhá čárka 24d, mezera 3d, tečka ≤ 0,5d, mezera 3d).
  */
-// TODO(norma): ověřit, zda školy a firmy v ČR nepoužívají delší čárky a mezery (výukové výkresy na obrazovce).
+// Rozhodnuto v D-017: držíme poměry z ISO 128, na obrazovce se čáry škálují spolu s výkresem.
 export const DASH_PATTERN_IN_D: Readonly<Record<LinePattern, readonly number[]>> = {
   continuous: [],
   dashed: [12, 3],
@@ -68,18 +68,37 @@ export function dashArrayMm(kind: LineKind): number[] {
   return DASH_PATTERN_IN_D[style.pattern].map((k) => k * d)
 }
 
-/** O kolik osa (čerchovaná) přesahuje obrys díry nebo prvku. */
-// TODO(norma): potvrdit přesah osy přes obrys (navrženo 3 mm).
+/**
+ * O kolik osa (čerchovaná) přesahuje obrys díry nebo prvku. V praxi se používá zhruba 2 až 5 mm,
+ * volíme 3 mm (D-017).
+ */
 export const CENTER_LINE_OVERHANG_MM = 3
 
 /**
  * Když se v pohledu kryje více čar, kreslí se ta s nejvyšší předností (nižší číslo = vyšší přednost).
  * Viditelná hrana přebije skrytou, skrytá přebije osu.
  */
-// TODO(norma): potvrdit pořadí přednosti čar (navrženo: viditelná, skrytá, stopa řezu, osa).
+// Pořadí odpovídá běžné praxi technického kreslení (D-017).
 export const LINE_PRIORITY: Readonly<Partial<Record<LineKind, number>>> = {
   visibleEdge: 1,
   hiddenEdge: 2,
   cuttingPlaneLine: 3,
   centerLine: 4,
 }
+
+/**
+ * Vrcholový úhel kuželového dna slepé (vrtané) díry. Šroubovitý vrták má hrot 118°, ve výkresech
+ * se dno kreslí zjednodušeně pod úhlem 120° (D-017). Hloubka slepé díry se udává bez kuželového dna.
+ */
+export const DRILL_POINT_ANGLE_DEG = 120
+
+/** Výška kuželového dna vrtané díry o daném průměru (mm). */
+export function drillPointHeight(diameter: number): number {
+  return diameter / 2 / Math.tan(((DRILL_POINT_ANGLE_DEG / 2) * Math.PI) / 180)
+}
+
+/**
+ * Osa souměrnosti se kreslí, jen když je souměrnost „vidět“: alespoň jeden prvek (díra, drážka…) leží
+ * uvnitř součásti souměrně s rovinou souměrnosti. U holého kvádru se osy nekreslí (D-017).
+ */
+export const SYMMETRY_AXIS_REQUIRES_FEATURE = true
