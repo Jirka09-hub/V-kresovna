@@ -3,16 +3,28 @@
  * Závisí jen na typech z `@vykresovna/exercises`.
  */
 import {
+  INTRO_PART_ERRORS,
   INTRO_PART_FEATURES,
   INTRO_PART_HIDDEN,
   INTRO_PART_HOLES,
   INTRO_PART_READING,
   INTRO_PART_VIEWS,
 } from './parts'
+import type { DrawingMutation } from '@vykresovna/exercises'
 import type { FixedTask, Lesson, Module, TaskPlanItem } from './types'
 
 export * from './types'
 export * from './parts'
+
+/**
+ * Chyba v ukázce lekce 6: spodní hrana výřezu vzadu je zepředu schovaná, v nárysu je ale
+ * nakreslená plnou čarou. Id hrany z enginu; platnost hlídá test v aplikaci.
+ */
+export const INTRO_ERROR: DrawingMutation = {
+  kind: 'hidden-as-visible',
+  view: 'front',
+  edgeIds: ['p:0:5|p:2:1#0'],
+}
 
 /** Pilotní modul „Pohledy a řezy jednoduchých součástí“ (docs/plan.md, 5.4). */
 export const PILOT_MODULE: Module = {
@@ -29,6 +41,7 @@ export const PILOT_MODULE: Module = {
         { kind: 'assign-views', difficulty: 1, count: 2 },
         { kind: 'assign-views', difficulty: 2, count: 1 },
       ],
+      adaptive: { count: 1, kinds: ['assign-views'], minDifficulty: 1, maxDifficulty: 3 },
     },
     {
       slug: 'viditelne-a-skryte-hrany',
@@ -38,6 +51,12 @@ export const PILOT_MODULE: Module = {
         { kind: 'assign-views', difficulty: 2, count: 1 },
         { kind: 'missing-view', difficulty: 1, count: 2 },
       ],
+      adaptive: {
+        count: 1,
+        kinds: ['assign-views', 'missing-view'],
+        minDifficulty: 1,
+        maxDifficulty: 2,
+      },
     },
     {
       slug: 'diry-a-osy',
@@ -60,6 +79,12 @@ export const PILOT_MODULE: Module = {
         { kind: 'missing-view', difficulty: 2, count: 2 },
         { kind: 'drawing-to-model', difficulty: 2, count: 1 },
       ],
+      adaptive: {
+        count: 1,
+        kinds: ['missing-view', 'drawing-to-model'],
+        minDifficulty: 2,
+        maxDifficulty: 3,
+      },
     },
     {
       slug: 'drazky-osazeni-zkoseni',
@@ -82,6 +107,12 @@ export const PILOT_MODULE: Module = {
         { kind: 'missing-view', difficulty: 3, count: 2 },
         { kind: 'drawing-to-model', difficulty: 3, count: 1 },
       ],
+      adaptive: {
+        count: 1,
+        kinds: ['missing-view', 'drawing-to-model'],
+        minDifficulty: 2,
+        maxDifficulty: 4,
+      },
     },
     {
       slug: 'chybejici-pohled-a-model',
@@ -107,8 +138,36 @@ export const PILOT_MODULE: Module = {
         { kind: 'drawing-to-model', difficulty: 3, count: 2 },
         { kind: 'drawing-to-model', difficulty: 4, count: 1 },
       ],
+      adaptive: {
+        count: 1,
+        kinds: ['missing-view', 'drawing-to-model'],
+        minDifficulty: 3,
+        maxDifficulty: 5,
+      },
     },
-    { slug: 'chyby-ve-vykresu', status: 'coming-soon', intro: [], plan: [] },
+    {
+      slug: 'chyby-ve-vykresu',
+      status: 'available',
+      intro: [
+        { id: 'postup', part: INTRO_PART_ERRORS, demo: { kind: 'linked', xray: true } },
+        {
+          id: 'ukazka',
+          part: INTRO_PART_ERRORS,
+          demo: { kind: 'error-example', mutation: INTRO_ERROR },
+        },
+      ],
+      plan: [
+        { kind: 'find-error', difficulty: 1, count: 1 },
+        { kind: 'find-error', difficulty: 2, count: 1 },
+        { kind: 'find-error', difficulty: 3, count: 1 },
+      ],
+      adaptive: {
+        count: 2,
+        kinds: ['find-error', 'missing-view'],
+        minDifficulty: 1,
+        maxDifficulty: 5,
+      },
+    },
     { slug: 'rez-a-srafovani', status: 'coming-soon', intro: [], plan: [] },
     { slug: 'koty', status: 'coming-soon', intro: [], plan: [] },
     { slug: 'zaverecny-test', status: 'coming-soon', intro: [], plan: [] },
@@ -138,14 +197,22 @@ export function expandPlan(
   )
 }
 
+/** Počet úloh lekce včetně adaptivních. */
+export function lessonTaskCount(lesson: Lesson): number {
+  return expandPlan(lesson.plan).length + (lesson.adaptive?.count ?? 0)
+}
+
 /** Součást pro 3D ukázku na začátku dema (animace rozložení). */
 export const DEMO_SHOWCASE_PART = INTRO_PART_VIEWS
 
-/** Pět pevných úloh dema (předvídatelná ukázka); „Další varianta“ mění jen seedy. */
+/**
+ * Pět pevných úloh dema (předvídatelná ukázka); „Další varianta“ mění jen seedy. Všechny čtyři
+ * typy cvičení; „najdi chybu“ nahradila druhé přiřazování pohledů, aby demo zůstalo krátké (D-023).
+ */
 export const DEMO_TASKS: readonly FixedTask[] = [
   { kind: 'assign-views', seed: 1101, difficulty: 1 },
   { kind: 'missing-view', seed: 2202, difficulty: 2 },
   { kind: 'drawing-to-model', seed: 3303, difficulty: 2 },
-  { kind: 'assign-views', seed: 4404, difficulty: 3 },
+  { kind: 'find-error', seed: 4409, difficulty: 2 },
   { kind: 'missing-view', seed: 5505, difficulty: 3 },
 ]

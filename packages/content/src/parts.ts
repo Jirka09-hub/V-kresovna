@@ -56,3 +56,14 @@ export const INTRO_PART_READING: PartSpec = {
     { kind: 'cutout', id: 'v1', box: { min: [56, 0, 0], max: [70, 14, 36] } },
   ],
 }
+
+/** Lekce 6: osazení vlevo, výřez vzadu (zepředu schovaný) a svislá průchozí díra. */
+export const INTRO_PART_ERRORS: PartSpec = {
+  id: 'uvod-chyby',
+  base: { kind: 'block', size: [70, 40, 36] },
+  features: [
+    { kind: 'step', id: 'o1', box: { min: [0, 0, 24], max: [16, 40, 36] } },
+    { kind: 'cutout', id: 'v1', box: { min: [32, 22, 16], max: [56, 40, 36] } },
+    { kind: 'hole', id: 'd1', axis: 'z', at: [44, 11], diameter: 10 },
+  ],
+}

@@ -1,13 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { DEMO_TASKS, expandPlan, getLesson, PILOT_MODULE } from './index'
+import { DEMO_TASKS, expandPlan, getLesson, lessonTaskCount, PILOT_MODULE } from './index'
 
 describe('pilotní modul', () => {
-  it('má 9 lekcí s unikátními slugy, 1–5 dostupné, 6–9 připravujeme', () => {
+  it('má 9 lekcí s unikátními slugy, 1–6 dostupné, 7–9 připravujeme', () => {
     const { lessons } = PILOT_MODULE
     expect(lessons).toHaveLength(9)
     expect(new Set(lessons.map((l) => l.slug)).size).toBe(9)
-    expect(lessons.slice(0, 5).every((l) => l.status === 'available')).toBe(true)
-    expect(lessons.slice(5).every((l) => l.status === 'coming-soon')).toBe(true)
+    expect(lessons.slice(0, 6).every((l) => l.status === 'available')).toBe(true)
+    expect(lessons.slice(6).every((l) => l.status === 'coming-soon')).toBe(true)
+  })
+
+  it('lekce 6 procvičuje hledání chyb, adaptivní úlohy jsou v rozumném rozsahu', () => {
+    const lesson = getLesson('chyby-ve-vykresu')!.lesson
+    expect(lesson.plan.every((p) => p.kind === 'find-error')).toBe(true)
+    expect(lesson.intro.some((s) => s.demo.kind === 'error-example')).toBe(true)
+    expect(lessonTaskCount(lesson)).toBe(5)
+    for (const l of PILOT_MODULE.lessons) {
+      if (!l.adaptive) continue
+      expect(l.adaptive.count).toBeGreaterThan(0)
+      expect(l.adaptive.kinds.length).toBeGreaterThan(0)
+      expect(l.adaptive.minDifficulty).toBeLessThanOrEqual(l.adaptive.maxDifficulty)
+    }
   })
 
   it('každá dostupná lekce má 1–2 úvodní obrazovky a aspoň jednu úlohu', () => {
@@ -50,10 +63,10 @@ describe('pilotní modul', () => {
 })
 
 describe('demo', () => {
-  it('má 5 úloh a obsahuje všechny tři typy cvičení', () => {
+  it('má 5 úloh a obsahuje všechny čtyři typy cvičení', () => {
     expect(DEMO_TASKS).toHaveLength(5)
     expect(new Set(DEMO_TASKS.map((t) => t.kind))).toEqual(
-      new Set(['assign-views', 'missing-view', 'drawing-to-model']),
+      new Set(['assign-views', 'missing-view', 'drawing-to-model', 'find-error']),
     )
     expect(new Set(DEMO_TASKS.map((t) => t.seed)).size).toBe(5)
   })
