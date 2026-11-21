@@ -187,3 +187,37 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   pro různé jmenné prostory).
 - Pozn. k testům: Playwright snímek celé stránky může u plátna v režimu „na vyžádání“ ukázat starší snímek;
   snímek samotného prvku je aktuální. Testy proto ověřují stav přes atributy (`data-rotation`), ne pixely.
+
+## D-022 Kótování výkresů
+
+- Stav: přijato (2026-11-21), odborné volby podle běžné školní praxe (D-017), **ke kontrole učitelem**.
+- Kóty se odvozují z popisu součásti (`PartSpec`), ne ze sítě: `partDimensions(spec)` v
+  `packages/engine/src/dimensions/semantic.ts`. Pro každou osu se kandidáti berou v pořadí celkový rozměr →
+  tloušťka základní desky (když ji žebra přesahují) → velikosti prvků (a hloubka slepé díry) → polohy prvků
+  a kóta se přijme, jen když spojuje dosud neurčené souřadnice (union-find). Tak je každý rozměr na výkrese
+  jednou a nevzniká uzavřený řetězec kót. Průměry děr a zkosení se přidají vždy.
+- Prvek, který se dotýká stěny, se kótuje od ní (velikost výřezu, osazení, hloubka drážky); prvek uvnitř
+  velikostí a polohou od základny (levá, přední, spodní stěna). Poloha prvku ležícího na nakreslené ose
+  souměrnosti se nekótuje. Díra: ⌀ u kružnice (šikmá kótovací čára přes střed, text na prodloužení vně
+  kružnice), poloha středu od základny, u slepé díry hloubka válcové části bez kuželového dna.
+- Zkosení 45° se kótuje zkráceně „8×45°“ na odvěsně v pohledu podél zkosené hrany.
+- Volba pohledu: skutečný tvar prvku (+4), viditelná hrana na každém konci kóty (+2), skrytá (+1); při shodě
+  nárys > půdorys > bokorys. Kóta, kterou nejde ukázat v žádném kresleném pohledu, se vynechá.
+- Rozmístění: kóty vně obrysu na straně bližší prvku (při shodě vně sestavy pohledů), kratší blíž k obrysu,
+  každá v nejbližší řadě, kde nepřekryje cizí text a kótovací čára nekříží cizí pomocnou čáru. Pomocné čáry
+  se navzájem křížit smějí (osazení v rohu). Pomocná čára k hraně uvnitř pohledu (např. dno drážky) vede
+  přes pohled; obrys, který pokračuje ve směru pomocné čáry, ji „posune“ až na svůj konec. Výkres se zvětší
+  o místo pro kóty (okraje po sloupcích a řádcích mřížky), `VIEW_GAP_MM` zůstává 16 mm.
+- Výkres bez `dimensions: true` je bajtově stejný jako dřív (pole `dimensions` v pohledu chybí).
+- Konstanty v `packages/drafting-standards/src/dimensions.ts`; **ke kontrole učitelem**:
+  - výška písma 3,5 mm, text 1 mm nad kótovací čarou, svislé kóty otočené o −90° (čtou se zprava),
+  - pomocná čára začíná přímo na obrysu (mezera 0 mm) a přesahuje kótovací čáru o 2 mm,
+  - první kótovací čára 10 mm od obrysu, další po 8 mm,
+  - šipka plná, délka 3 mm, rozevření 20° (šířka asi 1 mm); šipky zvenku, když je kóta kratší než 7 mm,
+  - text, který se mezi pomocné čáry nevejde, jde za konec kóty (kótovací čára se pod ním prodlouží),
+  - celá čísla bez desetinné části, jinak desetinná čárka; „⌀“ před průměrem; zkosení „8×45°“,
+  - hloubka slepé díry se kótuje k čárkovaným (skrytým) čarám, protože bez řezu jinak nejde
+    (v řezu by se kótovala lépe; až bude řez, přesunout),
+  - díry stejného průměru se kótují každá zvlášť (zatím ne „2× ⌀8“).
+- Písmo kót ve SVG: DejaVu Sans / Liberation Sans / Arial (bezpatkové; šířka textu se odhaduje bez DOM
+  podle nejširšího z nich), velikost tak, aby výška číslic byla 3,5 mm.

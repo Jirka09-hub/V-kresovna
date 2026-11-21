@@ -15,6 +15,9 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
   (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
   Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
+- Kótování (D-022): `createDrawing(spec, mesh, { dimensions: true })`, kód v `packages/engine/src/dimensions/`,
+  pravidla v `packages/drafting-standards/src/dimensions.ts`, snapshoty `packages/engine/test/__snapshots__/dims/`.
+  V laboratoři přepínač „Kóty“.
 
 ## Jak pracujeme
 
