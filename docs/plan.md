@@ -1,6 +1,7 @@
 # Výkresovna – plán pilotní verze
 
-> Stav: **návrh k odsouhlasení** (krok 1 zadání). Žádný aplikační kód zatím neexistuje.
+> Stav: **schváleno Jiřím 2026-11-21** s jednou změnou: hosting na **Cloudflare** (místo Vercelu).
+> Otázky z kapitoly 11 Jiří odsouhlasil podle doporučení (včetně přihlášení bez e-mailu).
 > Pracovní název produktu: Výkresovna. Modul pilotu: **„Pohledy a řezy jednoduchých součástí“**.
 
 Obsah:
@@ -34,8 +35,9 @@ Obsah:
   GPU přístup přes depth buffer použijeme jen pro „rentgen“ skrytých hran v živém 3D prohlížeči.
 - **Backend**: nový Supabase projekt v EU (Frankfurt), Auth + Postgres + RLS. Každý řádek s daty účastníka
   nese `org_id`; organizace nikdy nevidí data jiné organizace, ověřeno pgTAP testy v CI.
-- **Hosting**: **Vercel** (nativní podpora Next.js, náhledové deploye pro každý PR, funkce v regionu
-  Frankfurt vedle Supabase). Cloudflare by vyžadoval adaptér OpenNext a víc ladění.
+- **Hosting**: **Cloudflare Workers** přes adaptér OpenNext (`@opennextjs/cloudflare`). Jiří má na
+  Cloudflare placený účet; statické soubory i WASM jdou z CDN, aplikace běží na Workers. Původně
+  navržený Vercel nahrazen (viz D-011).
 - **Obsah (moduly, lekce, typy úloh) jako kód** v repozitáři, verzovaný v gitu. V databázi jen odkazy
   (slugy) a výsledky. Úlohy se generují deterministicky ze `seed`, takže se dají kdykoli znovu přehrát
   i ověřit na serveru.
@@ -143,9 +145,9 @@ nemůžou žít uvnitř `apps/web/lib`. Pořád je to jeden modul s konstantami 
 | Drag & drop | dnd-kit | má vestavěné ovládání klávesnicí (cvičení 1) |
 | i18n | next-intl | `cs` výchozí, `sk` a `de` připravené |
 | Backend | Supabase (Postgres, Auth, RLS), region eu-central-1 | nový samostatný projekt |
-| E-mail | Resend (nebo SMTP dle tvé volby) | notifikace z formuláře „Chci pilot“ |
+| E-mail | Cloudflare Email Routing (`send_email` binding) pro notifikace Jiřímu; Supabase Auth e-maily přes vlastní SMTP později | notifikace z formuláře „Chci pilot“ |
 | PDF | `@react-pdf/renderer` na serveru, vložený font s češtinou | certifikát |
-| Hosting | Vercel, funkce v regionu `fra1` | viz 2.4 |
+| Hosting | Cloudflare Workers + OpenNext | viz 2.4 |
 | Testy | Vitest, fast-check (property testy), Playwright, pgTAP | |
 | Kvalita | ESLint (flat config) + Prettier, `eslint-plugin-i18next` (zákaz textů natvrdo v JSX) | |
 
@@ -158,8 +160,14 @@ nemůžou žít uvnitř `apps/web/lib`. Pořád je to jeden modul s konstantami 
 | Region vedle Supabase (Frankfurt) | ano (`fra1`) | edge všude, Node runtime omezeně |
 | Cena pro komerční pilot | plán Pro (Hobby nesmí komerčně) | velmi levné |
 
-**Volba: Vercel.** Je to nejkratší cesta k profesionálně běžící aplikaci; případný přechod na Cloudflare
-později nebrání nic v architektuře.
+**Původní návrh: Vercel. Rozhodnutí Jiřího: Cloudflare** (placený účet už existuje). Důsledky:
+
+- Next.js poběží přes `@opennextjs/cloudflare` na Workers (Node.js kompatibilita zapnutá).
+- Serverový kód (server actions, route handlers) běží na Workers: žádné nativní Node moduly, PDF certifikátu
+  generujeme knihovnou, která na Workers funguje (ověřím ve fázi 4), velikost Workeru hlídáme.
+- Těžký engine (manifold WASM) běží v prohlížeči; na serveru ho nepotřebujeme pro běh stránek.
+- Deploy: Cloudflare Workers Builds napojené na GitHub (produkce z `main`, náhledy z větví).
+- Výhoda: CDN a WASM soubory blízko uživatelům v ČR, bez omezení „Hobby nesmí komerčně“.
 
 ---
 
@@ -503,7 +511,7 @@ Klíčové funkce (`security definer`, `set search_path = ''`):
 
 ### 7.4 GDPR a nezletilí
 
-- Data v EU (Supabase Frankfurt, funkce Vercel `fra1`), zpracovatelské smlouvy (DPA) se Supabase, Vercel, Resend.
+- Data v EU (Supabase Frankfurt); Cloudflare Workers neukládají osobní data, jen je zpracují při požadavku. Zpracovatelské smlouvy (DPA) se Supabase a Cloudflare.
 - Jen nezbytné cookies (session přihlášení) → není potřeba cookie lišta. Žádné reklamy, žádné trackery
   třetích stran. Analytika jen anonymní (vlastní počítadla v DB bez osobních údajů, nebo Plausible; viz otázky).
 - Stránka zásad zpracování, smazání účtu v profilu, retence `pilot_requests` a pokusů definovaná.
@@ -524,7 +532,7 @@ Klíčové funkce (`security definer`, `set search_path = ''`):
 | Vizuální snapshoty | Playwright | 10 testovacích výkresů (PNG), klíčové obrazovky; běží v Docker obrazu Playwright, aby se nelišily podle OS |
 
 CI (GitHub Actions) na každý PR: lint → typecheck → Vitest → pgTAP (Supabase CLI) → build → Playwright.
-Vercel k tomu vytvoří náhledový deploy.
+Cloudflare Workers Builds k tomu vytvoří náhledový deploy.
 
 ---
 
@@ -534,7 +542,7 @@ Odhady jsou hrubé, v pracovních dnech vývoje (já + tvoje kontroly), a nejví
 
 | Fáze | Obsah | Složitost | Odhad | Co potřebuju od tebe |
 |---|---|---|---|---|
-| **0** | Monorepo, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt (EU), deploy prázdné aplikace na Vercel, next-intl kostra, CLAUDE.md | S | 1 den | účty/přístupy (Vercel, Supabase), doména, větev `main` |
+| **0** | Monorepo, ESLint/Prettier, Vitest, Playwright, CI, Supabase projekt (EU), deploy prázdné aplikace na Cloudflare, next-intl kostra, CLAUDE.md | S | 1 den | napojení repa v Cloudflare, doména |
 | **1** | Engine: prototyp CSG (manifold vs. three-bvh-csg), `PartSpec` + generátor, extrakce hran, viditelnost (přístup B), SVG výkres se styly čar a osami, 3D prohlížeč s kostkou orientace, animace rozložení, 10 testovacích součástí se snapshoty | **XL** | 8–12 dní | **kontrola 10 výkresů** před pokračováním, odpovědi na `TODO(norma)` |
 | **2** | Cvičení 1–3, generátor distraktorů s kontrolou odlišnosti, hodnocení s vysvětlením chyb, výklad k lekcím 1–5, demo režim, nasazení na doménu | L | 6–8 dní | zpětná vazba k vysvětlivkám a obtížnostem |
 | **3** | Cvičení 4–6, interaktivní řez (stencil + šrafy), 2D řez se stopou A–A, kótování z prvků, lekce 6–9, adaptivita | L | 7–9 dní | kontrola řezů a kót |
@@ -568,6 +576,10 @@ Po každé fázi se zastavím a napíšu: co je hotové, jak to vyzkoušíš (ko
 
 ## 11. Otázky na Jiřího
 
+> **Odpovězeno 2026-11-21:** vše podle doporučení níže, přihlášení bez e-mailu ano, hosting Cloudflare,
+> Supabase projekt založím sám, `main` založen. Hodnoty u otázek 1–5 jsou tedy výchozí návrh, který
+> zůstává označený `TODO(norma)`, dokud výkresy z fáze 1 nezkontroluje odborník.
+
 **Odborná pravidla** (budou v kódu jako `TODO(norma)`, dokud je nepotvrdíš):
 
 1. **Tloušťky a vzory čar**: navrhuji skupinu čar 0,5 (tlustá 0,5 mm, tenká 0,25 mm) a vzory čárkování
@@ -593,8 +605,7 @@ Po každé fázi se zastavím a napíšu: co je hotové, jak to vyzkoušíš (ko
    nebo všechny účastníky organizace? Admin organizace vidí vše.
 9. **Člen více organizací**: může být jeden uživatel členem více firem (agentura)? Navrhuji ano,
    s oddělenými výsledky podle firmy.
-10. **Účty a náklady**: založíš účty Vercel (komerční provoz vyžaduje plán Pro, cca 20 USD/měsíc)
-    a Supabase (pro pilot doporučuji Pro, cca 25 USD/měsíc, Free projekt se při nečinnosti uspává)?
+10. **Účty a náklady**: hosting na Cloudflare (Jiří má placený účet). Supabase (pro pilot doporučuji Pro, cca 25 USD/měsíc, Free projekt se při nečinnosti uspává)?
     Supabase projekt umím založit sám přes propojený konektor, pokud mi řekneš, ve které organizaci
     a na jakém plánu.
 11. **Doména a e-mail**: jaká doména a na jakou adresu chodí poptávky z formuláře? Souhlasíš s Resend
