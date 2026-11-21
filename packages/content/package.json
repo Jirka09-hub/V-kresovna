@@ -1,0 +1,16 @@
+{
+  "name": "@vykresovna/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Obsah: moduly, lekce a úlohy jako data",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@vykresovna/exercises": "workspace:*"
+  }
+}

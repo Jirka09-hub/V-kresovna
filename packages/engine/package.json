@@ -1,0 +1,16 @@
+{
+  "name": "@vykresovna/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Geometrie součástí, projekce, viditelnost hran a SVG výkres. Bez Reactu a DOM.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@vykresovna/drafting-standards": "workspace:*"
+  }
+}
