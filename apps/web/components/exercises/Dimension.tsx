@@ -63,9 +63,10 @@ export function Dimension({ task, onResult, onNext, nextLabel }: ExerciseProps<D
     setInvalid(false)
     setBusy(true)
     try {
-      const r = await evaluateAnswer(task, { kind: 'dimension', value: n })
+      const answer = { kind: 'dimension', value: n } as const
+      const r = await evaluateAnswer(task, answer)
       setResult(r)
-      onResult(r)
+      onResult(r, answer)
     } finally {
       setBusy(false)
     }

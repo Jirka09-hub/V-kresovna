@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./projection": "./src/projection/hlr.ts",
     "./fixtures": "./src/fixtures/test-parts.ts",
-    "./section": "./src/section/index.ts"
+    "./section": "./src/section/index.ts",
+    "./version": "./src/version.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

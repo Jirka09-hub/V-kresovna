@@ -64,9 +64,10 @@ export function DrawingToModel({
     if (state || busy) return
     setBusy(true)
     try {
-      const result = await evaluateAnswer(task, { kind: 'drawing-to-model', optionId: o.id })
+      const answer = { kind: 'drawing-to-model', optionId: o.id } as const
+      const result = await evaluateAnswer(task, answer)
       setState({ chosenId: o.id, result })
-      onResult(result)
+      onResult(result, answer)
     } finally {
       setBusy(false)
     }

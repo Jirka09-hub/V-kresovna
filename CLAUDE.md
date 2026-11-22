@@ -26,11 +26,23 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Fáze 3: cvičení 4 „Najdi chybu ve výkresu“ a adaptivita (D-023): `packages/exercises/src/find-error.ts`,
   `adaptivity.ts` (čisté, subpath `@vykresovna/exercises/adaptivity`), UI `FindError.tsx`; na konci lekcí
   adaptivní úlohy z historie relace.
-- Fáze 3 dokončená (D-024), **čeká na Jiřího kontrolu**: cvičení 5 „Řez“ (vyber řez A–A / umísti rovinu,
+- Fáze 3 dokončená (D-024) a sloučená (PR #4, 2026-11-22): cvičení 5 „Řez“ (vyber řez A–A / umísti rovinu,
   `packages/exercises/src/section.ts`, UI `Section.tsx`) a 6 „Odečti kótu“ (`dimension.ts`, `Dimension.tsx`).
   Lekce 1–9 dostupné: 7 řez, 8 kóty (živé úvody `SectionDemo`, `DimensionDemo`), 9 závěrečný test
   (`FINAL_TEST` v `packages/content`, UI `FinalTest.tsx`, nic se neukládá). Demo: 5 úloh pěti typů.
   Styly SVG výkresu omezené na třídu `vk-drawing` (`scopeCss`). `ENGINE_VERSION` 0.4.0.
+- Fáze 4, účty (D-026, D-027): migrace `supabase/migrations/20261122070000_organizace_a_vysledky.sql`,
+  pgTAP `supabase/tests/010_organizace.sql`. Účty zakládá jen server (`lib/supabase/admin.ts`,
+  `SUPABASE_SECRET_KEY`), přihlášení e-mailem nebo jménem (`lib/auth/login-id.ts`, technická doména
+  `ucet.vykresovna.invalid`), připojení `/cs/pripojit?kod=`, pozvánky `/cs/pozvanka/<token>`, aktivní
+  organizace v cookie `vk_org`, klientský `useViewer()` (`components/auth/ViewerContext.tsx`).
+- Fáze 4, správa (D-028): `/cs/skolitel` (skupiny, matice postupu, hromadné účty, CSV), `/cs/sprava`
+  (správce organizace), `/cs/platforma` (provozovatel: organizace a licence).
+- Fáze 4, výsledky a certifikát (D-029): lekce a test ukládají přihlášenému s platnou licencí průchod
+  a pokusy z prohlížeče (`apps/web/lib/results/`, `TaskSequence onOutcome`), adaptivita čte posledních
+  60 pokusů z DB. Certifikát: PDF v prohlížeči (`lib/certificate/pdf.ts`, písmo `public/fonts/`), ověření
+  `/cs/overeni/<kód>`. `/cs/ucet`: jméno, heslo, odchod z organizace, certifikáty, smazání účtu.
+  `ENGINE_VERSION` je v `packages/engine/src/version.ts` (subpath `@vykresovna/engine/version`).
 - Seznam ke kontrole učitelem před pilotem: `docs/kontrola-ucitelem.md` (při novém odborném rozhodnutí
   doplnit i tam).
 
@@ -121,13 +133,18 @@ pnpm build && pnpm test:e2e    # Playwright proti produkčnímu buildu (next sta
 pnpm --filter web cf:build     # build pro Cloudflare Workers (OpenNext)
 pnpm --filter web cf:preview   # build + lokální běh ve workerd (wrangler)
 pnpm db:start && pnpm db:test  # lokální Supabase (Docker) + pgTAP testy RLS
+pnpm db:env                    # apps/web/.env.local s lokální Supabase (build + e2e s účty míří na ni)
+pnpm db:types                  # typy databáze z lokální Supabase
 ```
 
 ## Infrastruktura
 
 - Supabase projekt `vykresovna`, ref `lzzbnvqkwbcjsbmktelm`, region eu-central-1 (plán Free; před pilotem Pro).
-  Migrace v `supabase/migrations/`; na vzdálený projekt se zatím aplikují přes Supabase MCP a soubor
-  se pojmenuje podle verze, kterou vrátí `list_migrations`, aby lokál a produkce seděly.
+  Migrace v `supabase/migrations/`. Na produkci je nahrává Jiří sám v SQL Editoru: připravit jeden soubor
+  (migrace + `insert into supabase_migrations.schema_migrations (version, name)` se stejnými verzemi jako
+  názvy souborů, celé v `begin; … commit;`) do `/mnt/project-files/`, předem ho vyzkoušet na lokální DB
+  resetované na stav produkce (`supabase db reset --version <poslední nahraná>`). Potvrzovací okna
+  Supabase MCP se Jiřímu nezobrazují.
 - Veřejné hodnoty Supabase jsou v `apps/web/.env` (publishable klíč je určený pro prohlížeč). Tajné klíče jen
   do `.env.local` / Cloudflare secrets.
 - Cloudflare Workers přes `@opennextjs/cloudflare`, konfigurace `apps/web/wrangler.jsonc`. Deploy přes

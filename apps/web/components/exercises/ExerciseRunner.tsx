@@ -1,6 +1,6 @@
 'use client'
 
-import type { Difficulty, ErrorCode, ExerciseKind, TaskResult } from '@vykresovna/exercises'
+import type { Answer, Difficulty, ErrorCode, ExerciseKind, TaskResult } from '@vykresovna/exercises'
 import { useTranslations } from 'next-intl'
 import { useTask } from '@/lib/engine/hooks'
 import { AssignViews } from './AssignViews'
@@ -35,7 +35,7 @@ export const KIND_KEY: Record<
 
 type Props = {
   task: TaskRef
-  onResult: (r: TaskResult) => void
+  onResult: (r: TaskResult, answer?: Answer) => void
   onNext: () => void
   nextLabel: string
 }

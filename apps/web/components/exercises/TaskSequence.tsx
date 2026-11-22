@@ -1,9 +1,10 @@
 'use client'
 
-import type { ErrorCode, TaskResult } from '@vykresovna/exercises'
+import type { Answer, ErrorCode, TaskResult } from '@vykresovna/exercises'
 import { useTranslations } from 'next-intl'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { panel } from '@/components/ui'
+import type { OutcomeEvent } from '@/lib/results/recorder'
 import { recordAttempt } from '@/lib/session-history'
 import { ExerciseRunner, KIND_KEY, type TaskRef } from './ExerciseRunner'
 import { CheckIcon, CrossIcon } from './icons'
@@ -37,9 +38,14 @@ type Props = {
    */
   renderSummary?: (tasks: readonly TaskRef[], outcomes: readonly Outcome[]) => ReactNode
   summaryTitle?: string
+  /**
+   * Výsledek každé úlohy (i přeskočené, `result: null`), každá úloha jen jednou. Slouží k ukládání
+   * výsledků (D-029); bez něj se nic neukládá.
+   */
+  onOutcome?: (e: OutcomeEvent) => void
 }
 
-/** Úlohy jedna po druhé s ukazatelem postupu a shrnutím na konci. Nic se neukládá. */
+/** Úlohy jedna po druhé s ukazatelem postupu a shrnutím na konci. */
 export function TaskSequence({
   tasks: items,
   resolveAdaptive,
@@ -49,6 +55,7 @@ export function TaskSequence({
   testMode = false,
   renderSummary,
   summaryTitle,
+  onOutcome,
 }: Props) {
   const ts = useTranslations('sequence')
   const t = useTranslations('exercises')
@@ -68,7 +75,14 @@ export function TaskSequence({
   const heading = useRef<HTMLHeadingElement>(null)
   const top = useRef<HTMLDivElement>(null)
   const first = useRef(true)
+  // úlohy, jejichž výsledek už byl ohlášen, a kdy se ukázala aktuální úloha (doba řešení)
+  const reported = useRef(new Set<number>())
+  const shownAt = useRef(0)
   const done = index >= items.length
+
+  useEffect(() => {
+    shownAt.current = performance.now()
+  }, [index])
 
   // při přechodu na další úlohu (ne při prvním zobrazení) přesunout fokus na nadpis
   useEffect(() => {
@@ -82,7 +96,20 @@ export function TaskSequence({
   }, [index])
 
   const tasks = items.map((item, i) => resolved[i] ?? item)
+  const report = (task: TaskRef, result: TaskResult | null, answer: Answer | null) => {
+    if (reported.current.has(index)) return
+    reported.current.add(index)
+    onOutcome?.({
+      index,
+      task,
+      result,
+      answer,
+      durationMs: performance.now() - shownAt.current,
+    })
+  }
   const next = () => {
+    const skipped = resolved[index]
+    if (skipped && !reported.current.has(index)) report(skipped, null, null)
     setOutcomes((o) => o.map((x, i) => (i === index && x === null ? 'skipped' : x)))
     const n = index + 1
     if (n < items.length && !resolved[n]) {
@@ -127,8 +154,9 @@ export function TaskSequence({
           <ExerciseRunner
             key={`${index}:${current.kind}:${current.seed}:${current.focus ?? ''}`}
             task={current}
-            onResult={(r) => {
+            onResult={(r, answer) => {
               recordAttempt(current, r)
+              report(current, r, answer ?? null)
               setOutcomes((o) => o.map((x, i) => (i === index ? r : x)))
               if (testMode) {
                 // test: bez zpětné vazby rovnou další úloha

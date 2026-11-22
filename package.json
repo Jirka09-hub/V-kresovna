@@ -18,7 +18,8 @@
     "test:e2e": "pnpm --filter web test:e2e",
     "db:start": "supabase start",
     "db:test": "supabase test db",
-    "db:types": "supabase gen types typescript --project-id lzzbnvqkwbcjsbmktelm > apps/web/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local --schema public > apps/web/lib/supabase/database.types.ts && prettier --write apps/web/lib/supabase/database.types.ts",
+    "db:env": "node scripts/local-supabase-env.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
