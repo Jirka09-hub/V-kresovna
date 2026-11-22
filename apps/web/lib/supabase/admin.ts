@@ -21,3 +21,16 @@ export function createAdminClient() {
 export function hasAdminKey(): boolean {
   return !!process.env.SUPABASE_SECRET_KEY
 }
+
+export type AdminKeyStatus = 'ok' | 'missing-secret' | 'invalid-secret'
+
+/** Funguje tajný klíč proti databázi? (volá neškodnou funkci dostupnou jen service role) */
+export async function checkAdminKey(): Promise<AdminKeyStatus> {
+  if (!hasAdminKey()) return 'missing-secret'
+  try {
+    const { error } = await createAdminClient().rpc('platform_invitation_valid', { p_token: '-' })
+    return error ? 'invalid-secret' : 'ok'
+  } catch {
+    return 'invalid-secret'
+  }
+}

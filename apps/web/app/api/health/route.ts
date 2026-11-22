@@ -1,6 +1,6 @@
 import { ENGINE_VERSION } from '@vykresovna/engine'
 import { PROJECTION_METHOD } from '@vykresovna/drafting-standards'
-import { hasAdminKey } from '@/lib/supabase/admin'
+import { checkAdminKey } from '@/lib/supabase/admin'
 import { supabaseEnv } from '@/lib/supabase/env'
 
 export const dynamic = 'force-dynamic'
@@ -20,7 +20,8 @@ export async function GET() {
     engineVersion: ENGINE_VERSION,
     projectionMethod: PROJECTION_METHOD,
     supabase,
-    // jen zda je tajný klíč nastavený (hodnota se nikdy nevrací); bez něj nejde zakládat účty
-    accounts: hasAdminKey() ? 'ok' : 'missing-secret',
+    // jen zda je tajný klíč nastavený a databáze ho přijme (hodnota se nikdy nevrací);
+    // bez něj nejde zakládat účty
+    accounts: await checkAdminKey(),
   })
 }
