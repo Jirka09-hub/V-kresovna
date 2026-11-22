@@ -182,6 +182,13 @@ test.describe('řez a kóty', () => {
       // během testu žádná zpětná vazba, rovnou další úloha
       await expect(page.getByTestId('feedback')).toHaveCount(0)
       await expect(page.getByTestId('test-saved')).toContainText(`${i}`)
+      // během testu postup ukazuje jen „odpovězeno“, ne jestli správně
+      if (i < 12) {
+        await expect(page.locator('[data-testid="progress"] li').nth(i - 1)).toHaveAttribute(
+          'data-state',
+          'answered',
+        )
+      }
     }
     expect(kinds.size).toBe(6)
 
@@ -194,6 +201,9 @@ test.describe('řez a kóty', () => {
     const mistakes = page.getByTestId('test-mistakes').locator('li')
     await expect(mistakes).toHaveCount(1)
     await expect(mistakes.first()).toContainText('Odečti kótu')
+    // po testu už postup ukazuje správně / špatně
+    await expect(page.locator('[data-testid="progress"] li[data-state="done"]')).toHaveCount(11)
+    await expect(page.locator('[data-testid="progress"] li[data-state="wrong"]')).toHaveCount(1)
     await expect(page.getByTestId('certificate-note')).toBeVisible()
 
     await page.getByTestId('retry-test').click()

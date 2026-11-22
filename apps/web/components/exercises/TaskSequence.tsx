@@ -193,7 +193,8 @@ function Progress({
     <nav aria-label={ts('progressLabel')}>
       <ol className="flex flex-wrap items-center gap-2" data-testid="progress">
         {tasks.map((task, i) => {
-          const state = stepState(outcomes[i], i, index, testMode)
+          // v testu se výsledky ukážou až po poslední úloze
+          const state = stepState(outcomes[i], i, index, testMode && index < tasks.length)
           const label =
             state === 'current'
               ? ts('stepCurrent', { n: i + 1 })
