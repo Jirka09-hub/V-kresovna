@@ -111,6 +111,25 @@ export async function addGroupMember(
   if (error) throw error
 }
 
+/** Lekce přiřazená skupině (volitelně s termínem). */
+export async function createAssignment(
+  groupId: string,
+  lessonSlug: string,
+  dueAt: string | null = null,
+  trainerId?: string,
+) {
+  const { error } = await admin()
+    .from('assignments')
+    .insert({
+      group_id: groupId,
+      module_slug: 'pohledy-a-rezy',
+      lesson_slug: lessonSlug,
+      due_at: dueAt,
+      created_by: trainerId ?? null,
+    })
+  if (error) throw error
+}
+
 /** Klient přihlášený jako daný uživatel (publishable klíč + heslo), pro akce „za uživatele“. */
 export async function userClient(
   username: string,
