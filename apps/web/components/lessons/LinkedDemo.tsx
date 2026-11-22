@@ -1,6 +1,7 @@
 'use client'
 
 import type { IntroFeature, PartSpec } from '@vykresovna/content'
+import type { PartRenderData } from '@vykresovna/engine'
 import type { PartViewerHandle } from '@vykresovna/viewer'
 import { useTranslations } from 'next-intl'
 import { useMemo, useRef, useState } from 'react'
@@ -11,8 +12,7 @@ import { btnPrimary, btnSecondary, panel } from '@/components/ui'
 import { featureDrawingIds, featureEdgeIds, isRelated } from '@/lib/engine/highlight'
 import { useRenderParts } from '@/lib/engine/hooks'
 
-type Props = {
-  part: PartSpec
+type ViewProps = {
   xray?: boolean
   reveal?: boolean
   features?: readonly IntroFeature[]
@@ -22,12 +22,21 @@ type Props = {
  * Živá ukázka: 3D model vedle výkresu. Najetí na hranu zvýrazní tutéž hranu na druhé straně,
  * tlačítka zvýrazní celý prvek (díra, drážka…), rentgen ukáže skryté hrany.
  */
-export function LinkedDemo({ part, xray: xrayInitial = false, reveal = false, features }: Props) {
+export function LinkedDemo({ part, ...rest }: ViewProps & { part: PartSpec }) {
+  const rendered = useRenderParts(useMemo(() => [part], [part]))
+  return <LinkedView data={rendered.data?.[0] ?? null} {...rest} />
+}
+
+/** Totéž nad hotovými daty (např. předpočítanými pro úvodní stránku). null = načítá se. */
+export function LinkedView({
+  data,
+  xray: xrayInitial = false,
+  reveal = false,
+  features,
+}: ViewProps & { data: PartRenderData | null }) {
   const t = useTranslations('linked')
   const tm = useTranslations('model3d')
   const tl = useTranslations('lessons.terms')
-  const rendered = useRenderParts(useMemo(() => [part], [part]))
-  const data = rendered.data?.[0] ?? null
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [xray, setXray] = useState(xrayInitial)
   const [revealed, setRevealed] = useState(!reveal)

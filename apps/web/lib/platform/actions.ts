@@ -87,3 +87,31 @@ export async function createAdminInvitation(
   if (error || !data) return { error: dbError(error) }
   return { link: await appUrl(`/pozvanka/${data}`) }
 }
+
+/** Poptávka pilotu: označit jako vyřízenou (handled=1), nebo vrátit mezi nové (D-030). */
+export async function setPilotRequestHandled(
+  _prev: ManageState,
+  fd: FormData,
+): Promise<ManageState> {
+  const ctx = await requirePlatformAdmin()
+  const id = str(fd, 'id')
+  if (!ctx || !isUuid(id)) return FORBIDDEN
+  const { error } = await ctx.supabase.rpc('set_pilot_request_handled', {
+    p_id: id,
+    p_handled: str(fd, 'handled') === '1',
+  })
+  if (error) return { error: dbError(error) }
+  refresh()
+  return { ok: true }
+}
+
+/** Smazání poptávky pilotu (na žádost odesílatele nebo po vyřízení). */
+export async function deletePilotRequest(_prev: ManageState, fd: FormData): Promise<ManageState> {
+  const ctx = await requirePlatformAdmin()
+  const id = str(fd, 'id')
+  if (!ctx || !isUuid(id)) return FORBIDDEN
+  const { error } = await ctx.supabase.from('pilot_requests').delete().eq('id', id)
+  if (error) return { error: dbError(error) }
+  refresh()
+  return { ok: true }
+}

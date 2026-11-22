@@ -8,3 +8,4 @@ test-results
 apps/web/lib/supabase/database.types.ts
 apps/web/cloudflare-env.d.ts
 **/__snapshots__/**
+apps/web/public/ukazka
