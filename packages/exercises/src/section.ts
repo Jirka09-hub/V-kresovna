@@ -465,7 +465,6 @@ function chooseVariant(
   view: ViewName,
   correct: { fp: string; lines: string },
 ): Built<SectionChooseTask> | null {
-  const correctFp = correct.fp
   const { axis, at, featureId } = plane
   const spec = sectionSpec(axis, at)
   const cuttingPlaneView = CUTTING_PLANE_VIEW[axis]
@@ -473,11 +472,10 @@ function chooseVariant(
   const option = (
     o: Partial<Omit<SectionOption, 'id'>> & Pick<SectionOption, 'errorCode'>,
   ): Omit<SectionOption, 'id'> => ({ part, section: spec, view, ...o })
+  // možnosti se musí lišit i bez os (dvě možnosti lišící se jen osou díry by byly skoro stejné)
   const item = (o: Omit<SectionOption, 'id'>): SectionDistractor | undefined => {
     const fps = sectionFps(meshes, optionRender({ ...o, id: '' }))
-    return fps && fps.fp !== correctFp && fps.lines !== correct.lines
-      ? { fp: fps.fp, option: o }
-      : undefined
+    return fps && fps.lines !== correct.lines ? { fp: fps.lines, option: o } : undefined
   }
   const single = (cat: SectionCat, make: () => Omit<SectionOption, 'id'>) => {
     let done = false
@@ -571,7 +569,7 @@ function chooseVariant(
   const picked = selectDistinct(
     streams,
     SECTION_SLOTS[difficulty].map(withFallback),
-    correctFp,
+    correct.lines,
     true,
   )
   if (!picked) return null

@@ -31,11 +31,11 @@ const SEEDS = seeds(10)
 const sectionFp = (render: Parameters<typeof buildSectionViews>[1]) =>
   viewFingerprint(buildSectionViews(wasm, render)[0]!.views[0]!)
 
-/** Jen to, co je opravdu nakreslené (čáry, kružnice, osy, šrafy), bez obrysů ploch řezu. */
+/** Nakreslené čáry, kružnice a šrafy bez os a bez obrysů ploch řezu. */
 const drawnLines = (render: Parameters<typeof buildSectionViews>[1]) =>
   canonicalView(buildSectionViews(wasm, render)[0]!.views[0]!)
     .split(';')
-    .filter((x) => !/^[FU] /.test(x))
+    .filter((x) => !/^[FUA] /.test(x))
     .join(';')
 
 function section(seed: number, d: (typeof DIFFICULTIES)[number]): SectionTask {
@@ -55,7 +55,7 @@ function checkChoose(task: SectionChooseTask) {
   // každá možnost vypadá jinak (otisk pohledu v řezu včetně ploch řezu a šraf)
   const fps = task.options.map((o) => sectionFp(optionRender(o)))
   expect(new Set(fps).size).toBe(4)
-  // … a liší se i samotnými nakreslenými čarami (ne jen neviditelným dělením obrysu plochy)
+  // … a liší se i samotnými nakreslenými čarami bez os (ne jen osou nebo dělením obrysu plochy)
   expect(new Set(task.options.map((o) => drawnLines(optionRender(o)))).size).toBe(4)
   for (const o of task.options) {
     expect(layoutOk(o.part)).toBe(true)
