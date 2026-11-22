@@ -2,7 +2,7 @@
  * Engine Výkresovny: parametrické součásti, boolovské operace, projekce, viditelnost hran, SVG výkres.
  * Nesmí importovat React, Next.js, DOM ani Supabase (běží v prohlížeči, workeru i Node).
  */
-export const ENGINE_VERSION = '0.4.0'
+export { ENGINE_VERSION } from './version'
 
 export * from './part/spec'
 export * from './part/validate'
