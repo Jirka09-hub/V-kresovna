@@ -295,3 +295,56 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   takže demo ukazuje všechny čtyři typy cvičení.
 - Ke kontrole učitelem: zda „čára navíc“ zrcadlením působí jako věrohodná chyba žáka, a zda je u chyby
   rozmístění správně i klik do pohledu (ne jen tlačítko).
+
+## D-024 Cvičení „Řez“ a „Odečti kótu“, lekce 7–8 a závěrečný test (fáze 3)
+
+- Stav: přijato (2026-11-22), odborné a didaktické volby na seznam ke kontrole učitelem
+  (`docs/kontrola-ucitelem.md`).
+- Kontrakt je jen rozšířený: `EXERCISE_KINDS` má na konci `section` a `dimension`, nové typy úloh
+  (`SectionTask` = `SectionChooseTask | SectionPlaceTask`, `DimensionTask`), odpovědi (`SectionAnswer`
+  s `optionId` nebo `at`, `DimensionAnswer` s `value`) a kódy chyb `SECTION_HOLE_HATCHED`,
+  `SECTION_NOT_HATCHED`, `WRONG_SECTION_PLANE`, `SECTION_HIDDEN_EDGES`, `SECTION_WRONG_DIRECTION`,
+  `DIMENSION_WRONG_FEATURE`, `DIMENSION_NOT_COMBINED`, `DIMENSION_ARITHMETIC`, `DIMENSION_WRONG`.
+  Worker umí navíc `render-section`. Starší úlohy dávají pro stejný seed stejné zadání.
+- **Řez, varianta „vyber řez A–A“** (60 % úloh): dané pohledy se stopou roviny (`CUTTING_PLANE_VIEW`:
+  rovina kolmá na X nebo Z se zakreslí v nárysu, kolmá na Y v půdorysu), místo řezu je prázdné, čtyři
+  možnosti. Rovina vede osou díry nebo napříč průchozí drážkou v polovině její délky; nejčastěji je
+  kolmá na Y, tedy řez nahradí nárys (váhy rovin kolmých na Y / X / Z jsou 3 / 2 / 1, u drážky poloviční).
+  Chybné možnosti: šrafy přes díru (součást bez prvku), bez šraf, jiná rovina, skryté hrany v řezu,
+  pohled z opačné strany (zrcadlově), pozměněná součást. Lehčí obtížnosti dávají přednost zjevným
+  chybám (šrafy), těžší jemnějším (směr pohledu, skryté hrany). Každá možnost má jiný otisk pohledu
+  **i bez os** (dvě možnosti lišící se jen osou díry by byly prakticky stejné).
+- Otisk pohledu v řezu zahrnuje plochy řezu (obrysy bez vrcholů ležících na přímce mezi sousedy),
+  nešrafované plochy, šrafy a stopu roviny; pohled bez řezu má otisk stejný jako dřív.
+- **Řez, varianta „umísti rovinu“** (40 %): vlevo řez A–A, vpravo 3D model s rovinou, kterou žák posouvá
+  tažením úchytu, posuvníkem nebo šipkami (krok 0,5 mm). Správně je každá poloha, kde řez vypadá stejně
+  (úseky mezi stěnami prvků, osy stejných děr), plus tolerance podle obtížnosti 3 / 2,5 / 2 / 1,5 / 1 mm,
+  nejvýš 60 % vzdálenosti k nejbližšímu místu, kde se řez mění. Rovina, u které by tolerance vyšla pod
+  1 mm, se pro tuto variantu nepoužije. Výchozí poloha je vždy mimo toleranci. Po chybě se ukáže řez
+  v rovině žáka a tlačítko „Ukázat správnou rovinu“.
+- **Odečti kótu**: výkres s kótami (nárys, půdorys, bokorys), otázka slovy („Jak daleko je osa díry od
+  přední stěny?“), prvek zvýrazněný ve 3D, odpověď celé číslo v mm, tolerance 0. Obtížnost 1 se ptá hlavně
+  na celkové rozměry a velikosti prvků, 2–3 i na polohy, hloubky a zkosení. Od obtížnosti 4 je část otázek
+  složená (60 %, u 5 85 %): hodnota na výkrese není a spočítá se ze dvou kót (zbývající stěna za drážkou,
+  vzdálenost díry od protější stěny; u 5 i poloha prvku od protější stěny ze tří kót). Výsledek složené
+  otázky nesmí být číslo, které na výkrese je.
+- Hodnocení kót: u složené otázky jedna z potřebných kót → `DIMENSION_NOT_COMBINED`, jiné číslo
+  z výkresu → `DIMENSION_WRONG_FEATURE`, jinak `DIMENSION_ARITHMETIC`; u přímé otázky jiné číslo
+  z výkresu → `DIMENSION_WRONG_FEATURE`, jinak `DIMENSION_WRONG`. Po odpovědi se zvýrazní kóty, ze
+  kterých odpověď plyne.
+- Lekce 7 „Řez a šrafování“ (2 živé obrazovky: rovina řezu a šrafy, úlohy obtížnosti 1–3 + 1 adaptivní),
+  lekce 8 „Kóty: čtení rozměrů“ (2 obrazovky: odkud kam kóta měří, jak dopočítat; obtížnost 1–4 +
+  1 adaptivní z kót nebo řezu).
+- **Závěrečný test** (lekce 9): 12 pevných úloh ze všech šesti typů, obtížnost 2–4, dva stejné typy nejdou
+  po sobě. Seedy úloh plynou z jednoho náhodného seedu testu (`finalTestTasks`), takže stejný seed = stejný
+  test. Během testu se nic nehodnotí nahlas: po odpovědi rovnou další úloha, postup ukazuje jen
+  „odpovězeno“. Na konci skóre, splněno / nesplněno (hranice `FINAL_TEST_PASS_THRESHOLD` = 75 %),
+  rozpis podle typů a vysvětlení každé chyby. Nic se neukládá, certifikát je jen poznámka (přijde s účty).
+- **Demo**: zůstává na 5 úlohách, výběr řezu A–A (seed 5549, obtížnost 2) nahradil druhý „chybějící
+  pohled“. Řez s 3D modelem ukazuje to, čím se produkt liší, a demo tak má pět různých typů.
+- SVG výkresu má třídu `vk-drawing` a všechna pravidla jeho `<style>` jsou omezená na ni (`scopeCss`),
+  takže víc výkresů na stránce si styly nepřebíjí. Obejití přes inline styly (legenda, překryv „najdi
+  chybu“, zásahová čára) jsou pryč. Kresba se nezměnila, snapshoty laboratoře jsou stejné.
+- `ENGINE_VERSION` 0.4.0 (nové typy úloh, jiný otisk pohledu v řezu, jiné SVG).
+- E2E testy volí seedy úloh přes `fixSeeds` (podvrhne `crypto.getRandomValues` pro jedno 32bitové číslo)
+  a odpovídají podle testovacích atributů `data-test-*` (správná možnost, poloha roviny, hodnota kóty).

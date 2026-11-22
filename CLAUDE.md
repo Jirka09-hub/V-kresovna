@@ -24,8 +24,15 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
   (`packages/engine/src/fixtures/section-parts.ts`, snapshoty `rez-*.svg`). 3D: `PartViewer`
   s `sectionPlane` + `onSectionChange`. V laboratoři přepínač „Řez“ a posuvník roviny.
 - Fáze 3: cvičení 4 „Najdi chybu ve výkresu“ a adaptivita (D-023): `packages/exercises/src/find-error.ts`,
-  `adaptivity.ts` (čisté, subpath `@vykresovna/exercises/adaptivity`), UI `FindError.tsx`. Lekce 1–6
-  dostupné (lekce 6 = chyby ve výkresu), 7–9 připravujeme; na konci lekcí adaptivní úlohy z historie relace.
+  `adaptivity.ts` (čisté, subpath `@vykresovna/exercises/adaptivity`), UI `FindError.tsx`; na konci lekcí
+  adaptivní úlohy z historie relace.
+- Fáze 3 dokončená (D-024), **čeká na Jiřího kontrolu**: cvičení 5 „Řez“ (vyber řez A–A / umísti rovinu,
+  `packages/exercises/src/section.ts`, UI `Section.tsx`) a 6 „Odečti kótu“ (`dimension.ts`, `Dimension.tsx`).
+  Lekce 1–9 dostupné: 7 řez, 8 kóty (živé úvody `SectionDemo`, `DimensionDemo`), 9 závěrečný test
+  (`FINAL_TEST` v `packages/content`, UI `FinalTest.tsx`, nic se neukládá). Demo: 5 úloh pěti typů.
+  Styly SVG výkresu omezené na třídu `vk-drawing` (`scopeCss`). `ENGINE_VERSION` 0.4.0.
+- Seznam ke kontrole učitelem před pilotem: `docs/kontrola-ucitelem.md` (při novém odborném rozhodnutí
+  doplnit i tam).
 
 ## Jak pracujeme
 
@@ -96,6 +103,8 @@ Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm (viz D-008).
 - TypeScript strict. Žádné texty natvrdo v komponentách (vše přes `messages/*.json`).
 - Každá nová tabulka: RLS zapnuté + politiky + pgTAP test izolace organizací.
 - Úlohy jsou deterministické ze `seed`; ukládá se `seed` + `engine_version`.
+- E2E: seedy úloh pevně přes `fixSeeds(page, [...])` z `apps/web/e2e/helpers.ts`, správné odpovědi
+  z testovacích atributů `data-test-*` (`data-test-correct`, `data-test-answer-at`, `data-test-answer`).
 - Distraktor musí mít jiný 2D otisk než správná odpověď (jinak se zahodí).
 - Žádné trackery třetích stran, minimum osobních údajů.
 
