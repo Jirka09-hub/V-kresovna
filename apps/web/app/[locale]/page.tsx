@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
-import { use } from 'react'
+import { Suspense, use } from 'react'
+import { AccountDeletedNotice } from '@/components/account/AccountDeletedNotice'
 import { focusRing } from '@/components/ui'
 import { Link } from '@/i18n/navigation'
 
@@ -11,6 +12,9 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
 
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-10 px-4 py-12 sm:px-8 sm:py-20">
+      <Suspense fallback={null}>
+        <AccountDeletedNotice />
+      </Suspense>
       <header className="flex flex-col gap-4">
         <p className="text-sm font-semibold tracking-wide text-accent uppercase">{t('eyebrow')}</p>
         <h1 className="text-3xl font-bold text-balance sm:text-5xl">{t('title')}</h1>
