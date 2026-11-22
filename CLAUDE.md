@@ -43,6 +43,13 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
   60 pokusů z DB. Certifikát: PDF v prohlížeči (`lib/certificate/pdf.ts`, písmo `public/fonts/`), ověření
   `/cs/overeni/<kód>`. `/cs/ucet`: jméno, heslo, odchod z organizace, certifikáty, smazání účtu.
   `ENGINE_VERSION` je v `packages/engine/src/version.ts` (subpath `@vykresovna/engine/version`).
+- Fáze 5 (D-030 až D-032): úvodní stránka `/cs` (živá ukázka z předpočítaného
+  `public/ukazka/ukazka-uvod.json`, vzniká v `apps/web/lib/landing/sample.test.ts`, po změně enginu
+  `pnpm test -u`), formulář „Chci pilot“ (`lib/pilot/`, `components/pilot/`, tabulka `pilot_requests`,
+  funkce `submit_pilot_request` jen pro service role, poptávky v `/cs/platforma`), e-mail přes Cloudflare
+  Email Service až s doménou (README), zásady `/cs/zasady` (texty `privacy` v `messages/cs.json`, údaje
+  o provozovateli doplní Jiří), patička `SiteFooter`. Kvalita 3D podle výkonu: `packages/viewer/src/quality.ts`.
+  Přístupnost hlídá axe v `apps/web/e2e/uvod.spec.ts`.
 - Seznam ke kontrole učitelem před pilotem: `docs/kontrola-ucitelem.md` (při novém odborném rozhodnutí
   doplnit i tam).
 

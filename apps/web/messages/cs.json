@@ -178,7 +178,8 @@
     "reset": "Výchozí pohled",
     "xray": "Rentgen (skryté hrany)",
     "loading": "Načítám 3D model…",
-    "dragHint": "Model otočíte tažením myší nebo prstem."
+    "dragHint": "Model otočíte tažením myší nebo prstem.",
+    "slow": "3D se na tomto zařízení vykresluje pomalu. Zkuste zavřít ostatní okna, nebo se řiďte jen výkresem: úlohy jdou vyřešit i tak."
   },
   "exercises": {
     "kind": {

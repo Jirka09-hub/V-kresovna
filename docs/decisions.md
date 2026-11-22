@@ -495,3 +495,61 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
 - pgTAP `030_vysledky_a_ucet.sql` prochází zápis jako aplikace (průchod, pokus s `focus`, přeskočená
   úloha, uzavření), přiřazení jen vlastních skupin, prošlou licenci, změnu jména, odchod z organizace
   a posledního správce. Test 010 počítá organizace jen ze svých dat (sdílená lokální DB má data z e2e).
+
+## D-030 Formulář „Chci pilot“, upozornění e-mailem a zásady zpracování (fáze 5)
+
+- **Tabulka `pilot_requests`** (migrace `20261122120000_poptavky_pilotu.sql`): segment firma/škola,
+  jméno, organizace, e-mail, nepovinně telefon, počet lidí a zpráva, čas odeslání (`consent_at`),
+  vyřízení (`handled_at`, `handled_by`). RLS: číst a mazat smí jen správce platformy, zapisovat nesmí
+  žádný klient. Ukládá se funkcí `submit_pilot_request`, kterou smí volat jen service role (server).
+- **Ochrana proti spamu**: skryté pole (vyplněné = tváříme se, že se to povedlo, a nic neuložíme),
+  čas vyplnění aspoň 3 s a nejvýš 24 h (pole `startedAt` nastaví prohlížeč; kdo ho nepošle, dostane
+  „zkontrolujte a odešlete znovu“), v databázi limit 3 poptávky z jedné adresy za 24 h a 30 celkem za
+  hodinu (zámek, aby limit platil i při souběhu). Bez CAPTCHA, protože by vyžadovala službu třetí strany.
+- **Retence**: poptávky 24 měsíců od odeslání, mažou se samy při každém dalším odeslání (bez plánovače).
+  Správce platformy je může smazat dřív. Výsledky a certifikáty žijí s účtem (smazání účtu je odstraní).
+- **Právní základ** je jednání o smlouvě na žádost odesílatele, ne souhlas. Zaškrtávací pole proto
+  potvrzuje, že odesílatel rozumí účelu, a odkazuje na zásady.
+- **Upozornění e-mailem**: Cloudflare Email Service (vazba `send_email` jménem `PILOT_EMAIL`,
+  `env.PILOT_EMAIL.send({ to, from, subject, text, replyTo })`). Odesílatel musí být na doméně
+  spravované Cloudflare, na `workers.dev` to nejde, a odesílání je jen na placeném plánu Workers.
+  Dokud doména není, vazba ve `wrangler.jsonc` chybí a kód e-mail přeskočí; poptávky jsou v DB a v
+  `/cs/platforma` (sekce Poptávky pilotu, vyřízení a smazání). Adresy příjemce a odesílatele nejsou
+  v repozitáři: proměnné prostředí `PILOT_NOTIFY_TO`, `PILOT_NOTIFY_FROM` (postup v README).
+  Selhání odeslání poptávku neruší (jen se zaloguje).
+- **Zásady zpracování** `/cs/zasady`: vlastní text (poptávky, účty a výsledky, demo bez ukládání,
+  jen nezbytné cookies `sb-…` a `vk_org`, Supabase Frankfurt a Cloudflare, žáci přes školu jako
+  správce, práva a ÚOOÚ). Údaje o provozovateli a kontaktní e-mail čekají na Jiřího (zatím věta, že je
+  doplníme). Text je v `messages/cs.json` pod `privacy`.
+
+## D-031 Úvodní stránka a živá ukázka (fáze 5)
+
+- Úvodní stránka: hlavní sdělení s „Vyzkoušet demo“ a „Chci pilot“, živá ukázka, Jak to funguje
+  (prohlédnout, procvičit, ověřit), Pro firmy a Pro školy (každá s tlačítkem, které předvybere typ
+  ve formuláři), pilotní modul, časté otázky, formulář. Patička na všech stránkách: zásady, ověření
+  certifikátu, poptávka.
+- **Ukázka bez výpočetního jádra**: součást `LANDING_PART` (`packages/content`) je předpočítaná do
+  `apps/web/public/ukazka/ukazka-uvod.json` (~28 kB, souřadnice na 4 desetinná místa). Soubor vzniká
+  v testu `lib/landing/sample.test.ts` (`toMatchFileSnapshot`, `pnpm test -u` ho přegeneruje po změně
+  enginu). Úvodní stránka tak nestahuje WASM (~530 kB) ani worker. three.js se stáhne až ve chvíli,
+  kdy se ukázka přiblíží k obrazovce; při zapnutém šetření dat až na tlačítko. Komponenta je společná
+  s lekcemi (`LinkedView` z `LinkedDemo.tsx`).
+
+## D-032 Výkon na slabších zařízeních (fáze 5)
+
+- drei `PerformanceMonitor` nahrazen vlastním `AdaptiveQuality` (`packages/viewer/src/quality.ts`):
+  plátno kreslí jen při změně a PerformanceMonitor počítal pauzy mezi snímky jako 0 fps, takže na
+  klidné scéně zbytečně snižoval kvalitu. Nově se měří jen souvislé kreslení (mezera do 150 ms), po 30
+  snímcích: průměr nad 40 ms sníží rozlišení o 0,5 (nejníž 1), pod 20 ms ho vrátí, nejvýš 4 změny.
+  Při rozlišení 1 a pod ~10 fps se ukáže hláška, že úlohy jdou řešit i podle výkresu.
+- Výchozí rozlišení plátna nejvýš hustota displeje (dřív pevně 1,5, tedy zbytečně víc pixelů na
+  běžném monitoru), strop 2. Na displeji s hustotou 2 a víc vypnuté vyhlazování hran (MSAA), jemné
+  pixely ho nahradí.
+- Knihovna Supabase se v prohlížeči inicializuje jen u přihlášeného (cookie `sb-…`); nepřihlášený
+  návštěvník nečeká na načtení session.
+- Měření (Playwright, headless Chromium se softwarovým vykreslováním, ukázka na úvodní stránce při
+  otáčení): bez omezení 55 fps, CPU zpomalené 4× 34 fps, 6× 28 fps. Skutečný školní nebo firemní
+  počítač je třeba vyzkoušet ručně (plán, otázky).
+- **Přístupnost**: e2e kontrola axe (WCAG 2.1 A a AA) na úvodu, zásadách, demu, lekcích, lekci 1,
+  přihlášení a ověření certifikátu, bez nálezů. Formulář pilotu: chyby u polí přes `aria-invalid` a
+  `aria-describedby`, souhrn chyb dostane fokus, poděkování taky.

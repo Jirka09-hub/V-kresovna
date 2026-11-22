@@ -24,3 +24,4 @@ export {
   worldClippingPlane,
   type SectionPlaneState,
 } from './section'
+export { initialDpr, qualityDecision, type QualityDecision } from './quality'

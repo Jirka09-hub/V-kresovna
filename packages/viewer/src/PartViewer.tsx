@@ -1,11 +1,12 @@
 'use client'
 
 import type { PartRenderData } from '@vykresovna/engine'
-import { CameraControls, GizmoHelper, GizmoViewcube, PerformanceMonitor } from '@react-three/drei'
-import { Canvas, useThree } from '@react-three/fiber'
+import { CameraControls, GizmoHelper, GizmoViewcube } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { boundsOf, ENGINE_TO_THREE_ROTATION, ISO_DIRECTION, type Bounds } from './coords'
 import { DEFAULT_COLORS, PartModel, type ViewerColors } from './PartModel'
+import { CONTINUOUS_FRAME_MS, initialDpr, QUALITY_WINDOW, qualityDecision } from './quality'
 import { cutPlaneOfState, type SectionPlaneState } from './section'
 import { SectionStage } from './SectionStage'
 import { frontCameraTarget, UnfoldStage } from './UnfoldStage'
@@ -44,6 +45,44 @@ export type PartViewerProps = {
   onSectionChange?: (at: number) => void
   /** Krok polohy roviny při tažení (mm, výchozí 0,5). */
   sectionStep?: number
+  /** Zavolá se, když je 3D i při nejnižší kvalitě pod ~10 fps (aplikace může nabídnout výkres). */
+  onSlowRendering?: () => void
+}
+
+/**
+ * Měří souvislé vykreslování a mění rozlišení plátna podle výkonu (D-032, viz `quality.ts`).
+ */
+function AdaptiveQuality({
+  dpr,
+  maxDpr,
+  onDpr,
+  onSlow,
+}: {
+  dpr: number
+  maxDpr: number
+  onDpr: (dpr: number) => void
+  onSlow?: () => void
+}) {
+  const stats = useRef({ last: 0, frames: [] as number[], changes: 0, slow: false })
+  useFrame(() => {
+    const s = stats.current
+    const now = performance.now()
+    const delta = now - s.last
+    s.last = now
+    if (delta <= 0 || delta > CONTINUOUS_FRAME_MS) return
+    s.frames.push(delta)
+    if (s.frames.length < QUALITY_WINDOW) return
+    const decision = qualityDecision(s.frames, dpr, maxDpr, s.changes)
+    s.frames = []
+    if (decision.kind === 'set') {
+      s.changes++
+      onDpr(decision.dpr)
+    } else if (decision.kind === 'unusable' && !s.slow) {
+      s.slow = true
+      onSlow?.()
+    }
+  })
+  return null
 }
 
 export type PartViewerHandle = {
@@ -105,12 +144,16 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
     sectionPlane = null,
     onSectionChange,
     sectionStep = 0.5,
+    onSlowRendering,
   },
   ref,
 ) {
   const bounds = useMemo(() => boundsOf(data), [data])
   const colors = { ...DEFAULT_COLORS, ...colorOverrides }
-  const [dpr, setDpr] = useState(1.5)
+  const [{ start, max: maxDpr }] = useState(() =>
+    initialDpr(typeof window === 'undefined' ? 1 : window.devicePixelRatio),
+  )
+  const [dpr, setDpr] = useState(start)
   const [resetToken, setResetToken] = useState(0)
   useImperativeHandle(ref, () => ({ reset: () => setResetToken((t) => t + 1) }), [])
 
@@ -141,15 +184,18 @@ export const PartViewer = forwardRef<PartViewerHandle, PartViewerProps>(function
         frameloop="demand"
         dpr={dpr}
         camera={{ fov: 32, near: 1, far: 5000, position: [200, 200, 260] }}
-        gl={{ antialias: true, powerPreference: 'default' }}
+        // na jemném displeji (DPR 2+) vyhlazení hran nepotřebujeme a slabé GPU ušetří
+        gl={{ antialias: maxDpr < 2, powerPreference: 'default' }}
         onCreated={({ gl }) => {
           // ořezávací roviny jednotlivých materiálů (interaktivní řez)
           gl.localClippingEnabled = true
         }}
       >
-        <PerformanceMonitor
-          onDecline={() => setDpr(1)}
-          onIncline={() => setDpr(Math.min(2, window.devicePixelRatio))}
+        <AdaptiveQuality
+          dpr={dpr}
+          maxDpr={maxDpr}
+          onDpr={setDpr}
+          {...(onSlowRendering ? { onSlow: onSlowRendering } : {})}
         />
         <color attach="background" args={['#eef2f7']} />
         <ambientLight intensity={0.55} />
