@@ -215,6 +215,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"pilot_requests": {
+                  Row: {
+                    "consent_at": string,"created_at": string,"email": string,"handled_at": string | null,"handled_by": string | null,"headcount": number | null,"id": string,"message": string | null,"name": string,"organization": string,"phone": string | null,"segment": Database["public"]['Enums']["pilot_segment"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "consent_at": string,"created_at"?: string,"email": string,"handled_at"?: string | null,"handled_by"?: string | null,"headcount"?: number | null,"id"?: string,"message"?: string | null,"name": string,"organization": string,"phone"?: string | null,"segment": Database["public"]['Enums']["pilot_segment"]
+                  }
+                  Update: {
+                    "consent_at"?: string,"created_at"?: string,"email"?: string,"handled_at"?: string | null,"handled_by"?: string | null,"headcount"?: number | null,"id"?: string,"message"?: string | null,"name"?: string,"organization"?: string,"phone"?: string | null,"segment"?: Database["public"]['Enums']["pilot_segment"]
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"platform_admins": {
                   Row: {
                     "created_at": string,"user_id": string
@@ -328,6 +342,12 @@ isOneToOne: false
 "regenerate_join_code":
 { Args: { "p_group"?: string,"p_org"?: string }; Returns: string
                            },
+"set_pilot_request_handled":
+{ Args: { "p_handled": boolean,"p_id": string }; Returns: undefined
+                           },
+"submit_pilot_request":
+{ Args: { "p_email": string,"p_headcount"?: number,"p_message"?: string,"p_name": string,"p_organization": string,"p_phone"?: string,"p_segment": Database["public"]['Enums']["pilot_segment"] }; Returns: string
+                           },
 "update_organization_license":
 { Args: { "p_org": string,"p_seat_limit": number,"p_valid_until": string }; Returns: undefined
                            },
@@ -338,7 +358,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "group_role": "participant"|"trainer","org_kind": "company"|"school","org_role": "participant"|"trainer"|"org_admin"
+            "group_role": "participant"|"trainer","org_kind": "company"|"school","org_role": "participant"|"trainer"|"org_admin","pilot_segment": "company"|"school"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -454,7 +474,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "group_role": ["participant", "trainer"],"org_kind": ["company", "school"],"org_role": ["participant", "trainer", "org_admin"]
+            "group_role": ["participant", "trainer"],"org_kind": ["company", "school"],"org_role": ["participant", "trainer", "org_admin"],"pilot_segment": ["company", "school"]
           }
         }
 } as const
