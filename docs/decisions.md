@@ -402,3 +402,45 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   (`pdf-lib`, vložené písmo s češtinou), aby Worker na Cloudflare nenesl PDF knihovnu ani písmo.
 - Text certifikátu je návrh vlastními slovy (bez podpisu školitele); Jiří ho může upravit
   v `messages/cs.json`.
+
+## D-028 Přehled školitele, správa organizace a platformy (fáze 4)
+
+- Stav: přijato (2026-11-22).
+- **Stránky**: `/cs/skolitel` (skupiny v aktivní organizaci; školitel jen ty, které vede, správce
+  všechny; archivované sbalené), `/cs/skolitel/skupina/<id>` (postup, nejčastější chyby, přiřazené
+  lekce, členové, kód a pozvánka, hromadné účty), `/cs/sprava` (správce aktivní organizace),
+  `/cs/platforma` (správce platformy). Bez oprávnění přátelská zpráva; skupina, kterou uživatel
+  nesmí spravovat (cizí organizace nebo cizí skupina ve stejné organizaci), vrací 404.
+- **Vše čte klient uživatele přes RLS**, nová migrace nebyla potřeba. Oprávnění ke skupině se
+  v aplikaci ověřuje stejně jako `app.can_manage_group` (`loadManagedGroup` v
+  `apps/web/lib/manage/server.ts`). Admin klient (tajný klíč) jen pro založení účtů, zařazení
+  (`add_participant`) a nové heslo (po `can_manage_account`).
+- **Matice postupu**: buňka = nejlepší dokončený průchod (%), „rozpracováno“ (průchod začatý,
+  nedokončený), jinak nezahájeno. Závěrečný test zvlášť (splněno od `FINAL_TEST_PASS_THRESHOLD`)
+  a kód certifikátu. Přiřazené lekce jsou modré s termínem; nedokončené po termínu červeně.
+  Tabulka se na tabletu posouvá jen uvnitř svého rámečku, první sloupec stojí.
+- **Termín** se zadává jako den a ukládá jako konec toho dne v Praze (23:59:59 Europe/Prague).
+- **Nejčastější chyby**: chybné pokusy účastníků skupiny v této organizaci za 90 dní, kód chyby se
+  v jednom pokusu počítá jednou; text vysvětlení je stejný jako ve zpětné vazbě cvičení
+  (`exercises.errors.<KÓD>`).
+- **Hromadné účty** (lidé bez e-mailu): nejvýš 50 jmen najednou, přihlašovací jméno
+  `suggestUsername(jméno)`, při kolizi přípona 2, 3, …; heslo 8 znaků bez zaměnitelných.
+  Účty se zakládají postupně; když dojdou místa nebo vyprší licence, právě založený účet se smaže
+  a zakládání skončí (dříve založené zůstanou a ukážou se). Hesla se ukážou jen jednou v tabulce
+  k tisku (tisk jen tabulky přes `.vk-print-area`), nikde se neukládají čitelně.
+- **Nové heslo** nastaví školitel jen účastníkům svých skupin, správce členům bez role správce
+  (`can_manage_account`); ukáže se jednou.
+- **Pozvánky a kódy**: odkaz se skládá z hlaviček požadavku (`x-forwarded-host`/`host`), ukáže se
+  jen jednou (v DB je otisk). Školitel zve jen účastníky do své skupiny; správce kohokoli; správce
+  platformy po založení organizace vytvoří pozvánku pro jejího správce.
+- **Změna role**: sesazení na účastníka hlídá volná místa (`NO_SEATS`) a jeho vedení skupin
+  v organizaci změní na účastnictví (jinak by zůstal „školitelem“ skupiny bez práv). Posledního
+  správce hlídá databáze (`LAST_ORG_ADMIN`). Správce sám sebe z organizace na této stránce
+  neodebírá a školitel sám sebe ze skupiny také ne.
+- **CSV export**: vzniká v prohlížeči z dat stránky (žádná další cesta k datům). Oddělovač `;`,
+  UTF-8 s BOM, řádky CRLF (Excel v české lokalizaci), hlavičky česky, jeden řádek na účastníka
+  (jméno, přihlašovací jméno, lekce 1–8 jako „hotovo 80 %“ / „rozpracováno“ / „nezahájeno“,
+  závěrečný test %, splněno ano/ne, kód certifikátu). Hodnoty začínající `= + - @` dostanou
+  apostrof (ochrana proti vzorcům). Soubor `vysledky-<skupina>-<datum>.csv`.
+- U účtů s e-mailem se školiteli místo e-mailu ukáže jen „přihlášení e-mailem“ (e-mail není
+  v `profiles` a školitel ho nepotřebuje; minimum osobních údajů).

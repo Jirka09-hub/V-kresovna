@@ -28,3 +28,22 @@ body {
   stroke-width: 3;
   stroke-dasharray: none;
 }
+
+/* Tisk přihlašovacích údajů (hromadné založení účtů, D-028): vytiskne se jen tabulka. */
+@media print {
+  body:has(.vk-print-area) * {
+    visibility: hidden;
+  }
+  body:has(.vk-print-area) .vk-print-area,
+  body:has(.vk-print-area) .vk-print-area * {
+    visibility: visible;
+  }
+  .vk-print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+  .vk-print-area [data-print-hide] {
+    display: none;
+  }
+}
