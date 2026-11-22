@@ -122,7 +122,7 @@ export function FindError({ task, onResult, onNext, nextLabel }: ExerciseProps<F
     try {
       const r = await evaluateAnswer(task, answer)
       setResult(r)
-      onResult(r)
+      onResult(r, answer)
     } finally {
       setBusy(false)
     }

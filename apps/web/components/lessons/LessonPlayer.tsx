@@ -6,8 +6,10 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { TaskSequence, type SequenceItem } from '@/components/exercises/TaskSequence'
 import type { TaskRef } from '@/components/exercises/ExerciseRunner'
+import { ResultsBanner, SaveNotice } from '@/components/results/ResultsBanner'
 import { btnPrimary, btnSecondary, panel } from '@/components/ui'
 import { Link } from '@/i18n/navigation'
+import { useAttemptHistory, useLessonRecorder } from '@/lib/results/hooks'
 import { randomSeed } from '@/lib/seeds'
 import { sessionHistory } from '@/lib/session-history'
 import { DimensionDemo } from './DimensionDemo'
@@ -28,7 +30,7 @@ function lessonItems(lesson: Lesson): SequenceItem[] {
   ]
 }
 
-/** Adaptivní úloha podle historie této relace (jen v paměti, D-023). */
+/** Adaptivní úloha podle historie (relace a u přihlášeného i minulých pokusů, D-023, D-029). */
 function adaptiveTask(lesson: Lesson, seed: number): TaskRef {
   const slots = lesson.adaptive!
   const pick = pickNextTask(sessionHistory(), seed, {
@@ -54,87 +56,113 @@ export function LessonPlayer({ slug }: { slug: string }) {
   const [screen, setScreen] = useState(0)
   const [phase, setPhase] = useState<'intro' | 'tasks'>(lesson.intro.length ? 'intro' : 'tasks')
   const makeTasks = () => lessonItems(lesson)
-  const [tasks, setTasks] = useState(makeTasks)
+  // seedy se losují až při přechodu na úlohy (v obsluze kliknutí, tedy jednou): React smí první
+  // vykreslení zahodít a zopakovat (načítání, přihlášení), a pak by se losovalo znovu
+  const [tasks, setTasks] = useState<SequenceItem[] | null>(() =>
+    lesson.intro.length || lesson.test ? null : makeTasks(),
+  )
+  const toTasks = () => {
+    if (!tasks) setTasks(makeTasks())
+    setPhase('tasks')
+  }
   const [round, setRound] = useState(0)
+  useAttemptHistory()
+  const recorder = useLessonRecorder({
+    moduleSlug: mod.slug,
+    lessonSlug: slug,
+    taskCount: tasks?.length ?? 0,
+    round,
+  })
 
   const available = mod.lessons.filter((l) => l.status === 'available')
   const nextLesson = available[available.findIndex((l) => l.slug === slug) + 1]
 
-  if (lesson.test && phase === 'tasks') return <FinalTest spec={lesson.test} />
+  if (lesson.test && phase === 'tasks') {
+    return (
+      <div className="flex flex-col gap-4">
+        <ResultsBanner slug={slug} />
+        <FinalTest spec={lesson.test} moduleSlug={mod.slug} lessonSlug={slug} />
+      </div>
+    )
+  }
 
   if (phase === 'intro') {
     const current = lesson.intro[screen]!
     const last = screen === lesson.intro.length - 1
     return (
-      <section className="flex flex-col gap-4" aria-labelledby="intro-title" data-testid="intro">
-        <p className="text-sm font-semibold text-muted">
-          {t('introProgress', { current: screen + 1, total: lesson.intro.length })}
-        </p>
-        <IntroScreenView key={current.id} slug={slug} screen={current} />
-        <div className="flex flex-wrap items-center gap-3">
-          {screen > 0 ? (
-            <button type="button" className={btnSecondary} onClick={() => setScreen(screen - 1)}>
-              {t('prevScreen')}
-            </button>
-          ) : null}
-          {last ? (
-            <button
-              type="button"
-              className={btnPrimary}
-              onClick={() => setPhase('tasks')}
-              data-testid="to-tasks"
-            >
-              {t('toTasks')}
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                className={btnPrimary}
-                onClick={() => setScreen(screen + 1)}
-                data-testid="next-screen"
-              >
-                {t('nextScreen')}
+      <div className="flex flex-col gap-4">
+        <ResultsBanner slug={slug} />
+        <section className="flex flex-col gap-4" aria-labelledby="intro-title" data-testid="intro">
+          <p className="text-sm font-semibold text-muted">
+            {t('introProgress', { current: screen + 1, total: lesson.intro.length })}
+          </p>
+          <IntroScreenView key={current.id} slug={slug} screen={current} />
+          <div className="flex flex-wrap items-center gap-3">
+            {screen > 0 ? (
+              <button type="button" className={btnSecondary} onClick={() => setScreen(screen - 1)}>
+                {t('prevScreen')}
               </button>
-              <button type="button" className={btnSecondary} onClick={() => setPhase('tasks')}>
-                {t('skipIntro')}
+            ) : null}
+            {last ? (
+              <button type="button" className={btnPrimary} onClick={toTasks} data-testid="to-tasks">
+                {t('toTasks')}
               </button>
-            </>
-          )}
-        </div>
-      </section>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={btnPrimary}
+                  onClick={() => setScreen(screen + 1)}
+                  data-testid="next-screen"
+                >
+                  {t('nextScreen')}
+                </button>
+                <button type="button" className={btnSecondary} onClick={toTasks}>
+                  {t('skipIntro')}
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+      </div>
     )
   }
 
+  if (!tasks) return null
   return (
-    <TaskSequence
-      key={round}
-      tasks={tasks}
-      resolveAdaptive={(seed) => adaptiveTask(lesson, seed)}
-      summaryText={t('summaryText')}
-      summaryActions={
-        <>
-          {nextLesson ? (
-            <Link href={`/lekce/${nextLesson.slug}`} className={btnPrimary}>
-              {t('nextLesson', { title: t(`items.${nextLesson.slug}.title`) })}
+    <div className="flex flex-col gap-4">
+      <ResultsBanner slug={slug} />
+      <SaveNotice save={recorder.save} />
+      <TaskSequence
+        key={round}
+        tasks={tasks}
+        onOutcome={recorder.onOutcome}
+        resolveAdaptive={(seed) => adaptiveTask(lesson, seed)}
+        summaryText={t('summaryText')}
+        summaryActions={
+          <>
+            {nextLesson ? (
+              <Link href={`/lekce/${nextLesson.slug}`} className={btnPrimary}>
+                {t('nextLesson', { title: t(`items.${nextLesson.slug}.title`) })}
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              className={btnSecondary}
+              onClick={() => {
+                setTasks(makeTasks())
+                setRound((r) => r + 1)
+              }}
+            >
+              {t('repeat')}
+            </button>
+            <Link href="/lekce" className={btnSecondary}>
+              {t('backToOverview')}
             </Link>
-          ) : null}
-          <button
-            type="button"
-            className={btnSecondary}
-            onClick={() => {
-              setTasks(makeTasks())
-              setRound((r) => r + 1)
-            }}
-          >
-            {t('repeat')}
-          </button>
-          <Link href="/lekce" className={btnSecondary}>
-            {t('backToOverview')}
-          </Link>
-        </>
-      }
-    />
+          </>
+        }
+      />
+    </div>
   )
 }
 

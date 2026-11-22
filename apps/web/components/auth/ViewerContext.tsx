@@ -1,6 +1,14 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { usePathname } from '@/i18n/navigation'
 import type { Database } from '@/lib/supabase/database.types'
 import { createClient } from '@/lib/supabase/client'
