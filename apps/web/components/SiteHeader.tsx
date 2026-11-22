@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { focusRing } from '@/components/ui'
 import { Link, usePathname } from '@/i18n/navigation'
+import { UserMenu } from './auth/UserMenu'
 
 /** Hlavička webu: název (odkaz domů) a hlavní navigace. */
 export function SiteHeader() {
@@ -34,7 +35,7 @@ export function SiteHeader() {
           {t('home')}
         </Link>
         <nav aria-label={t('label')}>
-          <ul className="flex items-center gap-1">
+          <ul className="flex flex-wrap items-center justify-end gap-1">
             {links.map((l) => {
               const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
               return (
@@ -51,6 +52,7 @@ export function SiteHeader() {
                 </li>
               )
             })}
+            <UserMenu />
           </ul>
         </nav>
       </div>

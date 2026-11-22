@@ -92,7 +92,14 @@
     "home": "Výkresovna",
     "demo": "Demo",
     "lessons": "Lekce",
-    "skip": "Přeskočit na obsah"
+    "skip": "Přeskočit na obsah",
+    "signIn": "Přihlásit",
+    "account": "Můj účet",
+    "trainer": "Školitel",
+    "orgAdmin": "Správa",
+    "platform": "Platforma",
+    "signOut": "Odhlásit",
+    "userMenu": "Uživatelská nabídka"
   },
   "common": {
     "loading": "Načítám…",
@@ -563,5 +570,93 @@
     "certificateNote": "Certifikát o absolvování bude dostupný po přihlášení. Zatím si výsledek můžete jen prohlédnout.",
     "retry": "Zkusit test znovu",
     "backToLessons": "Zpět na přehled lekcí"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Přihlášení",
+      "intro": "Přihlaste se e-mailem nebo přihlašovacím jménem, které vám dal školitel.",
+      "login": "E-mail nebo přihlašovací jméno",
+      "password": "Heslo",
+      "submit": "Přihlásit se",
+      "noAccount": "Ještě nemáte účet? Účet vznikne s kódem od školitele nebo s pozvánkou.",
+      "joinLink": "Mám kód od školitele",
+      "forgot": "Zapomenuté heslo vám nastaví školitel nebo správce vaší organizace."
+    },
+    "join": {
+      "title": "Připojit se kódem",
+      "intro": "Kód organizace nebo skupiny dostanete od školitele nebo učitele.",
+      "code": "Kód",
+      "codeHint": "Například ABCD-EFGH. Na velikosti písmen ani pomlčce nezáleží.",
+      "check": "Pokračovat",
+      "target": "Připojíte se do organizace {org}.",
+      "targetGroup": "Připojíte se do organizace {org}, skupina {group}.",
+      "asUser": "Jste přihlášeni jako {name}.",
+      "joinNow": "Připojit se",
+      "otherCode": "Zadat jiný kód"
+    },
+    "invitation": {
+      "title": "Pozvánka",
+      "target": "Pozvánka do organizace {org} s rolí {role}.",
+      "targetGroup": "Pozvánka do organizace {org}, skupina {group}, s rolí {role}.",
+      "accept": "Přijmout pozvánku",
+      "platformTitle": "Pozvánka ke správě platformy",
+      "platformTarget": "Tímto odkazem získáte přístup ke správě platformy (zakládání organizací a licencí)."
+    },
+    "status": {
+      "invalid": "Tento kód nebo odkaz neplatí. Zkontrolujte ho, případně požádejte o nový.",
+      "license_expired": "Licence této organizace vypršela. Obraťte se na jejího správce.",
+      "no_seats": "Organizace už nemá volná místa pro další účastníky. Obraťte se na jejího správce.",
+      "used": "Pozvánka už byla použita. Pokud jste ji přijali vy, stačí se přihlásit.",
+      "expired": "Platnost pozvánky vypršela. Požádejte o novou."
+    },
+    "create": {
+      "title": "Nový účet",
+      "haveAccount": "Už máte účet?",
+      "signInFirst": "Přihlaste se a pak se připojte",
+      "displayName": "Jméno a příjmení",
+      "displayNameHint": "Takhle vás uvidí školitel a bude na certifikátu.",
+      "login": "E-mail nebo přihlašovací jméno",
+      "loginHint": "Nemáte e-mail? Vymyslete si přihlašovací jméno (malá písmena, číslice, tečka), například jan.novak.",
+      "password": "Heslo",
+      "passwordHint": "Aspoň 6 znaků.",
+      "password2": "Heslo znovu",
+      "submit": "Vytvořit účet a připojit se",
+      "privacy": "Ukládáme jen vaše jméno, přihlašovací údaj a výsledky cvičení. Účet můžete kdykoli smazat."
+    },
+    "errors": {
+      "LOGIN_INVALID": "Zadejte platný e-mail nebo přihlašovací jméno (3–32 znaků: malá písmena bez diakritiky, číslice, tečka, pomlčka).",
+      "INVALID_CREDENTIALS": "Přihlašovací údaje nesedí. Zkontrolujte je, případně požádejte školitele o nové heslo.",
+      "NAME_INVALID": "Zadejte jméno (2 až 80 znaků).",
+      "PASSWORD_INVALID": "Heslo musí mít 6 až 72 znaků.",
+      "PASSWORD_MISMATCH": "Hesla se neshodují.",
+      "EMAIL_TAKEN": "Účet s tímto e-mailem už existuje. Přihlaste se a pak se připojte.",
+      "USERNAME_TAKEN": "Toto přihlašovací jméno už někdo používá. Zvolte jiné, třeba s číslem na konci.",
+      "INVALID_CODE": "Tento kód neplatí.",
+      "LICENSE_EXPIRED": "Licence organizace vypršela.",
+      "NO_SEATS": "Organizace už nemá volná místa.",
+      "INVALID_INVITATION": "Pozvánka neplatí.",
+      "INVITATION_USED": "Pozvánka už byla použita.",
+      "INVITATION_EXPIRED": "Platnost pozvánky vypršela.",
+      "FORBIDDEN": "K této akci nemáte oprávnění.",
+      "SERVER_NOT_CONFIGURED": "Zakládání účtů zatím není na serveru zapnuté. Dejte prosím vědět správci.",
+      "UNKNOWN": "Něco se nepovedlo. Zkuste to prosím znovu."
+    }
+  },
+  "roles": {
+    "participant": "účastník",
+    "trainer": "školitel",
+    "org_admin": "správce organizace"
+  },
+  "account": {
+    "title": "Můj účet",
+    "name": "Jméno",
+    "login": "Přihlašovací jméno",
+    "email": "E-mail",
+    "organizations": "Organizace",
+    "active": "aktivní",
+    "switchTo": "Přepnout",
+    "noOrg": "Zatím nejste v žádné organizaci. Připojte se kódem od školitele.",
+    "signOut": "Odhlásit se",
+    "licenseExpired": "Licence vypršela {date}. Cvičit můžete dál, ale výsledky se neukládají."
   }
 }
