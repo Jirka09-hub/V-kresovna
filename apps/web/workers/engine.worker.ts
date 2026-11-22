@@ -16,6 +16,7 @@ import {
   buildFindErrorDrawing,
   buildOptionDrawing,
   evaluate,
+  sectionViews,
   generateTask,
   viewPlacements,
 } from '@vykresovna/exercises'
@@ -100,6 +101,15 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
         height: drawing.height,
         placements: viewPlacements(drawing),
       }
+      return { result, transfer: [] }
+    }
+    case 'render-section': {
+      const { mesh, edges } = await build(call.render.part)
+      const result: ViewsSvg[] = sectionViews(mesh, call.render, edges).map((drawing) => ({
+        svg: drawingToSvg(drawing, call.svgTitle ? { title: call.svgTitle } : {}),
+        width: drawing.width,
+        height: drawing.height,
+      }))
       return { result, transfer: [] }
     }
     case 'evaluate':

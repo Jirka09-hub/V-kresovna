@@ -4,9 +4,11 @@ import type { Difficulty, ErrorCode, ExerciseKind, TaskResult } from '@vykresovn
 import { useTranslations } from 'next-intl'
 import { useTask } from '@/lib/engine/hooks'
 import { AssignViews } from './AssignViews'
+import { Dimension } from './Dimension'
 import { DrawingToModel } from './DrawingToModel'
 import { FindError } from './FindError'
 import { MissingView } from './MissingView'
+import { Section } from './Section'
 
 export type TaskRef = {
   readonly kind: ExerciseKind
@@ -21,12 +23,14 @@ export type TaskRef = {
 /** Klíč textů podle typu cvičení (`exercises.kind.*`, `exercises.instructions.*`). */
 export const KIND_KEY: Record<
   ExerciseKind,
-  'assignViews' | 'missingView' | 'drawingToModel' | 'findError'
+  'assignViews' | 'missingView' | 'drawingToModel' | 'findError' | 'section' | 'dimension'
 > = {
   'assign-views': 'assignViews',
   'missing-view': 'missingView',
   'drawing-to-model': 'drawingToModel',
   'find-error': 'findError',
+  section: 'section',
+  dimension: 'dimension',
 }
 
 type Props = {
@@ -67,6 +71,10 @@ export function ExerciseRunner({ task: ref, onResult, onNext, nextLabel }: Props
         <MissingView task={task} {...props} />
       ) : task.kind === 'find-error' ? (
         <FindError task={task} {...props} />
+      ) : task.kind === 'section' ? (
+        <Section task={task} {...props} />
+      ) : task.kind === 'dimension' ? (
+        <Dimension task={task} {...props} />
       ) : (
         <DrawingToModel task={task} {...props} />
       )}

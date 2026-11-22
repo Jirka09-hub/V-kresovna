@@ -10,6 +10,7 @@ import type {
   ErrorCode,
   ExerciseKind,
   FindErrorTask,
+  SectionRender,
   Task,
   TaskResult,
 } from '@vykresovna/exercises'
@@ -57,6 +58,11 @@ export function callEngine<C extends EngineCall>(call: C): Promise<EngineResult<
   if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value!)
   promise.catch(() => cache.delete(key))
   return promise as Promise<EngineResult<C>>
+}
+
+/** Pohledy s řezem (cvičení 5) jako samostatné výkresy, v pořadí `render.show`. */
+export function renderSection(render: SectionRender): Promise<ViewsSvg[]> {
+  return callEngine({ type: 'render-section', render })
 }
 
 /** Postaví součást a celý výkres (3D síť, hrany, SVG), volitelně s kótami. */

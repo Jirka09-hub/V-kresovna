@@ -406,6 +406,8 @@ function ViewCells({
 }
 
 const TARGET = '#15803d'
+/** Čárkování místa, kde hrana chybí. */
+const MISSING_DASH = '1.5 1'
 const HALO = '#22c55e'
 /** Atributy čáry vrstvy (styly výkresu jsou omezené na jeho `<svg>`, vrstvu neovlivní). */
 const stroke = (color: string, width: number) => ({
@@ -456,14 +458,7 @@ function Overlay({
     const p = placementOf(selection.view)
     if (p) {
       const r = cellRect(p, selection.cell[0], selection.cell[1])
-      selected = (
-        <rect
-          {...r}
-          {...stroke(marker, 0.6)}
-          strokeDasharray="2 1"
-          data-testid="marker"
-        />
-      )
+      selected = <rect {...r} {...stroke(marker, 0.6)} strokeDasharray="2 1" data-testid="marker" />
     }
   }
   return (
@@ -499,16 +494,11 @@ function Overlay({
               const d = `M${a[0]} ${a[1]}L${b[0]} ${b[1]}`
               return (
                 <g key={j}>
-                  <path
-                    d={d}
-                    {...stroke(HALO, 3.2)}
-                    strokeOpacity={0.45}
-                    strokeLinecap="round"
-                  />
+                  <path d={d} {...stroke(HALO, 3.2)} strokeOpacity={0.45} strokeLinecap="round" />
                   <path
                     d={d}
                     {...stroke(TARGET, 0.5)}
-                    {...(missing ? { strokeDasharray: '1.5 1' } : {})}
+                    {...(missing ? { strokeDasharray: MISSING_DASH } : {})}
                   />
                 </g>
               )

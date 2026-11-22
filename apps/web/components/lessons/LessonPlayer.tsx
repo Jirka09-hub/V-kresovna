@@ -10,8 +10,11 @@ import { btnPrimary, btnSecondary, panel } from '@/components/ui'
 import { Link } from '@/i18n/navigation'
 import { randomSeed } from '@/lib/seeds'
 import { sessionHistory } from '@/lib/session-history'
+import { DimensionDemo } from './DimensionDemo'
 import { ErrorExampleDemo } from './ErrorExampleDemo'
+import { FinalTest } from './FinalTest'
 import { LinkedDemo } from './LinkedDemo'
+import { SectionDemo } from './SectionDemo'
 import { UnfoldDemo } from './UnfoldDemo'
 
 /** Pevné úlohy plánu s novými seedy a na konci místa pro adaptivní úlohy. */
@@ -56,6 +59,8 @@ export function LessonPlayer({ slug }: { slug: string }) {
 
   const available = mod.lessons.filter((l) => l.status === 'available')
   const nextLesson = available[available.findIndex((l) => l.slug === slug) + 1]
+
+  if (lesson.test && phase === 'tasks') return <FinalTest spec={lesson.test} />
 
   if (phase === 'intro') {
     const current = lesson.intro[screen]!
@@ -148,6 +153,13 @@ function IntroScreenView({ slug, screen }: { slug: string; screen: IntroScreen }
         <UnfoldDemo part={screen.part} label={t(`${base}.title`)} />
       ) : screen.demo.kind === 'error-example' ? (
         <ErrorExampleDemo part={screen.part} mutation={screen.demo.mutation} />
+      ) : screen.demo.kind === 'section' ? (
+        <SectionDemo part={screen.part} axis={screen.demo.axis} at={screen.demo.at} />
+      ) : screen.demo.kind === 'dimensions' ? (
+        <DimensionDemo
+          part={screen.part}
+          {...(screen.demo.features ? { features: screen.demo.features } : {})}
+        />
       ) : (
         <LinkedDemo
           part={screen.part}

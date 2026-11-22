@@ -12,6 +12,7 @@ import type {
   ErrorCode,
   ExerciseKind,
   FindErrorTask,
+  SectionRender,
   Task,
   TaskResult,
   ViewPlacement,
@@ -62,6 +63,11 @@ export type EngineCall =
     }
   /** Výkres úlohy „najdi chybu“ s chybou, nebo správný (`correct`), s polohou pohledů. */
   | { readonly type: 'render-find-error'; readonly task: FindErrorTask; readonly correct?: boolean }
+  /**
+   * Řez (cvičení 5): pohledy `render.show` jako samostatné výkresy (stopa A–A, pohled v řezu,
+   * případná úprava výkresu distraktoru).
+   */
+  | { readonly type: 'render-section'; readonly render: SectionRender; readonly svgTitle?: string }
   /** Hodnocení odpovědi (kód `exercises` importuje engine, proto taky ve workeru). */
   | { readonly type: 'evaluate'; readonly task: Task; readonly answer: Answer }
 
@@ -72,9 +78,11 @@ export type EngineResult<C extends EngineCall> = C extends { type: 'render-part'
     ? Task
     : C extends { type: 'render-views' | 'render-option' | 'render-find-error' }
       ? ViewsSvg
-      : C extends { type: 'evaluate' }
-        ? TaskResult
-        : never
+      : C extends { type: 'render-section' }
+        ? ViewsSvg[]
+        : C extends { type: 'evaluate' }
+          ? TaskResult
+          : never
 
 export type EngineRequest = { readonly id: number; readonly call: EngineCall }
 

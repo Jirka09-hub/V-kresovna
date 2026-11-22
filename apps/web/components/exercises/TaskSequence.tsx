@@ -8,7 +8,7 @@ import { recordAttempt } from '@/lib/session-history'
 import { ExerciseRunner, KIND_KEY, type TaskRef } from './ExerciseRunner'
 import { CheckIcon, CrossIcon } from './icons'
 
-type Outcome = TaskResult | 'skipped' | null
+export type Outcome = TaskResult | 'skipped' | null
 
 /** Místo pro úlohu, která se vybere adaptivně až ve chvíli, kdy na ni přijde řada. */
 export type AdaptiveSlot = { readonly adaptiveSlot: true; readonly seed: number }
@@ -26,6 +26,17 @@ type Props = {
   summaryText?: string
   /** Ovládání vpravo vedle ukazatele postupu (např. „Další varianta“). */
   toolbar?: ReactNode
+  /**
+   * Režim testu: po odpovědi se hned přejde na další úlohu, bez zpětné vazby; postup ukazuje jen
+   * „zodpovězeno“. Výsledek ukáže až `renderSummary`.
+   */
+  testMode?: boolean
+  /**
+   * Vlastní shrnutí místo výchozího (úlohy a výsledky v pořadí). Nadpis `summaryTitle` kreslí
+   * TaskSequence (po poslední úloze se na něj přesune fokus).
+   */
+  renderSummary?: (tasks: readonly TaskRef[], outcomes: readonly Outcome[]) => ReactNode
+  summaryTitle?: string
 }
 
 /** Úlohy jedna po druhé s ukazatelem postupu a shrnutím na konci. Nic se neukládá. */
@@ -35,6 +46,9 @@ export function TaskSequence({
   summaryActions,
   summaryText,
   toolbar,
+  testMode = false,
+  renderSummary,
+  summaryTitle,
 }: Props) {
   const ts = useTranslations('sequence')
   const t = useTranslations('exercises')
@@ -50,6 +64,7 @@ export function TaskSequence({
   )
   const [index, setIndex] = useState(0)
   const [outcomes, setOutcomes] = useState<Outcome[]>(() => items.map(() => null))
+  const [announce, setAnnounce] = useState('')
   const heading = useRef<HTMLHeadingElement>(null)
   const top = useRef<HTMLDivElement>(null)
   const first = useRef(true)
@@ -80,8 +95,13 @@ export function TaskSequence({
   const current = resolved[index]
   return (
     <div ref={top} className="flex scroll-mt-2 flex-col gap-4">
+      {testMode ? (
+        <p className="sr-only" role="status" aria-live="polite" data-testid="test-saved">
+          {announce}
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Progress tasks={tasks} outcomes={outcomes} index={index} />
+        <Progress tasks={tasks} outcomes={outcomes} index={index} testMode={testMode} />
         {toolbar}
       </div>
       {!done && current ? (
@@ -110,10 +130,30 @@ export function TaskSequence({
             onResult={(r) => {
               recordAttempt(current, r)
               setOutcomes((o) => o.map((x, i) => (i === index ? r : x)))
+              if (testMode) {
+                // test: bez zpětné vazby rovnou další úloha
+                setAnnounce(ts('testSaved', { n: index + 1 }))
+                next()
+              }
             }}
             onNext={next}
             nextLabel={index === tasks.length - 1 ? t('finish') : t('next')}
           />
+        </section>
+      ) : renderSummary ? (
+        <section className={`flex flex-col gap-5 p-6 ${panel}`} aria-labelledby="task-heading">
+          <h2
+            id="task-heading"
+            ref={heading}
+            tabIndex={-1}
+            className="text-2xl font-bold focus:outline-none"
+          >
+            {summaryTitle ?? ts('summaryTitle')}
+          </h2>
+          {renderSummary(
+            resolved.filter((x): x is TaskRef => x !== null),
+            outcomes,
+          )}
         </section>
       ) : (
         <Summary
@@ -128,11 +168,12 @@ export function TaskSequence({
   )
 }
 
-type StepState = 'current' | 'todo' | 'skipped' | 'done' | 'wrong'
+type StepState = 'current' | 'todo' | 'skipped' | 'done' | 'wrong' | 'answered'
 
-function stepState(o: Outcome | undefined, i: number, index: number): StepState {
+function stepState(o: Outcome | undefined, i: number, index: number, testMode: boolean): StepState {
   if (o === null || o === undefined) return i === index ? 'current' : 'todo'
   if (o === 'skipped') return 'skipped'
+  if (testMode) return 'answered'
   return o.correct ? 'done' : 'wrong'
 }
 
@@ -140,17 +181,19 @@ function Progress({
   tasks,
   outcomes,
   index,
+  testMode,
 }: {
   tasks: readonly SequenceItem[]
   outcomes: readonly Outcome[]
   index: number
+  testMode: boolean
 }) {
   const ts = useTranslations('sequence')
   return (
     <nav aria-label={ts('progressLabel')}>
       <ol className="flex flex-wrap items-center gap-2" data-testid="progress">
         {tasks.map((task, i) => {
-          const state = stepState(outcomes[i], i, index)
+          const state = stepState(outcomes[i], i, index, testMode)
           const label =
             state === 'current'
               ? ts('stepCurrent', { n: i + 1 })
@@ -160,7 +203,9 @@ function Progress({
                   ? ts('stepWrong', { n: i + 1 })
                   : state === 'skipped'
                     ? ts('stepSkipped', { n: i + 1 })
-                    : ts('stepTodo', { n: i + 1 })
+                    : state === 'answered'
+                      ? ts('stepAnswered', { n: i + 1 })
+                      : ts('stepTodo', { n: i + 1 })
           return (
             <li
               key={`${i}:${task.seed}`}
@@ -174,7 +219,9 @@ function Progress({
                     ? 'border-green-700 bg-green-50 text-green-700'
                     : state === 'wrong'
                       ? 'border-red-700 bg-red-50 text-red-700'
-                      : 'border-slate-300 bg-white text-muted'
+                      : state === 'answered'
+                        ? 'border-slate-600 bg-slate-100 text-ink'
+                        : 'border-slate-300 bg-white text-muted'
               }`}
             >
               {state === 'done' ? (

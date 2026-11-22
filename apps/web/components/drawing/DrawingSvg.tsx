@@ -15,6 +15,10 @@ type Props = {
   /** Najetí myší: zvýrazní související čáry (propojení s 3D). */
   hoverId?: string | null
   onHover?: (id: string | null) => void
+  /** Kóty (`data-dimension-id`), které se mají zvýraznit. */
+  highlightDimensionIds?: ReadonlySet<string> | null
+  /** Najetí myší na kótu: id kóty a prvku, který kótuje (null = mimo kóty). */
+  onHoverDimension?: (dim: { id: string; featureId: string | null } | null) => void
   className?: string
   style?: CSSProperties
 }
@@ -27,6 +31,8 @@ export function DrawingSvg({
   highlightView = null,
   hoverId = null,
   onHover,
+  highlightDimensionIds = null,
+  onHoverDimension,
   className = '',
   style,
 }: Props) {
@@ -56,6 +62,17 @@ export function DrawingSvg({
     }
   }, [svg, highlightIds, highlightView, hoverId])
 
+  useEffect(() => {
+    const root = ref.current
+    if (!root) return
+    for (const el of root.querySelectorAll<SVGElement>('[data-dimension-id]')) {
+      const on = !!highlightDimensionIds?.has(el.getAttribute('data-dimension-id')!)
+      el.setAttribute('data-highlight', String(on))
+    }
+  }, [svg, highlightDimensionIds])
+
+  const hover = onHover || onHoverDimension
+
   return (
     <div
       ref={ref}
@@ -64,15 +81,35 @@ export function DrawingSvg({
       className={`drawing-svg [&_svg]:block [&_svg]:h-auto [&_svg]:w-full ${className}`}
       style={style}
       onPointerMove={
-        onHover
+        hover
           ? (e) => {
-              const el = (e.target as Element).closest('[data-edge-ids]')
-              const ids = el?.getAttribute('data-edge-ids')?.split(' ') ?? []
-              onHover(ids.find((id) => !id.startsWith('feature:')) ?? ids[0] ?? null)
+              if (onHover) {
+                const el = (e.target as Element).closest('[data-edge-ids]')
+                const ids = el?.getAttribute('data-edge-ids')?.split(' ') ?? []
+                onHover(ids.find((id) => !id.startsWith('feature:')) ?? ids[0] ?? null)
+              }
+              if (onHoverDimension) {
+                const dim = (e.target as Element).closest('[data-dimension-id]')
+                onHoverDimension(
+                  dim
+                    ? {
+                        id: dim.getAttribute('data-dimension-id')!,
+                        featureId: dim.getAttribute('data-feature-id'),
+                      }
+                    : null,
+                )
+              }
             }
           : undefined
       }
-      onPointerLeave={onHover ? () => onHover(null) : undefined}
+      onPointerLeave={
+        hover
+          ? () => {
+              onHover?.(null)
+              onHoverDimension?.(null)
+            }
+          : undefined
+      }
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   )

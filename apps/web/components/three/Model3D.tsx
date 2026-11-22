@@ -1,7 +1,12 @@
 'use client'
 
 import type { PartRenderData } from '@vykresovna/engine'
-import { PartViewer, type PartViewerHandle, type ViewCubeLabels } from '@vykresovna/viewer'
+import {
+  PartViewer,
+  type PartViewerHandle,
+  type SectionPlaneState,
+  type ViewCubeLabels,
+} from '@vykresovna/viewer'
 import { useTranslations } from 'next-intl'
 import { useState, type Ref } from 'react'
 import { WebGLBoundary } from '@/components/lab/WebGLBoundary'
@@ -39,6 +44,10 @@ type Props = {
   onHoverEdge?: (id: string | null) => void
   viewerRef?: Ref<PartViewerHandle>
   className?: string
+  /** Interaktivní řez (rovina, tažení úchytu, krok v mm), viz `PartViewer`. */
+  sectionPlane?: SectionPlaneState | null
+  onSectionChange?: (at: number) => void
+  sectionStep?: number
 }
 
 /** 3D prohlížeč součásti s náhradou bez WebGL a stavem načítání. */
@@ -51,6 +60,9 @@ export function Model3D({
   onHoverEdge,
   viewerRef,
   className = '',
+  sectionPlane,
+  onSectionChange,
+  sectionStep,
 }: Props) {
   const t = useTranslations('model3d')
   const tv = useTranslations('viewer')
@@ -71,6 +83,9 @@ export function Model3D({
             {...(unfoldProgress !== undefined ? { unfoldProgress } : {})}
             {...(highlightedEdgeIds ? { highlightedEdgeIds } : {})}
             {...(onHoverEdge ? { onHoverEdge } : {})}
+            {...(sectionPlane ? { sectionPlane } : {})}
+            {...(onSectionChange ? { onSectionChange } : {})}
+            {...(sectionStep !== undefined ? { sectionStep } : {})}
             className="h-full w-full"
             ariaLabel={ariaLabel}
           />

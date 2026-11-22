@@ -8,10 +8,11 @@ import type {
   DrawingMutation,
   ErrorCode,
   ExerciseKind,
+  SectionRender,
   Task,
 } from '@vykresovna/exercises'
 import { useEffect, useState } from 'react'
-import { generateTask, renderOption, renderPart, renderViews } from './client'
+import { generateTask, renderOption, renderPart, renderSection, renderViews } from './client'
 import type { ViewsSvg } from './protocol'
 
 export type AsyncState<T> = { data: T | null; error: string | null; loading: boolean }
@@ -53,6 +54,20 @@ export function useTask(
 ) {
   return useAsync<Task>(`${kind}:${seed}:${difficulty}:${focus ?? ''}`, () =>
     generateTask(kind, seed, difficulty, focus),
+  )
+}
+
+/** Výkresy řezu pro několik požadavků (pořadí odpovídá vstupu, uvnitř pořadí `show`). */
+export function useSectionSvgs(renders: readonly SectionRender[] | null) {
+  return useAsync<ViewsSvg[][]>(renders ? JSON.stringify(renders) : null, () =>
+    Promise.all((renders ?? []).map((r) => renderSection(r))),
+  )
+}
+
+/** 3D data a výkres součásti s kótami (cvičení 6, výklad o kótách). */
+export function useDimensionedPart(part: PartSpec | null) {
+  return useAsync<PartRenderData>(part ? `dims:${JSON.stringify(part)}` : null, () =>
+    renderPart(part!, undefined, { dimensions: true }),
   )
 }
 
