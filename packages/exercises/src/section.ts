@@ -21,6 +21,8 @@ import {
   partBounds,
   projectView,
   viewFingerprint,
+  canonicalView,
+  VISUAL_DIFFERENCE_MM,
   viewFromOf,
   type Axis,
   type Drawing,
@@ -304,7 +306,12 @@ function sectionFps(meshes: MeshCache, r: SectionRender): { fp: string; lines: s
   try {
     const drawing = sectionDrawing(mesh, { ...r, cuttingPlaneView: null, show: [r.view] }, edges)
     const v = drawing.views.find((x) => x.view === r.view)!
-    return { fp: viewFingerprint(v), lines: viewFingerprint({ ...v, centerLines: [] }) }
+    // čáry, kružnice a šrafy bez os a bez obrysů ploch řezu, s přesností VISUAL_DIFFERENCE_MM
+    const lines = canonicalView({ ...v, centerLines: [] }, VISUAL_DIFFERENCE_MM)
+      .split(';')
+      .filter((x) => !/^[FUA] /.test(x))
+      .join(';')
+    return { fp: viewFingerprint(v), lines }
   } catch {
     return null
   }

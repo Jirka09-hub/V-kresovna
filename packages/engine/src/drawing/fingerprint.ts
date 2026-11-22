@@ -20,11 +20,9 @@ export const FINGERPRINT_PRECISION_MM = 1e-3
 type Interval = { s0: number; s1: number }
 type Line = { dir: Vec2; offset: number; visible: Interval[]; hidden: Interval[] }
 
-const q = (x: number) => Math.round(x / FINGERPRINT_PRECISION_MM) + 0
-
 /** Sjednocení intervalů (navazující a překrývající se spojí). */
-function union(intervals: readonly Interval[]): Interval[] {
-  const tol = FINGERPRINT_PRECISION_MM / 2
+function union(intervals: readonly Interval[], precision: number): Interval[] {
+  const tol = precision / 2
   const sorted = [...intervals].sort((a, b) => a.s0 - b.s0 || a.s1 - b.s1)
   const out: Interval[] = []
   for (const iv of sorted) {
@@ -36,8 +34,8 @@ function union(intervals: readonly Interval[]): Interval[] {
 }
 
 /** Rozdíl množin intervalů a − b (oba sjednocené a seřazené). */
-function subtract(a: readonly Interval[], b: readonly Interval[]): Interval[] {
-  const tol = FINGERPRINT_PRECISION_MM / 2
+function subtract(a: readonly Interval[], b: readonly Interval[], precision: number): Interval[] {
+  const tol = precision / 2
   const out: Interval[] = []
   for (const iv of a) {
     let pieces: Interval[] = [{ ...iv }]
@@ -58,8 +56,12 @@ function subtract(a: readonly Interval[], b: readonly Interval[]): Interval[] {
   return out
 }
 
-/** Kanonický textový popis pohledu (seřazený, zaokrouhlený). Otisk je jeho hash. */
-export function canonicalView(view: DrawingView): string {
+/**
+ * Kanonický textový popis pohledu (seřazený, zaokrouhlený). Otisk je jeho hash. Hrubší `precision`
+ * (např. 0,5 mm) slouží ke kontrole, že se distraktor liší viditelně, ne jen o desetiny milimetru.
+ */
+export function canonicalView(view: DrawingView, precision = FINGERPRINT_PRECISION_MM): string {
+  const q = (x: number) => Math.round(x / precision) + 0
   const origin = view.projection.bounds.min
   const rel = (p: Vec2): Vec2 => [p[0] - origin[0], p[1] - origin[1]]
 
@@ -70,7 +72,7 @@ export function canonicalView(view: DrawingView): string {
     let dx = b[0] - a[0]
     let dy = b[1] - a[1]
     const len = Math.hypot(dx, dy)
-    if (len < FINGERPRINT_PRECISION_MM) continue
+    if (len < precision) continue
     dx /= len
     dy /= len
     // kanonický směr (úhel v [0, π))
@@ -92,8 +94,8 @@ export function canonicalView(view: DrawingView): string {
 
   const items: string[] = []
   for (const line of lines.values()) {
-    const visible = union(line.visible)
-    const hidden = subtract(union(line.hidden), visible)
+    const visible = union(line.visible, precision)
+    const hidden = subtract(union(line.hidden, precision), visible, precision)
     const point = (s: number) => {
       // bod přímky: patní bod (offset·n) + s·dir, kde n = (dy, −dx)
       const x = line.offset * line.dir[1] + s * line.dir[0]
@@ -105,7 +107,7 @@ export function canonicalView(view: DrawingView): string {
       ['H', hidden],
     ] as const) {
       for (const iv of list) {
-        if (iv.s1 - iv.s0 < FINGERPRINT_PRECISION_MM) continue
+        if (iv.s1 - iv.s0 < precision) continue
         items.push(`${tag} ${point(iv.s0)} ${point(iv.s1)}`)
       }
     }
@@ -207,8 +209,8 @@ function hash53(s: string, seed: number): string {
 }
 
 /** Otisk jednoho pohledu (nezávisí na názvu pohledu ani na jeho poloze na výkrese). */
-export function viewFingerprint(view: DrawingView): string {
-  const text = canonicalView(view)
+export function viewFingerprint(view: DrawingView, precision = FINGERPRINT_PRECISION_MM): string {
+  const text = canonicalView(view, precision)
   return hash53(text, 1) + hash53(text, 2)
 }
 
@@ -224,4 +226,18 @@ export function drawingFingerprint(drawing: Drawing, views?: readonly ViewName[]
       return `${name}:${v ? viewFingerprint(v) : '-'}`
     })
     .join('|')
+}
+
+/**
+ * Nejmenší rozdíl (mm), který má uživatel na výkrese poznat. Distraktory a chyby ve výkresu se
+ * porovnávají s touto přesností, aby se možnosti nelišily jen o zlomky milimetru.
+ */
+export const VISUAL_DIFFERENCE_MM = 0.5
+
+/**
+ * Otisk pohledu „jak ho vidí člověk“: bez os (rozdíl jen v délce osy by byl nefér) a se
+ * zaokrouhlením na VISUAL_DIFFERENCE_MM. Slouží ke kontrole odlišnosti možností v úlohách.
+ */
+export function visualFingerprint(view: DrawingView): string {
+  return viewFingerprint({ ...view, centerLines: [] }, VISUAL_DIFFERENCE_MM)
 }

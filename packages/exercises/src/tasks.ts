@@ -10,7 +10,7 @@ import {
   createDrawing,
   ENGINE_VERSION,
   extractEdges,
-  viewFingerprint,
+  visualFingerprint,
   type Drawing,
   type DrawingView,
   type EdgeModel,
@@ -102,7 +102,7 @@ class Renderer {
       fp: (name) => {
         let f = fps.get(name)
         if (f === undefined) {
-          f = viewFingerprint(view(name))
+          f = visualFingerprint(view(name))
           fps.set(name, f)
         }
         return f
@@ -235,7 +235,7 @@ function missingView(
   const drawingProducer = () => {
     if (di >= drawingCandidates.length) return null
     const c = drawingCandidates[di++]!
-    const fp = viewFingerprint(applyToView(missingDrawingView, c.mutation))
+    const fp = visualFingerprint(applyToView(missingDrawingView, c.mutation))
     const mutation: DrawingMutation = c.mutation
     const option: Omit<ChoiceOption, 'id'> = {
       part,

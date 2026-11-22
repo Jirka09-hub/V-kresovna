@@ -348,3 +348,14 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
 - `ENGINE_VERSION` 0.4.0 (nové typy úloh, jiný otisk pohledu v řezu, jiné SVG).
 - E2E testy volí seedy úloh přes `fixSeeds` (podvrhne `crypto.getRandomValues` pro jedno 32bitové číslo)
   a odpovídají podle testovacích atributů `data-test-*` (správná možnost, poloha roviny, hodnota kóty).
+
+## D-025 Možnosti v úlohách se musí lišit viditelně
+
+- Stav: přijato (2026-11-22)
+- Zjištění: kontrola odlišnosti s přesností 0,001 mm propustila možnosti, které na obrazovce vypadají
+  stejně (průchozí a slepá díra lišící se jen délkou osy, řez se skrytými hranami kratšími než milimetr,
+  prvek zvětšený o zlomek milimetru). U úloh „chybějící pohled“ a „řez“ to bylo 15–30 % úloh u obtížností 2–4.
+- Rozhodnutí: distraktory, karty pohledů a chyby ve výkresu se porovnávají vizuálním otiskem
+  `visualFingerprint` (engine): bez os a se zaokrouhlením na `VISUAL_DIFFERENCE_MM` = 0,5 mm.
+  Test `packages/exercises/test/visual-distinct.test.ts` to hlídá pro všechny typy výběru a obtížnosti.
+- Důsledek: pro stejný seed mohou vzniknout jiné distraktory než dřív (nic se zatím neukládá).

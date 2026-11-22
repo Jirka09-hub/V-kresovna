@@ -9,6 +9,7 @@ import {
   TEST_PARTS,
   SECTION_TEST_CASES,
   viewFingerprint,
+  visualFingerprint,
   type Drawing,
   type DrawingView,
   type PartSpec,
@@ -180,5 +181,36 @@ describe('otisk pohledu v řezu', () => {
       },
     }
     expect(viewFingerprint(bent)).not.toBe(viewFingerprint(sec))
+  })
+})
+
+describe('vizuální otisk', () => {
+  it('ignoruje osy a rozdíly menší než VISUAL_DIFFERENCE_MM', () => {
+    const base: DrawingView = {
+      view: 'front',
+      projection: {
+        view: 'front',
+        segments: [{ a: [0, 0], b: [10, 0], visibility: 'visible', edgeIds: ['e'] }],
+        bounds: { min: [0, 0], max: [10, 0] },
+      },
+      centerLines: [],
+      circles: [],
+      origin: [0, 0],
+      size: [10, 0],
+    }
+    const withAxis = {
+      ...base,
+      centerLines: [{ a: [5, -3] as const, b: [5, 3] as const, featureId: 'd1' }],
+    }
+    expect(visualFingerprint(withAxis)).toBe(visualFingerprint(base))
+    const nudged: DrawingView = {
+      ...base,
+      projection: {
+        ...base.projection,
+        segments: [{ a: [0, 0], b: [10.1, 0], visibility: 'visible', edgeIds: ['e'] }],
+      },
+    }
+    expect(visualFingerprint(nudged)).toBe(visualFingerprint(base))
+    expect(viewFingerprint(nudged)).not.toBe(viewFingerprint(base))
   })
 })

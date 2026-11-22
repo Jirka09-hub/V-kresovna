@@ -30,7 +30,9 @@ export {
   canonicalView,
   drawingFingerprint,
   viewFingerprint,
+  visualFingerprint,
   FINGERPRINT_PRECISION_MM,
+  VISUAL_DIFFERENCE_MM,
 } from './drawing/fingerprint'
 export { TEST_PARTS } from './fixtures/test-parts'
 export * from './dimensions'

@@ -1,7 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { ManifoldToplevel } from 'manifold-3d'
 import { STANDARD_VIEWS } from '@vykresovna/drafting-standards'
-import { canonicalView, ENGINE_VERSION, loadManifold, viewFingerprint } from '@vykresovna/engine'
+import {
+  canonicalView,
+  ENGINE_VERSION,
+  loadManifold,
+  viewFingerprint,
+  VISUAL_DIFFERENCE_MM,
+} from '@vykresovna/engine'
 import {
   buildSectionViews,
   DIFFICULTIES,
@@ -31,9 +37,9 @@ const SEEDS = seeds(10)
 const sectionFp = (render: Parameters<typeof buildSectionViews>[1]) =>
   viewFingerprint(buildSectionViews(wasm, render)[0]!.views[0]!)
 
-/** Nakreslené čáry, kružnice a šrafy bez os a bez obrysů ploch řezu. */
+/** Nakreslené čáry, kružnice a šrafy bez os a bez obrysů ploch řezu (rozlišitelné okem). */
 const drawnLines = (render: Parameters<typeof buildSectionViews>[1]) =>
-  canonicalView(buildSectionViews(wasm, render)[0]!.views[0]!)
+  canonicalView(buildSectionViews(wasm, render)[0]!.views[0]!, VISUAL_DIFFERENCE_MM)
     .split(';')
     .filter((x) => !/^[FUA] /.test(x))
     .join(';')

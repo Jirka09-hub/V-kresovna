@@ -22,7 +22,7 @@ import {
   DRAWING_MARGIN_MM,
   extractEdges,
   VIEW_GAP_MM,
-  viewFingerprint,
+  visualFingerprint,
   type Drawing,
   type DrawingView,
   type PartSpec,
@@ -217,7 +217,7 @@ export function placedDrawingFingerprint(drawing: Drawing): string {
   const xs = [...new Set(drawing.views.map((v) => v.origin[0]))].sort((a, b) => a - b)
   const ys = [...new Set(drawing.views.map((v) => v.origin[1]))].sort((a, b) => a - b)
   return drawing.views
-    .map((v) => `${xs.indexOf(v.origin[0])},${ys.indexOf(v.origin[1])}:${viewFingerprint(v)}`)
+    .map((v) => `${xs.indexOf(v.origin[0])},${ys.indexOf(v.origin[1])}:${visualFingerprint(v)}`)
     .sort()
     .join('|')
 }
