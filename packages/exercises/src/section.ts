@@ -85,6 +85,12 @@ export const SECTION_PLACE_TOLERANCE_MM: Readonly<Record<Difficulty, number>> = 
   5: 1,
 }
 
+/**
+ * Nejmenší přípustná tolerance (mm): rovina, u které by se řez měnil už o necelé dva kroky
+ * posuvníku, se pro „umísti rovinu“ nepoužije (trefit ji ve 3D by bylo spíš štěstí).
+ */
+export const SECTION_PLACE_MIN_TOLERANCE_MM = 1
+
 /** Pravděpodobnost varianty „umísti rovinu“ (jinak „vyber řez“). */
 const PLACE_CHANCE = 0.4
 
@@ -610,7 +616,7 @@ function placeVariant(
     SECTION_PLACE_TOLERANCE_MM[difficulty],
     Math.floor(gap * 0.6 * 2) / 2,
   )
-  if (toleranceMm < step) return null
+  if (toleranceMm < SECTION_PLACE_MIN_TOLERANCE_MM) return null
   const base = { part, view, cuttingPlaneView: null, show: [view] } as const
   const accepted = equivalentPositions(meshes, part, base, axis, at, correctFp)
   const distance = (x: number) =>

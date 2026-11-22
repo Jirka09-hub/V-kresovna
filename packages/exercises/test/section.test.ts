@@ -11,6 +11,7 @@ import {
   givenRender,
   layoutOk,
   optionRender,
+  SECTION_PLACE_MIN_TOLERANCE_MM,
   SECTION_PLACE_TOLERANCE_MM,
   targetRender,
   type SectionChooseTask,
@@ -64,7 +65,8 @@ function checkChoose(task: SectionChooseTask) {
 
 function checkPlace(task: SectionPlaceTask) {
   const { at } = task.section
-  expect(task.toleranceMm).toBeGreaterThanOrEqual(task.step)
+  expect(task.toleranceMm).toBeGreaterThanOrEqual(SECTION_PLACE_MIN_TOLERANCE_MM)
+  expect(SECTION_PLACE_MIN_TOLERANCE_MM).toBeGreaterThanOrEqual(2 * task.step)
   expect(task.toleranceMm).toBeLessThanOrEqual(SECTION_PLACE_TOLERANCE_MM[task.difficulty])
   expect(at).toBeGreaterThanOrEqual(task.range.min)
   expect(at).toBeLessThanOrEqual(task.range.max)
