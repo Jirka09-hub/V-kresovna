@@ -31,6 +31,11 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
   Lekce 1–9 dostupné: 7 řez, 8 kóty (živé úvody `SectionDemo`, `DimensionDemo`), 9 závěrečný test
   (`FINAL_TEST` v `packages/content`, UI `FinalTest.tsx`, nic se neukládá). Demo: 5 úloh pěti typů.
   Styly SVG výkresu omezené na třídu `vk-drawing` (`scopeCss`). `ENGINE_VERSION` 0.4.0.
+- Fáze 4, výsledky a certifikát (D-029): lekce a test ukládají přihlášenému s platnou licencí průchod
+  a pokusy z prohlížeče (`apps/web/lib/results/`, `TaskSequence onOutcome`), adaptivita čte posledních
+  60 pokusů z DB. Certifikát: PDF v prohlížeči (`lib/certificate/pdf.ts`, písmo `public/fonts/`), ověření
+  `/cs/overeni/<kód>`. `/cs/ucet`: jméno, heslo, odchod z organizace, certifikáty, smazání účtu.
+  `ENGINE_VERSION` je v `packages/engine/src/version.ts` (subpath `@vykresovna/engine/version`).
 - Seznam ke kontrole učitelem před pilotem: `docs/kontrola-ucitelem.md` (při novém odborném rozhodnutí
   doplnit i tam).
 
