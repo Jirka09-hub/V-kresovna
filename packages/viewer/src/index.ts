@@ -16,3 +16,11 @@ export {
   type PartGalleryProps,
   type PartGalleryViewProps,
 } from './PartGallery'
+export {
+  clipSegments,
+  cutPlaneOfState,
+  defaultViewFrom,
+  sectionViewOf,
+  worldClippingPlane,
+  type SectionPlaneState,
+} from './section'

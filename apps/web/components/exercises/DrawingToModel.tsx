@@ -107,7 +107,11 @@ export function DrawingToModel({
           </div>
         </section>
 
-        <section className="flex flex-col gap-2" aria-labelledby="to-model-options">
+        <section
+          className="flex flex-col gap-2"
+          aria-labelledby="to-model-options"
+          data-test-correct={correct.id}
+        >
           <h3 id="to-model-options" className="text-sm font-semibold text-muted">
             {tm('options')}
           </h3>

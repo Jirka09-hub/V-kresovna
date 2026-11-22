@@ -11,11 +11,11 @@
     "forCompaniesText": "Zaučení operátorů CNC, montážníků a kontrolorů kvality bez prezenčního školení.",
     "forSchools": "Pro školy",
     "forSchoolsText": "Technická dokumentace na SPŠ a SOU: úlohy s okamžitou zpětnou vazbou.",
-    "status": "Stav: vývoj, fáze 2 (cvičení a demo)",
+    "status": "Stav: vývoj, fáze 3 (řezy, kóty a závěrečný test)",
     "ctaDemo": "Vyzkoušet demo",
     "ctaDemoText": "Pět krátkých úloh bez registrace. Zabere to asi pět minut.",
     "ctaLessons": "Projít lekce",
-    "ctaLessonsText": "Pilotní modul: pohledy, skryté hrany, díry a čtení výkresu.",
+    "ctaLessonsText": "Pilotní modul: pohledy, skryté hrany, díry, řezy, kóty a závěrečný test.",
     "tryTitle": "Vyzkoušejte si to"
   },
   "drafting": {
@@ -61,6 +61,7 @@
     "partsLabel": "Testovací součásti",
     "model": "3D model",
     "drawing": "Výkres",
+    "dimensions": "Kóty",
     "loading": "Načítám model…",
     "modelLabel": "3D model součásti {id}",
     "drawingTitle": "Výkres součásti {id}: nárys, půdorys a bokorys",
@@ -68,9 +69,23 @@
     "legend": {
       "visible": "viditelná hrana",
       "hidden": "skrytá hrana",
-      "center": "osa"
+      "center": "osa",
+      "hatching": "šrafování plochy řezu",
+      "cuttingPlane": "stopa roviny řezu"
     },
-    "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu."
+    "hoverHint": "Tip: najeďte myší na čáru ve výkresu nebo na hranu modelu.",
+    "section": {
+      "title": "Řez",
+      "toggle": "Řez",
+      "axis": "Rovina řezu",
+      "axis_y": "kolmo na Y (řez místo nárysu)",
+      "axis_x": "kolmo na X (řez místo bokorysu)",
+      "axis_z": "kolmo na Z (řez místo půdorysu)",
+      "position": "Poloha roviny: {axis} = {value, number} mm",
+      "slider": "Poloha roviny řezu",
+      "hint": "Rovinu posunete tažením modrého úchytu ve 3D nebo posuvníkem (i šipkami na klávesnici). Výkres s řezem A–A se přepočítá chvilku po puštění.",
+      "error": "Řez se nepodařilo vytvořit: {message}"
+    }
   },
   "nav": {
     "label": "Hlavní navigace",
@@ -94,12 +109,18 @@
     "kind": {
       "assignViews": "Přiřaď pohledy",
       "missingView": "Najdi chybějící pohled",
-      "drawingToModel": "Výkres → model"
+      "drawingToModel": "Výkres → model",
+      "findError": "Najdi chybu ve výkresu",
+      "section": "Řez",
+      "dimension": "Odečti kótu"
     },
     "instructions": {
       "assignViews": "Nárys je pevně uprostřed. Přetáhněte každou kartu s pohledem na místo, kam podle evropského promítání patří.",
       "missingView": "Jeden pohled ve výkresu chybí. Vyberte z možností ten, který patří do prázdného rámečku.",
-      "drawingToModel": "Prohlédněte si výkres a vyberte 3D model, který mu odpovídá."
+      "drawingToModel": "Prohlédněte si výkres a vyberte 3D model, který mu odpovídá.",
+      "findError": "Ve výkresu je právě jedna chyba. Porovnejte ho s 3D modelem a klikněte na místo, kde chyba je. Když jsou celé pohledy na špatných místech, stiskněte tlačítko „Rozmístění pohledů je špatně“.",
+      "section": "Řez ukazuje, jak součást vypadá uvnitř, když ji rozřízneme rovinou A–A a díváme se ve směru šipek. Porovnávejte výkres s 3D modelem.",
+      "dimension": "Přečtěte z výkresu rozměr, na který se ptáme. Odpověď napište číslem v milimetrech."
     },
     "difficulty": "Obtížnost {level} z 5",
     "loading": "Připravuji úlohu…",
@@ -134,7 +155,17 @@
       "FEATURE_MISSING": "Této možnosti chybí prvek, který na výkrese je, třeba díra, drážka nebo výřez.",
       "FEATURE_EXTRA": "Tato možnost má prvek navíc, který na výkrese není.",
       "FEATURE_RESIZED": "Prvek má jiný rozměr: je větší nebo menší, než ukazuje výkres.",
-      "THROUGH_VS_BLIND": "Záměna průchozí a slepé díry. Průchozí díra vede skrz celou součást, slepá končí uvnitř a má kuželové dno od špičky vrtáku."
+      "THROUGH_VS_BLIND": "Záměna průchozí a slepé díry. Průchozí díra vede skrz celou součást, slepá končí uvnitř a má kuželové dno od špičky vrtáku.",
+      "MISSED_ERROR": "Na tomhle místě chyba není. Zkuste projít hrany modelu jednu po druhé a u každé zkontrolovat, jak je nakreslená v každém pohledu.",
+      "SECTION_HOLE_HATCHED": "Šrafy jsou i tam, kde je díra nebo drážka. Šrafuje se jen místo, kde rovina řezu prošla materiálem. Díra je vzduch, ta zůstává bez šraf.",
+      "SECTION_NOT_HATCHED": "Plocha řezu není vyšrafovaná. Všude, kde rovina řezu prošla materiálem, patří tenké šikmé šrafy.",
+      "WRONG_SECTION_PLANE": "Tohle je řez jiným místem součásti. Podívejte se, kudy přesně vede rovina A–A, třeba osou díry, a co v tom místě rovina protne.",
+      "SECTION_HIDDEN_EDGES": "V řezu jsou nakreslené čárkované skryté hrany. Řez ukazuje vnitřek přímo, proto se skryté hrany v řezu nekreslí.",
+      "SECTION_WRONG_DIRECTION": "Řez je viděný z opačné strany, proto je zrcadlově obrácený. Šipky u stopy roviny řezu ukazují, kterým směrem se díváme.",
+      "DIMENSION_WRONG_FEATURE": "Tohle číslo na výkrese je, ale patří k jiné kótě. Najděte nejdřív prvek na modelu, pak kótu, jejíž pomocné čáry vedou právě k jeho hranám.",
+      "DIMENSION_NOT_COMBINED": "Tohle je jen jedna z kót, které potřebujete. Hledaný rozměr na výkrese přímo není, musíte ho spočítat, třeba celkový rozměr minus rozměr prvku.",
+      "DIMENSION_ARITHMETIC": "Výsledek nesedí. Zkontrolujte, které kóty jste vzali a jestli je správně odečítáte. Pomůže si na modelu ukázat, odkud kam se měří.",
+      "DIMENSION_WRONG": "Takové číslo na výkrese není. Najděte kótu, která měří právě tento rozměr. Pozor: u díry se píše průměr (⌀), ne poloměr."
     },
     "assign": {
       "model": "3D model součásti",
@@ -196,6 +227,98 @@
       "hidden": "skrytá hrana",
       "center": "osa",
       "highlight": "zvýrazněný prvek"
+    },
+    "findError": {
+      "drawing": "Výkres s chybou",
+      "drawingLabel": "Výkres součásti s jednou chybou: nárys, půdorys a bokorys",
+      "correctDrawing": "Správný výkres",
+      "correctDrawingLabel": "Správný výkres součásti: nárys, půdorys a bokorys",
+      "model": "Součást ve 3D",
+      "modelLabel": "3D model součásti, podle které výkres kontrolujete",
+      "modelHint": "Model můžete otáčet tažením.",
+      "keyboardHint": "Bez myši: tabulátorem přejděte na pohled, šipkami vyberte část pohledu a potvrďte Enterem.",
+      "layoutWrong": "Rozmístění pohledů je špatně",
+      "nothingSelected": "Zatím nic nevybráno. Klikněte do výkresu na místo s chybou.",
+      "selectedPoint": "Vybráno místo v pohledu: {view}. Můžete kliknout jinam, nebo odpověď zkontrolovat.",
+      "selectedCell": "Vybráno: {view}, {cell}.",
+      "selectedLayout": "Vybráno: rozmístění pohledů je špatně.",
+      "outside": "Tohle místo je mimo pohledy. Klikněte do některého pohledu.",
+      "cellLabel": "{view}: {cell}",
+      "cell": {
+        "topLeft": "vlevo nahoře",
+        "top": "nahoře uprostřed",
+        "topRight": "vpravo nahoře",
+        "left": "vlevo uprostřed",
+        "center": "uprostřed",
+        "right": "vpravo uprostřed",
+        "bottomLeft": "vlevo dole",
+        "bottom": "dole uprostřed",
+        "bottomRight": "vpravo dole"
+      },
+      "whereView": "Chyba je v tomto pohledu: {view}.",
+      "whereLayout": "Chyba je v rozmístění pohledů.",
+      "youChose": "Vy jste ukázali na pohled: {view}.",
+      "highlightHint": "Místo chyby je ve výkresu orámované zeleně a na modelu, pokud tam ta hrana je, zvýrazněné modře. Tlačítkem pod výkresem si můžete zobrazit správný výkres.",
+      "showCorrect": "Ukázat správný výkres",
+      "showTask": "Ukázat výkres s chybou"
+    },
+    "section": {
+      "chooseTask": "Ve výkresu je zakreslená rovina řezu A–A. Vyberte, jak vypadá řez A–A.",
+      "given": "Výkres",
+      "givenLabel": "Dané pohledy se stopou roviny řezu A–A a prázdné místo pro řez",
+      "planeHere": "rovina A–A",
+      "frame": "Řez A–A",
+      "correctSection": "Správný řez A–A",
+      "model": "Součást ve 3D",
+      "modelLabel": "3D model součásti, kterou řežeme",
+      "modelCut": "Součást rozříznutá rovinou A–A",
+      "modelCutLabel": "3D model součásti rozříznutý rovinou řezu A–A",
+      "options": "Který řez A–A je správný?",
+      "optionLabel": "Možnost {letter}: řez A–A",
+      "correctHint": "Na modelu je teď součást rozříznutá přesně rovinou A–A. Šrafy jsou jen tam, kde rovina prošla materiálem.",
+      "placeTask": "Vlevo je řez A–A. Posuňte rovinu řezu na modelu (podél osy {axis}) tak, aby řez vypadal stejně, a pak odpověď zkontrolujte.",
+      "target": "Řez A–A",
+      "targetLabel": "Řez A–A, ke kterému hledáte rovinu",
+      "modelPlane": "Součást s rovinou řezu",
+      "modelPlaneLabel": "3D model součásti s posuvnou rovinou řezu",
+      "position": "Poloha roviny: {axis} = {value, number} mm",
+      "slider": "Poloha roviny řezu",
+      "sliderValue": "{axis} = {value, number} milimetrů",
+      "placeHint": "Rovinu posunete tažením modrého úchytu na modelu nebo posuvníkem (funguje i šipkami na klávesnici). Materiál před rovinou zmizí a plocha řezu se vyšrafuje.",
+      "correctPlane": "Správná rovina je v místě {axis} = {value, number} mm, vy jste ji dali do {axis} = {chosen, number} mm.",
+      "yourSection": "Řez ve vaší rovině",
+      "showCorrectPlane": "Ukázat správnou rovinu",
+      "showYourPlane": "Ukázat vaši rovinu"
+    },
+    "dimension": {
+      "drawing": "Výkres s kótami",
+      "drawingLabel": "Zakótovaný výkres součásti: nárys, půdorys a bokorys",
+      "model": "Součást ve 3D",
+      "modelLabel": "3D model součásti, prvek z otázky je zvýrazněný",
+      "featureMarked": "Prvek, na který se ptáme, je na 3D modelu zvýrazněný modře.",
+      "wholePart": "Ptáme se na celou součást.",
+      "unitHint": "Odpověď napište jako celé číslo v milimetrech.",
+      "unit": "mm",
+      "invalid": "Napište číslo, například 24.",
+      "correctDirect": "Správně je {value} mm, přímo podle kóty ve výkresu.",
+      "correctCombined": "Správně je {value} mm: {calc} = {value}. Tento rozměr ve výkresu přímo není, spočítá se z kót.",
+      "combinedDone": "{calc} = {value} mm. Přesně takhle se chybějící rozměr dopočítá.",
+      "highlightHint": "Kóty, ze kterých odpověď plyne, jsou ve výkresu zvýrazněné modře.",
+      "q": {
+        "overall": "{axis, select, x {Jak dlouhá je celá součást zleva doprava?} y {Jak hluboká je celá součást zepředu dozadu?} z {Jak vysoká je celá součást?} other {Jak velká je součást?}}",
+        "size": "Jaký rozměr má {feature, select, hole {díra} slot {drážka} step {osazení} cutout {výřez} chamfer {zkosení} rib {žebro} other {prvek}} ve směru {axis, select, x {zleva doprava} y {zepředu dozadu} z {shora dolů} other {}}?",
+        "slotDepth": "Jak hluboká je drážka?",
+        "slotWidth": "Jak široká je drážka?",
+        "diameter": "Jaký průměr má díra?",
+        "holeDepth": "Jak hluboká je slepá díra? Počítá se jen válcová část, bez kuželového hrotu na dně.",
+        "chamfer": "Jak velké je zkosení? Stačí číslo před „×45°“.",
+        "baseThickness": "Jak silná je základní deska (bez žebra)?",
+        "holePosition": "Jak daleko je osa díry od {wall, select, left {levé} right {pravé} front {přední} back {zadní} bottom {spodní} top {horní} other {protější}} stěny součásti?",
+        "featurePosition": "Jak daleko od {wall, select, left {levé} right {pravé} front {přední} back {zadní} bottom {spodní} top {horní} other {protější}} stěny součásti začíná {feature, select, hole {díra} slot {drážka} step {osazení} cutout {výřez} chamfer {zkosení} rib {žebro} other {prvek}}?",
+        "wallBeyond": "Kolik materiálu zbývá mezi {feature, select, hole {dírou} slot {drážkou} step {osazením} cutout {výřezem} chamfer {zkosením} rib {žebrem} other {prvkem}} a {wall, select, left {levou} right {pravou} front {přední} back {zadní} bottom {spodní} top {horní} other {protější}} stěnou součásti?",
+        "holeFromFar": "Jak daleko je osa díry od {wall, select, left {levé} right {pravé} front {přední} back {zadní} bottom {spodní} top {horní} other {protější}} stěny součásti?",
+        "featureFromFar": "Kolik materiálu zbývá mezi {feature, select, hole {dírou} slot {drážkou} step {osazením} cutout {výřezem} chamfer {zkosením} rib {žebrem} other {prvkem}} a {wall, select, left {levou} right {pravou} front {přední} back {zadní} bottom {spodní} top {horní} other {protější}} stěnou součásti?"
+      }
     }
   },
   "sequence": {
@@ -215,7 +338,10 @@
     "summaryTaskWrong": "s chybou",
     "summaryTaskSkipped": "přeskočeno",
     "commonErrors": "Na co si dát pozor",
-    "restart": "Nová sada úloh"
+    "restart": "Nová sada úloh",
+    "adaptiveHint": "Úloha vybraná podle vašich chyb",
+    "stepAnswered": "Úloha {n}: zodpovězeno",
+    "testSaved": "Odpověď na úlohu {n} je uložená."
   },
   "demo": {
     "title": "Demo: čtení výkresů na 3D modelu",
@@ -257,7 +383,7 @@
     "lead": "Každá lekce začíná krátkým výkladem s 3D modelem a pokračuje úlohami s okamžitou zpětnou vazbou. Postup se zatím neukládá.",
     "lessonNumber": "Lekce {n}",
     "comingSoon": "připravujeme",
-    "comingSoonText": "Na této lekci pracujeme. Zatím vyzkoušejte lekce 1–5.",
+    "comingSoonText": "Na této lekci pracujeme. Zatím vyzkoušejte ostatní lekce.",
     "tasksCount": "{count, plural, one {# úloha} few {# úlohy} other {# úloh}}",
     "start": "Začít lekci",
     "backToOverview": "Zpět na přehled lekcí",
@@ -338,20 +464,104 @@
       },
       "chyby-ve-vykresu": {
         "title": "Chyby ve výkresu",
-        "summary": "Najít, co je na výkrese špatně: chybějící hranu, plnou čáru místo čárkované, pohled na špatném místě."
+        "summary": "Najít, co je na výkrese špatně: chybějící hranu, plnou čáru místo čárkované, pohled na špatném místě.",
+        "intro": {
+          "postup": {
+            "title": "Jak výkres zkontrolovat",
+            "text": "Chyba se nejlépe hledá postupně. Vezměte jednu hranu modelu a najděte ji v nárysu, půdorysu i bokorysu. Je z té strany vidět? Pak má být plná. Je schovaná? Pak čárkovaná. Najeďte myší na čáru a model ukáže, ke které hraně patří. Nakonec zkontrolujte, jestli je půdorys pod nárysem a bokorys vpravo od něj."
+          },
+          "ukazka": {
+            "title": "Najdete chybu?",
+            "text": "V tomto výkresu je jedna chyba. Porovnejte ho s modelem, pak si ji nechte ukázat. V úlohách pak na chybu kliknete přímo ve výkresu."
+          }
+        }
       },
       "rez-a-srafovani": {
         "title": "Řez a šrafování",
-        "summary": "Jak výkres ukáže vnitřek součásti a co znamenají šrafy."
+        "summary": "Jak výkres ukáže vnitřek součásti, kudy vede rovina řezu a co znamenají šrafy.",
+        "intro": {
+          "rovina": {
+            "title": "Rozřízněte součást",
+            "text": "Díry a drážky uvnitř součásti jsou v obyčejném pohledu jen čárkované čáry. Řez je čitelnější: součást si představíme rozříznutou rovinou, přední kus odložíme a nakreslíme, co zbylo. Posuňte rovinu na modelu a sledujte, jak se mění řez A–A ve výkresu. Kudy rovina vede, ukazuje v sousedním pohledu čerchovaná čára se šipkami a písmeny A."
+          },
+          "srafy": {
+            "title": "Kde patří šrafy",
+            "text": "Šrafy (tenké šikmé čáry) jsou jen tam, kde rovina prošla plným materiálem. Díra nebo drážka je vzduch, ta zůstane bez šraf. Za rovinou kreslíme jen hrany, které jsou opravdu vidět, skryté hrany v řezu nekreslíme. Šipky u stopy řezu říkají, ze které strany se na řez díváme."
+          }
+        }
       },
       "koty": {
         "title": "Kóty: čtení rozměrů",
-        "summary": "Odkud kam kóta měří a jak z výkresu vyčíst rozměry."
+        "summary": "Odkud kam kóta měří a jak z výkresu vyčíst nebo dopočítat rozměr.",
+        "intro": {
+          "cteni": {
+            "title": "Co kóta měří",
+            "text": "Kóta je číslo v milimetrech nad tenkou čarou se šipkami. Tenké pomocné čáry vedou k hranám, mezi kterými se měří. Jednotka se nepíše, vždy jsou to milimetry. Znak ⌀ znamená průměr. Najeďte myší na číslo kóty a na modelu uvidíte, co měří."
+          },
+          "pocitani": {
+            "title": "Rozměr, který ve výkresu není",
+            "text": "Každý rozměr je ve výkresu jen jednou, a některé tam nejsou vůbec. Dají se ale spočítat. Když je součást vysoká 30 mm a drážka hluboká 10 mm, pod drážkou zbývá 30 − 10 = 20 mm materiálu. V úlohách se na takové rozměry budeme ptát taky."
+          }
+        }
       },
       "zaverecny-test": {
-        "title": "Závěrečný test",
-        "summary": "Souhrnný test celého modulu, podklad pro certifikát."
+        "title": "Závěrečný test modulu",
+        "summary": "Dvanáct úloh ze všech témat modulu bez nápovědy. Výsledek uvidíte na konci."
       }
     }
+  },
+  "errorExample": {
+    "model": "3D model součásti z ukázky",
+    "wrongLabel": "Výkres s jednou chybou",
+    "correctLabel": "Správný výkres",
+    "reveal": "Ukázat chybu",
+    "showCorrect": "Správný výkres",
+    "hint": "Najdete chybu sami? Porovnejte čáry v nárysu s modelem, pak si chybu nechte ukázat.",
+    "explanation": "Spodní hrana výřezu vzadu je zepředu schovaná za materiálem. V nárysu je ale nakreslená plnou čarou, a měla by být čárkovaná."
+  },
+  "sectionDemo": {
+    "model": "3D model s rovinou řezu",
+    "modelLabel": "3D model součásti s posuvnou rovinou řezu",
+    "drawing": "Výkres s řezem A–A",
+    "drawingLabel": "Výkres součásti, jeden pohled je nahrazený řezem A–A",
+    "position": "Poloha roviny: {axis} = {value, number} mm",
+    "slider": "Poloha roviny řezu",
+    "sliderValue": "{axis} = {value, number} milimetrů",
+    "hint": "Rovinu posunete tažením modrého úchytu nebo posuvníkem (i šipkami na klávesnici). Výkres s řezem se přepočítá chvilku po puštění.",
+    "error": "Řez v této poloze se nepodařilo nakreslit. Zkuste rovinu posunout."
+  },
+  "dimensionDemo": {
+    "drawing": "Výkres s kótami",
+    "drawingLabel": "Zakótovaný výkres součásti: nárys, půdorys a bokorys",
+    "model": "3D model",
+    "modelLabel": "3D model součásti, kótovaný prvek je zvýrazněný",
+    "features": "Ukázat kóty prvku",
+    "hoverFeature": "Kóta měří zvýrazněný prvek.",
+    "hoverPart": "Tahle kóta měří celou součást.",
+    "activeFeature": "Ve výkresu jsou zvýrazněné všechny kóty vybraného prvku.",
+    "hint": "Najeďte myší na číslo kóty: na modelu se zvýrazní, co kóta měří. Bez myši použijte tlačítka prvků."
+  },
+  "finalTest": {
+    "introTitle": "Jak test probíhá",
+    "ruleCount": "{count, plural, one {# úloha} few {# úlohy} other {# úloh}} ze všech témat modulu: pohledy, skryté hrany, díry, řezy i kóty.",
+    "ruleNoFeedback": "Během testu se nedozvíte, jestli odpověď byla správně. Po odpovědi jde hned další úloha.",
+    "rulePass": "Test splníte, když bude správně aspoň {percent} % úloh.",
+    "ruleNothingStored": "Výsledek se zatím nikam neukládá.",
+    "start": "Začít test",
+    "resultsTitle": "Výsledek testu",
+    "passed": "Test je splněný.",
+    "failed": "Test zatím splněný není.",
+    "score": "Správně {correct} z {total} úloh ({percent} %).",
+    "threshold": "Ke splnění je potřeba {percent} %.",
+    "byKind": "Výsledky podle typu úlohy",
+    "kindColumn": "Typ úlohy",
+    "resultColumn": "Správně",
+    "kindScore": "{correct} z {total}",
+    "mistakes": "Co bylo špatně",
+    "mistakeTask": "Úloha {n}",
+    "skipped": "Úloha zůstala bez odpovědi.",
+    "certificateNote": "Certifikát o absolvování bude dostupný po přihlášení. Zatím si výsledek můžete jen prohlédnout.",
+    "retry": "Zkusit test znovu",
+    "backToLessons": "Zpět na přehled lekcí"
   }
 }

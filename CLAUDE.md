@@ -13,8 +13,26 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
 - Jiří svěřil odborná rozhodnutí Claudovi (D-017): nejasnosti řeš podle běžné praxe, zapiš do
   `docs/decisions.md` a před pilotem doporuč kontrolu učitelem. Jiřího se na normy neptej.
 - Fáze 2: generátor úloh a distraktory hotové (D-019), webové UI hotové (D-020): `/cs/demo`
-  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>` (lekce 1–5 dostupné, 6–9 připravujeme).
-  Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Čeká na kontrolu.
+  (ukázka → 5 úloh → shrnutí), `/cs/lekce` a `/cs/lekce/<slug>`.
+  Cvičení v `apps/web/components/exercises/`, obsah lekcí v `packages/content`. Jiří schválil (PR #3).
+- Kótování (D-022): `createDrawing(spec, mesh, { dimensions: true })`, kód v `packages/engine/src/dimensions/`,
+  pravidla v `packages/drafting-standards/src/dimensions.ts`, snapshoty `packages/engine/test/__snapshots__/dims/`.
+  V laboratoři přepínač „Kóty“.
+- Řez (D-021): `createDrawing(spec, mesh, { section: { spec: { axis, at, label }, view } })`, kód
+  v `packages/engine/src/section/` (bez WASM, podmodul `@vykresovna/engine/section`), pravidla
+  v `packages/drafting-standards/src/section.ts`, testovací řezy `SECTION_TEST_CASES`
+  (`packages/engine/src/fixtures/section-parts.ts`, snapshoty `rez-*.svg`). 3D: `PartViewer`
+  s `sectionPlane` + `onSectionChange`. V laboratoři přepínač „Řez“ a posuvník roviny.
+- Fáze 3: cvičení 4 „Najdi chybu ve výkresu“ a adaptivita (D-023): `packages/exercises/src/find-error.ts`,
+  `adaptivity.ts` (čisté, subpath `@vykresovna/exercises/adaptivity`), UI `FindError.tsx`; na konci lekcí
+  adaptivní úlohy z historie relace.
+- Fáze 3 dokončená (D-024), **čeká na Jiřího kontrolu**: cvičení 5 „Řez“ (vyber řez A–A / umísti rovinu,
+  `packages/exercises/src/section.ts`, UI `Section.tsx`) a 6 „Odečti kótu“ (`dimension.ts`, `Dimension.tsx`).
+  Lekce 1–9 dostupné: 7 řez, 8 kóty (živé úvody `SectionDemo`, `DimensionDemo`), 9 závěrečný test
+  (`FINAL_TEST` v `packages/content`, UI `FinalTest.tsx`, nic se neukládá). Demo: 5 úloh pěti typů.
+  Styly SVG výkresu omezené na třídu `vk-drawing` (`scopeCss`). `ENGINE_VERSION` 0.4.0.
+- Seznam ke kontrole učitelem před pilotem: `docs/kontrola-ucitelem.md` (při novém odborném rozhodnutí
+  doplnit i tam).
 
 ## Jak pracujeme
 
@@ -85,6 +103,8 @@ Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm (viz D-008).
 - TypeScript strict. Žádné texty natvrdo v komponentách (vše přes `messages/*.json`).
 - Každá nová tabulka: RLS zapnuté + politiky + pgTAP test izolace organizací.
 - Úlohy jsou deterministické ze `seed`; ukládá se `seed` + `engine_version`.
+- E2E: seedy úloh pevně přes `fixSeeds(page, [...])` z `apps/web/e2e/helpers.ts`, správné odpovědi
+  z testovacích atributů `data-test-*` (`data-test-correct`, `data-test-answer-at`, `data-test-answer`).
 - Distraktor musí mít jiný 2D otisk než správná odpověď (jinak se zahodí).
 - Žádné trackery třetích stran, minimum osobních údajů.
 

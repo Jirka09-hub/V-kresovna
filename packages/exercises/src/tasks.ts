@@ -1,5 +1,5 @@
 /**
- * Generátor úloh (cvičení 1–3). Úloha je deterministická ze (seed, obtížnost, typ). Každý distraktor
+ * Generátor úloh (cvičení 1–6; „najdi chybu“ je v find-error.ts, řez v section.ts, kóty v dimension.ts). Úloha je deterministická ze (seed, obtížnost, typ). Každý distraktor
  * se ověří otiskem výkresu: musí se viditelně lišit od správné odpovědi i od ostatních distraktorů.
  * Když se pro součást nedaří najít dost distraktorů, vezme se další součást ze stejného proudu
  * náhodných čísel.
@@ -10,7 +10,7 @@ import {
   createDrawing,
   ENGINE_VERSION,
   extractEdges,
-  viewFingerprint,
+  visualFingerprint,
   type Drawing,
   type DrawingView,
   type EdgeModel,
@@ -25,8 +25,12 @@ import {
   drawingMutationCandidates,
   edgeFeatureLookup,
 } from './drawing-mutations'
+import { CandidateStreams, selectDistinct } from './candidates'
+import { buildDimensionTask } from './dimension'
+import { buildFindErrorTask } from './find-error'
 import { generatePart, generatePartWith } from './generator'
 import { partMutations, type PartMutation } from './part-mutations'
+import { buildSectionTask, generateSectionPart } from './section'
 import { createRng, deriveSeed, type Rng } from './rng'
 import {
   EXERCISE_KINDS,
@@ -35,6 +39,7 @@ import {
   type Difficulty,
   type DrawingMutation,
   type DrawingToModelTask,
+  type ErrorCode,
   type ExerciseKind,
   type MissingViewTask,
   type Task,
@@ -97,7 +102,7 @@ class Renderer {
       fp: (name) => {
         let f = fps.get(name)
         if (f === undefined) {
-          f = viewFingerprint(view(name))
+          f = visualFingerprint(view(name))
           fps.set(name, f)
         }
         return f
@@ -106,84 +111,6 @@ class Renderer {
     this.cache.set(key, rendered)
     return rendered
   }
-}
-
-/**
- * Proudy kandidátů po kategoriích. Kandidát se vyhodnocuje (staví) až ve chvíli, kdy je potřeba;
- * kandidát jiné kategorie se odloží do zásobníku své kategorie.
- */
-class CandidateStreams<C extends string, T> {
-  private readonly buffers = new Map<C, T[]>()
-  constructor(
-    private readonly producers: readonly {
-      readonly cats: readonly C[]
-      /** null = vyčerpáno, undefined = kandidát zamítnut, jinak kandidát a jeho kategorie */
-      readonly next: () => { cat: C; item: T } | null | undefined
-      /** Levný producent (bez stavění tělesa) smí vyrábět i při výběru „pestrých“ kandidátů. */
-      readonly cheap?: boolean
-    }[],
-  ) {}
-
-  /** Vezme první vyhovující kandidát kategorie; nevyhovující zůstávají v zásobníku pro další výběr. */
-  take(cat: C, accept: (item: T) => boolean, onlyCheap = false): T | null {
-    const buf = this.buffer(cat)
-    const idx = buf.findIndex(accept)
-    if (idx >= 0) return buf.splice(idx, 1)[0]!
-    for (const p of this.producers) {
-      if (!p.cats.includes(cat) || (onlyCheap && !p.cheap)) continue
-      for (;;) {
-        const r = p.next()
-        if (r === null) break
-        if (r === undefined) continue
-        if (r.cat === cat && accept(r.item)) return r.item
-        this.buffer(r.cat).push(r.item)
-      }
-    }
-    return null
-  }
-
-  private buffer(cat: C): T[] {
-    let buf = this.buffers.get(cat)
-    if (!buf) {
-      buf = []
-      this.buffers.set(cat, buf)
-    }
-    return buf
-  }
-}
-
-/**
- * Vybere distraktory pro sloty (každý slot = pořadí preferovaných kategorií). Otisk musí být jiný než
- * u správné odpovědi i u ostatních distraktorů. Přednost má už vyhodnocený (nebo levný) kandidát
- * s dosud nepoužitým kódem chyby (pestřejší možnosti); když žádný není, stačí odlišný otisk.
- */
-function selectDistinct<C extends string, T extends { fp: string; option: { errorCode: unknown } }>(
-  streams: CandidateStreams<C, T>,
-  slots: readonly (readonly C[])[],
-  correctFp: string,
-): T[] | null {
-  const used = new Set<string>([correctFp])
-  const usedCodes = new Set<unknown>()
-  const picked: T[] = []
-  for (const prefs of slots) {
-    let found: T | null = null
-    for (const cat of prefs) {
-      for (const strict of [true, false]) {
-        found = streams.take(
-          cat,
-          (item) => !used.has(item.fp) && (!strict || !usedCodes.has(item.option.errorCode)),
-          strict,
-        )
-        if (found) break
-      }
-      if (found) break
-    }
-    if (!found) return null
-    used.add(found.fp)
-    usedCodes.add(found.option.errorCode)
-    picked.push(found)
-  }
-  return picked
 }
 
 type Distractor = {
@@ -308,7 +235,7 @@ function missingView(
   const drawingProducer = () => {
     if (di >= drawingCandidates.length) return null
     const c = drawingCandidates[di++]!
-    const fp = viewFingerprint(applyToView(missingDrawingView, c.mutation))
+    const fp = visualFingerprint(applyToView(missingDrawingView, c.mutation))
     const mutation: DrawingMutation = c.mutation
     const option: Omit<ChoiceOption, 'id'> = {
       part,
@@ -429,6 +356,12 @@ function drawingToModel(
   return { kind: 'drawing-to-model', part, options }
 }
 
+/** Volitelné vstupy generátoru (ukládají se spolu se seedem). */
+export type GenerateTaskOptions = {
+  /** Upřednostněný druh chyby (adaptivita); zatím ho používá jen „najdi chybu“. */
+  readonly focus?: ErrorCode
+}
+
 /**
  * Úloha daného typu ze seedu. Deterministická: stejné vstupy dají stejnou (deep-equal) úlohu.
  * Součást úlohy je obvykle `generatePart(seed, difficulty)`; když pro ni nejde úlohu sestavit
@@ -439,13 +372,26 @@ export function generateTask(
   kind: ExerciseKind,
   seed: number,
   difficulty: Difficulty,
+  options: GenerateTaskOptions = {},
 ): Task {
   const rng = createRng(deriveSeed(seed, difficulty, EXERCISE_KINDS.indexOf(kind) + 1, 0x7a5c))
   const views: readonly ViewName[] =
     kind === 'assign-views' ? ['front', ...assignViewCards(difficulty)] : STANDARD_VIEWS
   const renderer = new Renderer(wasm, views)
-  const meta = { seed, difficulty, engineVersion: ENGINE_VERSION }
+  const meta = {
+    seed,
+    difficulty,
+    engineVersion: ENGINE_VERSION,
+    ...(options.focus ? { focus: options.focus } : {}),
+  }
   for (let attempt = 0; attempt < MAX_PARTS; attempt++) {
+    if (kind === 'section') {
+      // řez potřebuje součást s dírami: vlastní plán prvků (generateSectionPart)
+      const part = generateSectionPart(rng, difficulty, `sec-${difficulty}-${seed}-${attempt}`)
+      const t = part ? buildSectionTask(wasm, rng, part, difficulty) : null
+      if (t) return { ...meta, ...t }
+      continue
+    }
     const part =
       attempt === 0
         ? generatePart(seed, difficulty)
@@ -463,6 +409,16 @@ export function generateTask(
       }
       case 'drawing-to-model': {
         const t = drawingToModel(renderer, rng, part, difficulty)
+        if (t) return { ...meta, ...t }
+        break
+      }
+      case 'find-error': {
+        const t = buildFindErrorTask(wasm, rng, part, difficulty, options.focus)
+        if (t) return { ...meta, ...t }
+        break
+      }
+      case 'dimension': {
+        const t = buildDimensionTask(wasm, rng, part, difficulty)
         if (t) return { ...meta, ...t }
         break
       }

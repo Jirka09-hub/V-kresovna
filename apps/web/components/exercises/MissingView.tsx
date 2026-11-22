@@ -149,6 +149,7 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
           <div
             className="grid w-full grid-cols-2 gap-3"
             style={{ maxWidth: gridMaxWidth(2, 2, aspect, 52) }}
+            data-test-correct={correct.id}
           >
             {task.options.map((o, i) => (
               <OptionCard

@@ -12,7 +12,7 @@ export const letterOf = (i: number) => OPTION_LETTERS[i] ?? String(i + 1)
 export type ChoiceState = { chosenId: string; result: TaskResult } | null
 
 /** Stav možnosti po odpovědi: správná / zvolená špatná / ostatní. */
-export function optionStatus(option: ChoiceOption, state: ChoiceState) {
+export function optionStatus(option: Pick<ChoiceOption, 'id' | 'errorCode'>, state: ChoiceState) {
   if (!state) return null
   if (option.errorCode === null) return 'correct' as const
   if (option.id === state.chosenId) return 'wrong' as const

@@ -9,10 +9,15 @@ import {
   type Vec3,
   type ViewName,
 } from '@vykresovna/drafting-standards'
+import { layoutDimensions } from '../dimensions/layout'
+import { partDimensions } from '../dimensions/semantic'
+import type { DimensionMargins, DrawingDimension } from '../dimensions/types'
 import { extractEdges, type EdgeModel } from '../edges/extract'
 import type { SolidMesh } from '../mesh/types'
 import { AXIS_INDEX, otherAxes, type Axis, type Box, type PartSpec } from '../part/spec'
 import { projectView, viewBasis, type Vec2, type ViewProjection } from '../projection/hlr'
+import type { CuttingPlaneMark, SectionDrawingOptions, SectionViewData } from '../section/types'
+import { fitSectionAnnotations, prepareSection } from '../section/view'
 
 /** Mezera mezi pohledy na výkrese (mm). Není to norma, jen rozvržení. */
 export const VIEW_GAP_MM = 16
@@ -41,6 +46,12 @@ export type DrawingView = {
   /** Posun levého horního rohu pohledu na výkrese (mm, SVG souřadnice: y dolů). */
   readonly origin: Vec2
   readonly size: Vec2
+  /** Kóty pohledu (jen s `createDrawing(…, { dimensions: true })`), souřadnice pohledu. */
+  readonly dimensions?: readonly DrawingDimension[]
+  /** Pohled je nahrazený řezem (plochy řezu, šrafy, označení A–A). */
+  readonly section?: SectionViewData
+  /** Stopy rovin řezu, které leží v tomto pohledu „na hraně“. */
+  readonly cuttingPlanes?: readonly CuttingPlaneMark[]
 }
 
 export type Drawing = {
@@ -56,6 +67,10 @@ export type DrawingOptions = {
   readonly views?: readonly ViewName[]
   readonly layout?: 'first-angle' | 'third-angle-demo'
   readonly edges?: EdgeModel
+  /** Zakótovat výkres (výchozí ne). Výkres se zvětší, aby se kóty vešly vně pohledů. */
+  readonly dimensions?: boolean
+  /** Plný řez: daný pohled se nahradí řezem a do sousedního pohledu se nakreslí stopa roviny řezu. */
+  readonly section?: SectionDrawingOptions
 }
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
@@ -274,43 +289,76 @@ export function createDrawing(
     layoutName === 'first-angle' ? FIRST_ANGLE_LAYOUT : THIRD_ANGLE_DEMO_ONLY
   const edges = options.edges ?? extractEdges(mesh)
   const planes = symmetryPlanes(spec, mesh)
+  const section = options.section ? prepareSection(spec, mesh, options.section, viewNames) : null
 
   const parts = viewNames.map((view) => {
-    const projection = projectView(mesh, edges, view)
+    const inSection = section?.view === view
+    const projection = inSection ? section.projection : projectView(mesh, edges, view)
     const holes = holeAnnotations(spec, view)
     const symmetry = symmetryLines(planes, view, projection.bounds)
-    const centerLines = [
+    let centerLines = [
       ...symmetry,
       ...holes.centerLines.filter((cl) => !symmetry.some((s) => containedIn(cl, s))),
     ]
-    const circles = holes.circles
+    let circles = holes.circles
+    if (inSection) {
+      // osy a kružnice prvků, které řez celé odebral, se v pohledu v řezu nekreslí
+      centerLines = centerLines.filter((cl) => section.keepsFeature(cl.featureId))
+      circles = circles.filter((c) => section.keepsFeature(c.featureId))
+    }
     const size: Vec2 = [
       projection.bounds.max[0] - projection.bounds.min[0],
       projection.bounds.max[1] - projection.bounds.min[1],
     ]
-    return { view, projection, centerLines, circles, size, cell: grid[view] }
+    const extra = {
+      ...(inSection ? { section: section.data } : {}),
+      ...(section?.markView === view ? { cuttingPlanes: [section.mark(projection.bounds)] } : {}),
+    }
+    return { view, projection, centerLines, circles, size, cell: grid[view], extra }
   })
 
-  // šířky sloupců a výšky řádků mřížky
+  // kóty: každá právě v jednom pohledu; okraje, o které kóty přesahují pohled
+  const dims = options.dimensions
+    ? new Map(
+        layoutDimensions(partDimensions(spec, { symmetry: planes }), parts).map((d) => [d.view, d]),
+      )
+    : null
+  const NO_MARGIN: DimensionMargins = { top: 0, bottom: 0, left: 0, right: 0 }
+  const margin = (view: ViewName) => dims?.get(view)?.margins ?? NO_MARGIN
+
+  // šířky sloupců a výšky řádků mřížky (včetně místa pro kóty kolem pohledů)
   const colWidth = new Map<number, number>()
   const rowHeight = new Map<number, number>()
+  const colLeft = new Map<number, number>()
+  const colRight = new Map<number, number>()
+  const rowTop = new Map<number, number>()
+  const rowBottom = new Map<number, number>()
+  const grow = (map: Map<number, number>, key: number, value: number) =>
+    map.set(key, Math.max(map.get(key) ?? 0, value))
   for (const p of parts) {
-    colWidth.set(p.cell[0], Math.max(colWidth.get(p.cell[0]) ?? 0, p.size[0]))
-    rowHeight.set(p.cell[1], Math.max(rowHeight.get(p.cell[1]) ?? 0, p.size[1]))
+    grow(colWidth, p.cell[0], p.size[0])
+    grow(rowHeight, p.cell[1], p.size[1])
+    const m = margin(p.view)
+    grow(colLeft, p.cell[0], m.left)
+    grow(colRight, p.cell[0], m.right)
+    grow(rowTop, p.cell[1], m.top)
+    grow(rowBottom, p.cell[1], m.bottom)
   }
   const cols = [...colWidth.keys()].sort((x, y) => x - y)
   const rows = [...rowHeight.keys()].sort((x, y) => y - x) // nahoře je vyšší řádek
   const colX = new Map<number, number>()
   let x = DRAWING_MARGIN_MM
   for (const c of cols) {
+    x += colLeft.get(c)!
     colX.set(c, x)
-    x += colWidth.get(c)! + VIEW_GAP_MM
+    x += colWidth.get(c)! + colRight.get(c)! + VIEW_GAP_MM
   }
   const rowY = new Map<number, number>()
   let y = DRAWING_MARGIN_MM
   for (const r of rows) {
+    y += rowTop.get(r)!
     rowY.set(r, y)
-    y += rowHeight.get(r)! + VIEW_GAP_MM
+    y += rowHeight.get(r)! + rowBottom.get(r)! + VIEW_GAP_MM
   }
 
   const views: DrawingView[] = parts.map((p) => ({
@@ -320,13 +368,16 @@ export function createDrawing(
     circles: p.circles,
     size: p.size,
     origin: [colX.get(p.cell[0])!, rowY.get(p.cell[1])!],
+    ...(dims ? { dimensions: dims.get(p.view)?.dimensions ?? [] } : {}),
+    ...p.extra,
   }))
 
-  return {
+  const drawing: Drawing = {
     partId: spec.id,
     views,
     width: x - VIEW_GAP_MM + DRAWING_MARGIN_MM,
     height: y - VIEW_GAP_MM + DRAWING_MARGIN_MM,
     layout: layoutName,
   }
+  return section ? fitSectionAnnotations(drawing, DRAWING_MARGIN_MM) : drawing
 }

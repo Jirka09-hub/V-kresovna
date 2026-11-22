@@ -4,8 +4,15 @@ import {
   LINE_WIDTH_MM,
   type LineKind,
 } from '@vykresovna/drafting-standards'
+import { dimensionStyleRules, renderDimensions } from '../dimensions/svg'
 import type { EdgeVisibility, Vec2 } from '../projection/hlr'
 import type { Drawing, DrawingView, ViewCircle } from './drawing'
+import {
+  hasSections,
+  renderSectionOverlay,
+  renderSectionUnderlay,
+  sectionStyleRules,
+} from '../section/svg'
 
 /**
  * Převod výkresu do SVG. Souřadnice i tloušťky čar jsou v mm (viewBox v mm), takže výkres jde
@@ -28,23 +35,49 @@ const fmt = (n: number) => {
   return Number.isInteger(r) ? String(r) : r.toFixed(3).replace(/0+$/, '')
 }
 
+/**
+ * Třída kořenového `<svg>` výkresu. Všechna pravidla stylu jsou omezená na ni, takže výkres vložený
+ * přímo do stránky (inline SVG) nemění vzhled jiných SVG na stránce.
+ */
+export const DRAWING_ROOT_CLASS = 'vk-drawing'
+
+/** Omezí pravidla CSS na výkres: před každý selektor přidá `.vk-drawing `. */
+export function scopeCss(css: string, scope = DRAWING_ROOT_CLASS): string {
+  return css
+    .split('}')
+    .filter((rule) => rule.trim() !== '')
+    .map((rule) => {
+      const i = rule.indexOf('{')
+      const selectors = rule
+        .slice(0, i)
+        .split(',')
+        .map((sel) => `.${scope} ${sel.trim()}`)
+        .join(',')
+      return `${selectors}${rule.slice(i)}}`
+    })
+    .join('')
+}
+
 const KIND_BY_VISIBILITY: Record<EdgeVisibility, LineKind> = {
   visible: 'visibleEdge',
   hidden: 'hiddenEdge',
 }
 
-function styleBlock(): string {
+function styleBlock(drawing: Drawing): string {
   const kinds: LineKind[] = ['visibleEdge', 'hiddenEdge', 'centerLine']
   const rules = kinds.map((k) => {
     const dash = dashArrayMm(k)
     const width = LINE_WIDTH_MM[LINE_STYLES[k].weight]
     return `.${k}{stroke-width:${fmt(width)}${dash.length ? `;stroke-dasharray:${dash.map(fmt).join(' ')}` : ''}}`
   })
-  return [
+  const css = [
     'path,circle,line{fill:none;stroke:var(--drawing-ink,#111);stroke-linecap:butt;stroke-linejoin:round}',
     ...rules,
     '[data-highlight="true"]{stroke:var(--drawing-highlight,#1d4ed8)}',
+    ...(drawing.views.some((v) => v.dimensions?.length) ? [dimensionStyleRules()] : []),
+    ...(hasSections(drawing) ? [sectionStyleRules()] : []),
   ].join('')
+  return scopeCss(css)
 }
 
 type Chain = { points: Vec2[]; closed: boolean; edgeIds: Set<string> }
@@ -125,7 +158,8 @@ function renderView(v: DrawingView, opts: SvgOptions): string {
   const { min, max } = v.projection.bounds
   // pohled: u doprava, v nahoru → SVG: x doprava, y dolů
   const tx = (p: Vec2): Vec2 => [v.origin[0] + (p[0] - min[0]), v.origin[1] + (max[1] - p[1])]
-  const out: string[] = []
+  // plochy řezu a šrafy pod hranami
+  const out: string[] = v.section ? [renderSectionUnderlay(v)] : []
 
   for (const visibility of ['hidden', 'visible'] as const) {
     if (visibility === 'hidden' && opts.showHidden === false) continue
@@ -137,7 +171,11 @@ function renderView(v: DrawingView, opts: SvgOptions): string {
     for (const chain of chainSegments(segs)) {
       const circle =
         chain.points.length >= 4 ? circles.find((c) => onCircle(chain.points, c)) : undefined
-      if (circle && chain.closed) {
+      // celá kružnice, i když se konce řetězce kvůli zaokrouhlení liší o desetitisícinu mm
+      const p0 = chain.points[0]!
+      const pn = chain.points[chain.points.length - 1]!
+      const almostClosed = Math.hypot(pn[0] - p0[0], pn[1] - p0[1]) < 1e-3
+      if (circle && (chain.closed || almostClosed)) {
         out.push(
           `<circle ${attrs(kind, chain.edgeIds)} cx="${fmt(circle.center[0])}" cy="${fmt(circle.center[1])}" r="${fmt(circle.radius)}"/>`,
         )
@@ -179,7 +217,10 @@ function renderView(v: DrawingView, opts: SvgOptions): string {
       )
     }
   }
-  return `<g data-view="${v.view}">${out.join('')}</g>`
+  if (v.dimensions?.length) out.push(renderDimensions(v.dimensions, tx))
+  if (v.section || v.cuttingPlanes) out.push(renderSectionOverlay(v))
+  const sectionAttr = v.section ? ` data-section="${escapeXml(v.section.label)}"` : ''
+  return `<g data-view="${v.view}"${sectionAttr}>${out.join('')}</g>`
 }
 
 /** Vykreslí výkres jako samostatný SVG dokument (řetězec). */
@@ -188,9 +229,9 @@ export function drawingToSvg(drawing: Drawing, opts: SvgOptions = {}): string {
   const h = fmt(drawing.height)
   const title = opts.title ? `<title>${escapeXml(opts.title)}</title>` : ''
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg"${opts.id ? ` id="${escapeXml(opts.id)}"` : ''} viewBox="0 0 ${w} ${h}" width="${w}mm" height="${h}mm" data-part="${escapeXml(drawing.partId)}" data-layout="${drawing.layout}"${opts.title ? ' role="img"' : ''}>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" class="${DRAWING_ROOT_CLASS}"${opts.id ? ` id="${escapeXml(opts.id)}"` : ''} viewBox="0 0 ${w} ${h}" width="${w}mm" height="${h}mm" data-part="${escapeXml(drawing.partId)}" data-layout="${drawing.layout}"${opts.title ? ' role="img"' : ''}>`,
     title,
-    `<style>${styleBlock()}</style>`,
+    `<style>${styleBlock(drawing)}</style>`,
     ...drawing.views.map((v) => renderView(v, opts)),
     '</svg>',
   ].join('')

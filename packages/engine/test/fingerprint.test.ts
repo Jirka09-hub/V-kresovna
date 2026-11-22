@@ -7,7 +7,9 @@ import {
   drawingFingerprint,
   loadManifold,
   TEST_PARTS,
+  SECTION_TEST_CASES,
   viewFingerprint,
+  visualFingerprint,
   type Drawing,
   type DrawingView,
   type PartSpec,
@@ -115,5 +117,100 @@ describe('otisk pohledu', () => {
     expect(text).toContain('C 30000,20000 6000')
     expect(text).toMatch(/A /)
     expect(text).toMatch(/H |V /)
+  })
+})
+
+describe('otisk pohledu v řezu', () => {
+  const c = SECTION_TEST_CASES[0]!
+  const withSection = (at = c.section.at) =>
+    createDrawing(c.part, buildPart(wasm, c.part), {
+      section: { spec: { ...c.section, at }, view: c.view },
+    })
+
+  it('pohled bez řezu nemá v otisku nic z řezu (otisky starších úloh se nemění)', () => {
+    for (const spec of TEST_PARTS) {
+      for (const v of drawing(spec).views) expect(canonicalView(v)).not.toMatch(/(^|;)(F|U|X|P)/)
+    }
+  })
+
+  it('plochy řezu a šrafy jsou v otisku: bez šraf je otisk jiný', () => {
+    const d = withSection()
+    const sec = view(d, c.view)
+    const text = canonicalView(sec)
+    expect(text).toMatch(/(^|;)F /)
+    expect(text).toMatch(/(^|;)X /)
+    const bare: DrawingView = { ...sec, section: { ...sec.section!, hatching: [] } }
+    expect(viewFingerprint(bare)).not.toBe(viewFingerprint(sec))
+    // stopa roviny řezu je v otisku pohledu, kde leží
+    const marked = d.views.find((v) => v.cuttingPlanes?.length)!
+    expect(canonicalView(marked)).toMatch(/(^|;)PA /)
+  })
+
+  it('jiná poloha roviny dá jiný otisk, stejná stejný', () => {
+    expect(viewFingerprint(view(withSection(), c.view))).toBe(
+      viewFingerprint(view(withSection(), c.view)),
+    )
+    expect(viewFingerprint(view(withSection(10), c.view))).not.toBe(
+      viewFingerprint(view(withSection(), c.view)),
+    )
+  })
+
+  it('vrcholy plochy řezu na přímce mezi sousedy otisk nemění (stejně nakreslená plocha)', () => {
+    const sec = view(withSection(), c.view)
+    const faces = sec.section!.faces
+    const face = faces[0]!
+    const [a, b] = [face.outer[0]!, face.outer[1]!]
+    const mid: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    const extra: DrawingView = {
+      ...sec,
+      section: {
+        ...sec.section!,
+        faces: [{ ...face, outer: [a, mid, mid, ...face.outer.slice(1)] }, ...faces.slice(1)],
+      },
+    }
+    expect(viewFingerprint(extra)).toBe(viewFingerprint(sec))
+    // posunutý vrchol (mimo přímku) otisk změní
+    const bent: DrawingView = {
+      ...sec,
+      section: {
+        ...sec.section!,
+        faces: [
+          { ...face, outer: [a, [mid[0] + 0.5, mid[1] + 0.5], ...face.outer.slice(1)] },
+          ...faces.slice(1),
+        ],
+      },
+    }
+    expect(viewFingerprint(bent)).not.toBe(viewFingerprint(sec))
+  })
+})
+
+describe('vizuální otisk', () => {
+  it('ignoruje osy a rozdíly menší než VISUAL_DIFFERENCE_MM', () => {
+    const base: DrawingView = {
+      view: 'front',
+      projection: {
+        view: 'front',
+        segments: [{ a: [0, 0], b: [10, 0], visibility: 'visible', edgeIds: ['e'] }],
+        bounds: { min: [0, 0], max: [10, 0] },
+      },
+      centerLines: [],
+      circles: [],
+      origin: [0, 0],
+      size: [10, 0],
+    }
+    const withAxis = {
+      ...base,
+      centerLines: [{ a: [5, -3] as const, b: [5, 3] as const, featureId: 'd1' }],
+    }
+    expect(visualFingerprint(withAxis)).toBe(visualFingerprint(base))
+    const nudged: DrawingView = {
+      ...base,
+      projection: {
+        ...base.projection,
+        segments: [{ a: [0, 0], b: [10.1, 0], visibility: 'visible', edgeIds: ['e'] }],
+      },
+    }
+    expect(visualFingerprint(nudged)).toBe(visualFingerprint(base))
+    expect(viewFingerprint(nudged)).not.toBe(viewFingerprint(base))
   })
 })

@@ -1,13 +1,16 @@
 'use client'
 
 import type { ViewName } from '@vykresovna/drafting-standards'
-import type { PartRenderData, PartSpec } from '@vykresovna/engine'
+import type { PartRenderData, PartSpec, SectionDrawingOptions } from '@vykresovna/engine'
 import type {
   Answer,
   ChoiceOption,
   Difficulty,
   DrawingMutation,
+  ErrorCode,
   ExerciseKind,
+  FindErrorTask,
+  SectionRender,
   Task,
   TaskResult,
 } from '@vykresovna/exercises'
@@ -57,11 +60,23 @@ export function callEngine<C extends EngineCall>(call: C): Promise<EngineResult<
   return promise as Promise<EngineResult<C>>
 }
 
-/** Postaví součást a celý výkres (3D síť, hrany, SVG). */
-export function renderPart(spec: PartSpec, svgTitle?: string): Promise<PartRenderData> {
-  return callEngine(
-    svgTitle ? { type: 'render-part', spec, svgTitle } : { type: 'render-part', spec },
-  )
+/** Pohledy s řezem (cvičení 5) jako samostatné výkresy, v pořadí `render.show`. */
+export function renderSection(render: SectionRender): Promise<ViewsSvg[]> {
+  return callEngine({ type: 'render-section', render })
+}
+
+/** Postaví součást a celý výkres (3D síť, hrany, SVG), volitelně s kótami. */
+export function renderPart(
+  spec: PartSpec,
+  svgTitle?: string,
+  options: { dimensions?: boolean } = {},
+): Promise<PartRenderData> {
+  return callEngine({
+    type: 'render-part',
+    spec,
+    ...(svgTitle ? { svgTitle } : {}),
+    ...(options.dimensions ? { dimensions: true } : {}),
+  })
 }
 
 /** Vygeneruje úlohu ze seedu (generátor potřebuje WASM, proto běží ve workeru). */
@@ -69,15 +84,29 @@ export function generateTask(
   kind: ExerciseKind,
   seed: number,
   difficulty: Difficulty,
+  focus?: ErrorCode,
 ): Promise<Task> {
-  return callEngine({ type: 'generate-task', kind, seed, difficulty })
+  return callEngine({
+    type: 'generate-task',
+    kind,
+    seed,
+    difficulty,
+    ...(focus ? { focus } : {}),
+  })
+}
+
+/** Výkres úlohy „najdi chybu“ (s chybou, nebo správný) včetně polohy pohledů. */
+export function renderFindError(task: FindErrorTask, correct = false): Promise<ViewsSvg> {
+  return callEngine(
+    correct ? { type: 'render-find-error', task, correct } : { type: 'render-find-error', task },
+  )
 }
 
 /** SVG vybraných pohledů součásti, volitelně s mutací výkresu (distraktor). */
 export function renderViews(
   spec: PartSpec,
   views: readonly ViewName[],
-  options: { mutation?: DrawingMutation; svgTitle?: string } = {},
+  options: { mutation?: DrawingMutation; svgTitle?: string; section?: SectionDrawingOptions } = {},
 ): Promise<ViewsSvg> {
   return callEngine({
     type: 'render-views',
@@ -85,6 +114,7 @@ export function renderViews(
     views,
     ...(options.mutation ? { mutation: options.mutation } : {}),
     ...(options.svgTitle ? { svgTitle: options.svgTitle } : {}),
+    ...(options.section ? { section: options.section } : {}),
   })
 }
 

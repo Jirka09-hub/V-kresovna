@@ -20,11 +20,9 @@ export const FINGERPRINT_PRECISION_MM = 1e-3
 type Interval = { s0: number; s1: number }
 type Line = { dir: Vec2; offset: number; visible: Interval[]; hidden: Interval[] }
 
-const q = (x: number) => Math.round(x / FINGERPRINT_PRECISION_MM) + 0
-
 /** Sjednocení intervalů (navazující a překrývající se spojí). */
-function union(intervals: readonly Interval[]): Interval[] {
-  const tol = FINGERPRINT_PRECISION_MM / 2
+function union(intervals: readonly Interval[], precision: number): Interval[] {
+  const tol = precision / 2
   const sorted = [...intervals].sort((a, b) => a.s0 - b.s0 || a.s1 - b.s1)
   const out: Interval[] = []
   for (const iv of sorted) {
@@ -36,8 +34,8 @@ function union(intervals: readonly Interval[]): Interval[] {
 }
 
 /** Rozdíl množin intervalů a − b (oba sjednocené a seřazené). */
-function subtract(a: readonly Interval[], b: readonly Interval[]): Interval[] {
-  const tol = FINGERPRINT_PRECISION_MM / 2
+function subtract(a: readonly Interval[], b: readonly Interval[], precision: number): Interval[] {
+  const tol = precision / 2
   const out: Interval[] = []
   for (const iv of a) {
     let pieces: Interval[] = [{ ...iv }]
@@ -58,8 +56,12 @@ function subtract(a: readonly Interval[], b: readonly Interval[]): Interval[] {
   return out
 }
 
-/** Kanonický textový popis pohledu (seřazený, zaokrouhlený). Otisk je jeho hash. */
-export function canonicalView(view: DrawingView): string {
+/**
+ * Kanonický textový popis pohledu (seřazený, zaokrouhlený). Otisk je jeho hash. Hrubší `precision`
+ * (např. 0,5 mm) slouží ke kontrole, že se distraktor liší viditelně, ne jen o desetiny milimetru.
+ */
+export function canonicalView(view: DrawingView, precision = FINGERPRINT_PRECISION_MM): string {
+  const q = (x: number) => Math.round(x / precision) + 0
   const origin = view.projection.bounds.min
   const rel = (p: Vec2): Vec2 => [p[0] - origin[0], p[1] - origin[1]]
 
@@ -70,7 +72,7 @@ export function canonicalView(view: DrawingView): string {
     let dx = b[0] - a[0]
     let dy = b[1] - a[1]
     const len = Math.hypot(dx, dy)
-    if (len < FINGERPRINT_PRECISION_MM) continue
+    if (len < precision) continue
     dx /= len
     dy /= len
     // kanonický směr (úhel v [0, π))
@@ -92,8 +94,8 @@ export function canonicalView(view: DrawingView): string {
 
   const items: string[] = []
   for (const line of lines.values()) {
-    const visible = union(line.visible)
-    const hidden = subtract(union(line.hidden), visible)
+    const visible = union(line.visible, precision)
+    const hidden = subtract(union(line.hidden, precision), visible, precision)
     const point = (s: number) => {
       // bod přímky: patní bod (offset·n) + s·dir, kde n = (dy, −dx)
       const x = line.offset * line.dir[1] + s * line.dir[0]
@@ -105,7 +107,7 @@ export function canonicalView(view: DrawingView): string {
       ['H', hidden],
     ] as const) {
       for (const iv of list) {
-        if (iv.s1 - iv.s0 < FINGERPRINT_PRECISION_MM) continue
+        if (iv.s1 - iv.s0 < precision) continue
         items.push(`${tag} ${point(iv.s0)} ${point(iv.s1)}`)
       }
     }
@@ -122,8 +124,72 @@ export function canonicalView(view: DrawingView): string {
     const pb = `${q(b[0])},${q(b[1])}`
     items.push(`A ${pa < pb ? `${pa} ${pb}` : `${pb} ${pa}`}`)
   }
+  // řez: plochy řezu, šrafy, nešrafované části a stopy roviny řezu (u pohledů bez řezu se nic
+  // nepřidá, takže jejich otisk zůstává stejný jako dřív)
+  const pt = (p: Vec2) => {
+    const r = rel(p)
+    return `${q(r[0])},${q(r[1])}`
+  }
+  const seg = (tag: string, a: Vec2, b: Vec2) => {
+    const pa = pt(a)
+    const pb = pt(b)
+    return `${tag} ${pa < pb ? `${pa} ${pb}` : `${pb} ${pa}`}`
+  }
+  const ring = (loop: readonly Vec2[]) => {
+    const pts = simplifyRing(loop.map((p) => rel(p).map(q) as unknown as Vec2)).map(
+      (p) => `${p[0]},${p[1]}`,
+    )
+    const variants: string[] = []
+    for (const seq of [pts, [...pts].reverse()]) {
+      for (let i = 0; i < seq.length; i++) {
+        variants.push([...seq.slice(i), ...seq.slice(0, i)].join(' '))
+      }
+    }
+    return variants.sort()[0] ?? ''
+  }
+  if (view.section) {
+    for (const f of view.section.faces) {
+      items.push(`F ${ring(f.outer)}${f.holes.map((h) => ` / ${ring(h)}`).join('')}`)
+    }
+    for (const f of view.section.unhatched ?? []) items.push(`U ${ring(f.outer)}`)
+    for (const h of view.section.hatching) items.push(seg('X', h.a, h.b))
+  }
+  for (const m of view.cuttingPlanes ?? []) items.push(seg(`P${m.label}`, m.line.a, m.line.b))
   items.push(`S ${q(view.size[0])},${q(view.size[1])}`)
   return [...new Set(items)].sort().join(';')
+}
+
+/**
+ * Obrys plochy bez nadbytečných vrcholů (opakované body a body ležící na přímce mezi sousedy, např.
+ * z dělení kružnice díry na straně, kterou rovina řezu díru jen míjí): stejně nakreslené plochy
+ * pak mají stejný otisk. Souřadnice jsou už zaokrouhlené (celé násobky přesnosti otisku).
+ */
+function simplifyRing(points: readonly Vec2[]): Vec2[] {
+  let pts = points.filter((p, i) => {
+    const prev = points[(i + points.length - 1) % points.length]!
+    return points.length < 2 || p[0] !== prev[0] || p[1] !== prev[1]
+  })
+  let changed = true
+  while (changed && pts.length > 3) {
+    changed = false
+    for (let i = 0; i < pts.length && pts.length > 3; i++) {
+      const a = pts[(i + pts.length - 1) % pts.length]!
+      const b = pts[i]!
+      const c = pts[(i + 1) % pts.length]!
+      const len = Math.hypot(c[0] - a[0], c[1] - a[1])
+      // vzdálenost b od přímky a–c nejvýš jedna jednotka zaokrouhlení
+      const cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+      const between =
+        (b[0] - a[0]) * (c[0] - a[0]) + (b[1] - a[1]) * (c[1] - a[1]) >= 0 &&
+        (b[0] - c[0]) * (a[0] - c[0]) + (b[1] - c[1]) * (a[1] - c[1]) >= 0
+      if (len > 0 && between && Math.abs(cross) / len <= 1) {
+        pts = [...pts.slice(0, i), ...pts.slice(i + 1)]
+        changed = true
+        i--
+      }
+    }
+  }
+  return pts
 }
 
 /** 53bitový hash řetězce (cyrb53), deterministický v prohlížeči i v Node. */
@@ -143,8 +209,8 @@ function hash53(s: string, seed: number): string {
 }
 
 /** Otisk jednoho pohledu (nezávisí na názvu pohledu ani na jeho poloze na výkrese). */
-export function viewFingerprint(view: DrawingView): string {
-  const text = canonicalView(view)
+export function viewFingerprint(view: DrawingView, precision = FINGERPRINT_PRECISION_MM): string {
+  const text = canonicalView(view, precision)
   return hash53(text, 1) + hash53(text, 2)
 }
 
@@ -160,4 +226,18 @@ export function drawingFingerprint(drawing: Drawing, views?: readonly ViewName[]
       return `${name}:${v ? viewFingerprint(v) : '-'}`
     })
     .join('|')
+}
+
+/**
+ * Nejmenší rozdíl (mm), který má uživatel na výkrese poznat. Distraktory a chyby ve výkresu se
+ * porovnávají s touto přesností, aby se možnosti nelišily jen o zlomky milimetru.
+ */
+export const VISUAL_DIFFERENCE_MM = 0.5
+
+/**
+ * Otisk pohledu „jak ho vidí člověk“: bez os (rozdíl jen v délce osy by byl nefér) a se
+ * zaokrouhlením na VISUAL_DIFFERENCE_MM. Slouží ke kontrole odlišnosti možností v úlohách.
+ */
+export function visualFingerprint(view: DrawingView): string {
+  return viewFingerprint({ ...view, centerLines: [] }, VISUAL_DIFFERENCE_MM)
 }

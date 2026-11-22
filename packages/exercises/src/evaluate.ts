@@ -4,6 +4,9 @@ import {
   THIRD_ANGLE_DEMO_ONLY,
   type GridPosition,
 } from '@vykresovna/drafting-standards'
+import { evaluateDimension } from './dimension'
+import { evaluateFindError } from './find-error'
+import { evaluateSection } from './section'
 import type {
   Answer,
   AssignViewsAnswer,
@@ -56,6 +59,18 @@ export function evaluate(task: Task, answer: Answer): TaskResult {
   if (task.kind === 'assign-views') {
     if (answer.kind !== 'assign-views') throw new Error('odpověď neodpovídá typu úlohy')
     return evaluateAssignViews(task, answer)
+  }
+  if (task.kind === 'find-error') {
+    if (answer.kind !== 'find-error') throw new Error('odpověď neodpovídá typu úlohy')
+    return evaluateFindError(task, answer)
+  }
+  if (task.kind === 'section') {
+    if (answer.kind !== 'section') throw new Error('odpověď neodpovídá typu úlohy')
+    return evaluateSection(task, answer)
+  }
+  if (task.kind === 'dimension') {
+    if (answer.kind !== 'dimension') throw new Error('odpověď neodpovídá typu úlohy')
+    return evaluateDimension(task, answer)
   }
   if (answer.kind !== task.kind) throw new Error('odpověď neodpovídá typu úlohy')
   const option = task.options.find((o) => o.id === answer.optionId)

@@ -1,17 +1,32 @@
 'use client'
 
-import type { PartRenderData, PartSpec } from '@vykresovna/engine'
+import type { PartRenderData, PartSpec, SectionTestCase } from '@vykresovna/engine'
 import { PartViewer, UNFOLD_STEPS, type PartViewerHandle } from '@vykresovna/viewer'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { renderPart } from '@/lib/engine/client'
 import { isRelated } from '@/lib/engine/highlight'
 import { DrawingPanel } from './DrawingPanel'
+import {
+  SectionControls,
+  sectionPosition,
+  SECTION_STEP_MM,
+  type LabSection,
+} from './SectionControls'
+import { useSectionDrawing } from './useSectionDrawing'
 import { hasWebGL, WebGLBoundary } from './WebGLBoundary'
 
 const UNFOLD_DURATION_MS = 7000
 
-export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
+export function EngineLab({
+  parts: baseParts,
+  sections = [],
+}: {
+  parts: readonly PartSpec[]
+  /** Součásti s předem daným řezem (po výběru se řez zapne). */
+  sections?: readonly SectionTestCase[]
+}) {
+  const parts = useMemo(() => [...baseParts, ...sections.map((c) => c.part)], [baseParts, sections])
   const t = useTranslations('lab')
   const tv = useTranslations('viewer')
   const [selected, setSelected] = useState(0)
@@ -22,23 +37,32 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
   } | null>(null)
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [xray, setXray] = useState(false)
+  const [dimensions, setDimensions] = useState(false)
   const [unfold, setUnfold] = useState<number | undefined>(undefined)
   const [playing, setPlaying] = useState(false)
   const viewer = useRef<PartViewerHandle>(null)
   const [webgl] = useState(() => hasWebGL())
+  const [section, setSection] = useState<LabSection>({ on: false, axis: 'y', at: null })
   const spec = parts[selected]!
 
   useEffect(() => {
     let alive = true
-    renderPart(spec, t('drawingTitle', { id: spec.id }))
+    renderPart(spec, t('drawingTitle', { id: spec.id }), { dimensions })
       .then((d) => alive && setResult({ id: spec.id, data: d }))
       .catch((e: Error) => alive && setResult({ id: spec.id, error: e.message }))
     return () => {
       alive = false
     }
-  }, [spec, t])
+  }, [spec, t, dimensions])
   const data = result?.id === spec.id ? (result.data ?? null) : null
   const error = result?.id === spec.id ? (result.error ?? null) : null
+  const sectionAt = data && section.on ? sectionPosition(section, data.bbox).at : null
+  const sectionSvg = useSectionDrawing(
+    spec,
+    section.on && sectionAt !== null ? { axis: section.axis, at: sectionAt } : null,
+    t('drawingTitle', { id: spec.id }),
+  )
+  const drawingSvg = section.on ? sectionSvg.svg : (data?.svg ?? null)
 
   // přehrávání animace rozložení
   useEffect(() => {
@@ -95,6 +119,12 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
             onClick={() => {
               setSelected(i)
               setHoverId(null)
+              const preset = sections.find((c) => c.part.id === p.id)
+              setSection((s) =>
+                preset
+                  ? { on: true, axis: preset.section.axis, at: preset.section.at }
+                  : { ...s, at: null },
+              )
             }}
             aria-pressed={i === selected}
             className={`${button} ${i === selected ? 'border-accent bg-blue-50 text-accent' : ''}`}
@@ -131,6 +161,9 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
                   {...(unfold !== undefined ? { unfoldProgress: unfold } : {})}
                   highlightedEdgeIds={highlighted3d}
                   onHoverEdge={setHoverId}
+                  sectionPlane={sectionAt !== null ? { axis: section.axis, at: sectionAt } : null}
+                  onSectionChange={(at) => setSection((s) => ({ ...s, at }))}
+                  sectionStep={SECTION_STEP_MM}
                   className="h-full w-full"
                   ariaLabel={t('modelLabel', { id: spec.id })}
                 />
@@ -154,6 +187,12 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
               {tv('xray')}
             </button>
           </div>
+          <SectionControls
+            section={section}
+            bbox={data?.bbox ?? null}
+            onChange={setSection}
+            buttonClass={button}
+          />
           <fieldset className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3">
             <legend className="px-1 text-sm font-semibold">{tv('unfold.title')}</legend>
             <div className="flex flex-wrap items-center gap-2">
@@ -215,13 +254,24 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
         </section>
 
         <section className="flex flex-col gap-3" aria-labelledby="lab-2d">
-          <h2 id="lab-2d" className="text-lg font-semibold">
-            {t('drawing')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="lab-2d" className="text-lg font-semibold">
+              {t('drawing')}
+            </h2>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={dimensions}
+                onChange={(e) => setDimensions(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+              {t('dimensions')}
+            </label>
+          </div>
           <div className="aspect-[4/3] w-full rounded-lg border border-slate-200 bg-white p-2">
-            {data ? (
+            {drawingSvg ? (
               <DrawingPanel
-                svg={data.svg}
+                svg={drawingSvg}
                 hoverId={hoverId}
                 onHover={setHoverId}
                 label={t('drawingTitle', { id: spec.id })}
@@ -263,7 +313,42 @@ export function EngineLab({ parts }: { parts: readonly PartSpec[] }) {
               </svg>
               {t('legend.center')}
             </li>
+            {section.on ? (
+              <>
+                <li className="flex items-center gap-2">
+                  <svg width="32" height="12" aria-hidden="true">
+                    <path
+                      d="M0 12L12 0M8 12L20 0M16 12L28 0M24 12L32 4"
+                      stroke="#111"
+                      strokeWidth="1"
+                    />
+                  </svg>
+                  {t('legend.hatching')}
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg width="32" height="6" aria-hidden="true">
+                    <line x1="0" y1="3" x2="6" y2="3" stroke="#111" strokeWidth="3" />
+                    <line
+                      x1="6"
+                      y1="3"
+                      x2="26"
+                      y2="3"
+                      stroke="#111"
+                      strokeWidth="1"
+                      strokeDasharray="10 2 1 2"
+                    />
+                    <line x1="26" y1="3" x2="32" y2="3" stroke="#111" strokeWidth="3" />
+                  </svg>
+                  {t('legend.cuttingPlane')}
+                </li>
+              </>
+            ) : null}
           </ul>
+          {section.on && sectionSvg.error ? (
+            <p role="alert" className="text-sm text-red-700">
+              {t('section.error', { message: sectionSvg.error })}
+            </p>
+          ) : null}
           <p className="text-sm text-muted">{t('hoverHint')}</p>
         </section>
       </div>

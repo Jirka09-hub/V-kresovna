@@ -1,18 +1,26 @@
 'use client'
 
 import type { PartRenderData } from '@vykresovna/engine'
+import type { CutPlane } from '@vykresovna/engine/section'
 import { type ThreeEvent } from '@react-three/fiber'
 import { Line } from '@react-three/drei'
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { Bounds } from './coords'
+import { clipSegments, worldClippingPlane } from './section'
 
 export type ViewerColors = {
   body: string
   edge: string
   hiddenEdge: string
   highlight: string
+  /** Plocha řezu (interaktivní řez). */
+  section: string
+  /** Šrafy na ploše řezu. */
+  sectionHatch: string
+  /** Rovina řezu a její úchyt. */
+  sectionPlane: string
 }
 
 export const DEFAULT_COLORS: ViewerColors = {
@@ -20,6 +28,9 @@ export const DEFAULT_COLORS: ViewerColors = {
   edge: '#18212f',
   hiddenEdge: '#475569',
   highlight: '#1d4ed8',
+  section: '#f4d3b8',
+  sectionHatch: '#7c2d12',
+  sectionPlane: '#2563eb',
 }
 
 type Props = {
@@ -32,6 +43,8 @@ type Props = {
   /** Tloušťka viditelných hran v pixelech. */
   edgeWidth: number
   onHoverEdge?: (edgeId: string | null) => void
+  /** Interaktivní řez: materiál před rovinou se nezobrazí (těleso i hrany). */
+  clip?: CutPlane | null
 }
 
 /** Těleso součásti s hranami. Souřadnice enginu, posunuté tak, aby střed tělesa byl v počátku. */
@@ -44,6 +57,7 @@ export function PartModel({
   highlightedEdgeIds,
   edgeWidth,
   onHoverEdge,
+  clip = null,
 }: Props) {
   const geometry = useMemo(() => {
     const g = new THREE.BufferGeometry()
@@ -70,10 +84,34 @@ export function PartModel({
     })
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
-    const segmentPoints: [number, number, number][] = []
+    let segmentPoints: [number, number, number][] = []
     for (let i = 0; i < pts.length; i += 3) segmentPoints.push([pts[i]!, pts[i + 1]!, pts[i + 2]!])
-    return { edgeGeometry: g, segmentEdge, segmentPoints }
-  }, [data])
+    let edges = segmentEdge
+    if (clip) {
+      // řez: hrany před rovinou se nekreslí, protnuté se zkrátí
+      const clipped = clipSegments(segmentPoints, clip)
+      segmentPoints = clipped.points
+      edges = clipped.source.map((s) => segmentEdge[s]!)
+      g.setAttribute('position', new THREE.Float32BufferAttribute(segmentPoints.flat(), 3))
+    }
+    return { edgeGeometry: g, segmentEdge: edges, segmentPoints }
+  }, [data, clip])
+
+  const clippingPlanes = useMemo(
+    () => (clip ? [worldClippingPlane(clip, bounds)] : null),
+    [clip, bounds],
+  )
+
+  // zásah myší jen do zobrazené části tělesa (odebraný materiál paprsek ignoruje)
+  const raycast = useMemo(() => {
+    const plane = clippingPlanes?.[0] ?? null
+    return function (this: THREE.Mesh, raycaster: THREE.Raycaster, hits: THREE.Intersection[]) {
+      if (!plane) return THREE.Mesh.prototype.raycast.call(this, raycaster, hits)
+      const all: THREE.Intersection[] = []
+      THREE.Mesh.prototype.raycast.call(this, raycaster, all)
+      for (const h of all) if (plane.distanceToPoint(h.point) >= -1e-6) hits.push(h)
+    }
+  }, [clippingPlanes])
 
   const highlightLines = useMemo(() => {
     const wanted = new Set(highlightedEdgeIds)
@@ -86,9 +124,12 @@ export function PartModel({
           const k = i % n
           pts.push([edge.points[k * 3]!, edge.points[k * 3 + 1]!, edge.points[k * 3 + 2]!])
         }
-        return { id: edge.id, pts }
+        if (!clip) return { id: edge.id, pts, segments: false }
+        const pairs = pts.slice(1).flatMap((p, i) => [pts[i]!, p])
+        return { id: edge.id, pts: clipSegments(pairs, clip).points, segments: true }
       })
-  }, [data, highlightedEdgeIds])
+      .filter((h) => h.pts.length >= 2)
+  }, [data, highlightedEdgeIds, clip])
 
   const hiddenLines = useMemo(() => {
     const lines = new THREE.LineSegments(
@@ -142,6 +183,7 @@ export function PartModel({
     <group position={offset}>
       <mesh
         geometry={geometry}
+        raycast={raycast}
         onPointerMove={handleMove}
         onPointerOut={() => onHoverEdge?.(null)}
         visible={opacity > 0.01}
@@ -152,6 +194,7 @@ export function PartModel({
           roughness={0.5}
           transparent={transparent}
           opacity={xray ? 0.35 * opacity : opacity}
+          clippingPlanes={clippingPlanes}
           polygonOffset
           polygonOffsetFactor={1}
           polygonOffsetUnits={1}
@@ -173,6 +216,7 @@ export function PartModel({
         <Line
           key={h.id}
           points={h.pts}
+          segments={h.segments}
           color={colors.highlight}
           lineWidth={4}
           depthTest={false}

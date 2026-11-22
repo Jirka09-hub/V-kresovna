@@ -2,7 +2,13 @@
  * Typy obsahu: modul → lekce → úvodní obrazovky a plán úloh. Jen data, žádné texty: texty jsou
  * v aplikaci (`messages/*.json`) pod klíči odvozenými ze slugů a id.
  */
-import type { AssignViewsTask, Difficulty, ExerciseKind } from '@vykresovna/exercises'
+import type {
+  AssignViewsTask,
+  Difficulty,
+  DrawingMutation,
+  ErrorCode,
+  ExerciseKind,
+} from '@vykresovna/exercises'
 
 /** Popis součásti (typ z kontraktu úloh, aby obsah nezávisel přímo na enginu). */
 export type PartSpec = AssignViewsTask['part']
@@ -31,6 +37,21 @@ export type IntroDemo =
       readonly reveal?: boolean
       readonly features?: readonly IntroFeature[]
     }
+  /**
+   * 3D model a výkres s jednou chybou (`mutation`). Tlačítko chybu ukáže a přepínač ukáže
+   * správný výkres.
+   */
+  | { readonly kind: 'error-example'; readonly mutation: DrawingMutation }
+  /**
+   * Živý řez: 3D model s posuvnou rovinou řezu kolmou na `axis` (výchozí poloha `at`) a vedle
+   * výkres s řezem A–A, který se po posunu roviny přepočítá.
+   */
+  | { readonly kind: 'section'; readonly axis: 'x' | 'y' | 'z'; readonly at: number }
+  /**
+   * Zakótovaný výkres vedle 3D modelu: najetí na kótu zvýrazní kótovaný prvek ve 3D, tlačítka
+   * zvýrazní prvek a jeho kóty.
+   */
+  | { readonly kind: 'dimensions'; readonly features?: readonly IntroFeature[] }
 
 export type IntroScreen = {
   /** Id obrazovky v rámci lekce (texty: `lessons.items.<slug>.intro.<id>.title|text`). */
@@ -46,7 +67,29 @@ export type TaskPlanItem = {
   readonly count: number
 }
 
+/**
+ * Úlohy na konci lekce vybírané adaptivně podle chyb uživatele (`pickNextTask`, D-023):
+ * `count` úloh z typů `kinds` v rozsahu obtížnosti. Výchozí obtížnost = obtížnost poslední
+ * pevné úlohy plánu.
+ */
+export type AdaptiveSlots = {
+  readonly count: number
+  readonly kinds: readonly ExerciseKind[]
+  readonly minDifficulty: Difficulty
+  readonly maxDifficulty: Difficulty
+}
+
 export type LessonStatus = 'available' | 'coming-soon'
+
+/**
+ * Závěrečný test: pevný plán úloh (typ a obtížnost), seedy se odvodí z jednoho seedu testu
+ * (`finalTestTasks`). Během testu se nezobrazuje zpětná vazba, výsledek až na konci.
+ */
+export type FinalTestSpec = {
+  readonly plan: readonly Pick<FixedTask, 'kind' | 'difficulty'>[]
+  /** Podíl správných odpovědí potřebný ke splnění (0–1). */
+  readonly passThreshold: number
+}
 
 export type Lesson = {
   /** Slug v URL (`/lekce/<slug>`), zároveň klíč textů `lessons.items.<slug>`. */
@@ -54,6 +97,10 @@ export type Lesson = {
   readonly status: LessonStatus
   readonly intro: readonly IntroScreen[]
   readonly plan: readonly TaskPlanItem[]
+  /** Adaptivní úlohy po pevném plánu (volitelné). */
+  readonly adaptive?: AdaptiveSlots
+  /** Lekce je závěrečný test (místo plánu úloh a adaptivních úloh). */
+  readonly test?: FinalTestSpec
 }
 
 export type Module = {
@@ -67,4 +114,6 @@ export type FixedTask = {
   readonly kind: ExerciseKind
   readonly seed: number
   readonly difficulty: Difficulty
+  /** Upřednostněný druh chyby (vstup generátoru, ukládá se se seedem). */
+  readonly focus?: ErrorCode
 }

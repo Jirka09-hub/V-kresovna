@@ -1,6 +1,12 @@
 import { PILOT_MODULE } from '@vykresovna/content'
-import { validatePart } from '@vykresovna/engine'
-import { ERROR_CODES } from '@vykresovna/exercises'
+import {
+  buildPart,
+  createDrawing,
+  loadManifold,
+  validatePart,
+  viewFingerprint,
+} from '@vykresovna/engine'
+import { applyDrawingMutation, ERROR_CODES } from '@vykresovna/exercises'
 import { describe, expect, it } from 'vitest'
 import cs from '../messages/cs.json'
 
@@ -32,5 +38,26 @@ describe('obsah lekcí', () => {
   it('každý kód chyby má vysvětlení', () => {
     const errors = cs.exercises.errors as Record<string, string>
     for (const code of ERROR_CODES) expect(errors[code], code).toBeTruthy()
+  })
+})
+
+describe('ukázka chyby v lekci 6', () => {
+  it('chyba v ukázce existuje a výkres opravdu změní', async () => {
+    const wasm = await loadManifold()
+    const screens = PILOT_MODULE.lessons.flatMap((l) => l.intro)
+    const examples = screens.filter((s) => s.demo.kind === 'error-example')
+    expect(examples.length).toBeGreaterThan(0)
+    for (const screen of examples) {
+      if (screen.demo.kind !== 'error-example') continue
+      const { mutation } = screen.demo
+      const drawing = createDrawing(screen.part, buildPart(wasm, screen.part))
+      const view = drawing.views.find((v) => v.view === mutation.view)!
+      const ids = new Set(view.projection.segments.flatMap((s) => s.edgeIds))
+      for (const id of mutation.edgeIds) expect(ids, id).toContain(id)
+      const mutated = applyDrawingMutation(drawing, mutation).views.find(
+        (v) => v.view === mutation.view,
+      )!
+      expect(viewFingerprint(mutated)).not.toBe(viewFingerprint(view))
+    }
   })
 })

@@ -13,9 +13,12 @@ import {
 } from '@vykresovna/engine'
 import {
   applyDrawingMutation,
+  buildFindErrorDrawing,
   buildOptionDrawing,
   evaluate,
+  sectionViews,
   generateTask,
+  viewPlacements,
 } from '@vykresovna/exercises'
 import type { EngineCall, EngineRequest, EngineResponse, ViewsSvg } from '@/lib/engine/protocol'
 
@@ -48,17 +51,31 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
   switch (call.type) {
     case 'render-part': {
       const { mesh, edges } = await build(call.spec)
-      const drawing = createDrawing(call.spec, mesh, { edges })
+      const drawing = createDrawing(call.spec, mesh, {
+        edges,
+        ...(call.dimensions ? { dimensions: true } : {}),
+        ...(call.section ? { section: call.section } : {}),
+      })
       const data = toRenderData(mesh, edges, drawing, call.svgTitle)
       return { result: data, transfer: transferables(data) }
     }
     case 'generate-task': {
-      const task = generateTask(await wasm(), call.kind, call.seed, call.difficulty)
+      const task = generateTask(
+        await wasm(),
+        call.kind,
+        call.seed,
+        call.difficulty,
+        call.focus ? { focus: call.focus } : {},
+      )
       return { result: task, transfer: [] }
     }
     case 'render-views': {
       const { mesh, edges } = await build(call.spec)
-      let drawing = createDrawing(call.spec, mesh, { edges, views: call.views })
+      let drawing = createDrawing(call.spec, mesh, {
+        edges,
+        views: call.views,
+        ...(call.section ? { section: call.section } : {}),
+      })
       if (call.mutation) drawing = applyDrawingMutation(drawing, call.mutation)
       const result: ViewsSvg = {
         svg: drawingToSvg(drawing, call.svgTitle ? { title: call.svgTitle } : {}),
@@ -74,6 +91,25 @@ async function handle(call: EngineCall): Promise<{ result: unknown; transfer: Tr
         width: drawing.width,
         height: drawing.height,
       }
+      return { result, transfer: [] }
+    }
+    case 'render-find-error': {
+      const drawing = buildFindErrorDrawing(await wasm(), call.task, { correct: !!call.correct })
+      const result: ViewsSvg = {
+        svg: drawingToSvg(drawing),
+        width: drawing.width,
+        height: drawing.height,
+        placements: viewPlacements(drawing),
+      }
+      return { result, transfer: [] }
+    }
+    case 'render-section': {
+      const { mesh, edges } = await build(call.render.part)
+      const result: ViewsSvg[] = sectionViews(mesh, call.render, edges).map((drawing) => ({
+        svg: drawingToSvg(drawing, call.svgTitle ? { title: call.svgTitle } : {}),
+        width: drawing.width,
+        height: drawing.height,
+      }))
       return { result, transfer: [] }
     }
     case 'evaluate':

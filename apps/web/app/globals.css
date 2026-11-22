@@ -18,6 +18,13 @@ body {
 }
 
 /* Zvýrazněný prvek ve výkresu: barva i větší tloušťka (vzor čáry zůstává, čárkovaná je dál čárkovaná). */
-.drawing-svg [data-highlight='true'] {
+.drawing-svg .vk-drawing [data-highlight='true'] {
   stroke-width: 0.7;
+}
+
+/* neviditelná širší „zásahová“ čára pod hranou (DrawingSvg), aby šlo na tenké čáry snadno najet */
+.drawing-svg .vk-drawing [data-hit='true'] {
+  stroke: transparent;
+  stroke-width: 3;
+  stroke-dasharray: none;
 }
