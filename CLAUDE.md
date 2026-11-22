@@ -140,8 +140,11 @@ pnpm db:types                  # typy databáze z lokální Supabase
 ## Infrastruktura
 
 - Supabase projekt `vykresovna`, ref `lzzbnvqkwbcjsbmktelm`, region eu-central-1 (plán Free; před pilotem Pro).
-  Migrace v `supabase/migrations/`; na vzdálený projekt se zatím aplikují přes Supabase MCP a soubor
-  se pojmenuje podle verze, kterou vrátí `list_migrations`, aby lokál a produkce seděly.
+  Migrace v `supabase/migrations/`. Na produkci je nahrává Jiří sám v SQL Editoru: připravit jeden soubor
+  (migrace + `insert into supabase_migrations.schema_migrations (version, name)` se stejnými verzemi jako
+  názvy souborů, celé v `begin; … commit;`) do `/mnt/project-files/`, předem ho vyzkoušet na lokální DB
+  resetované na stav produkce (`supabase db reset --version <poslední nahraná>`). Potvrzovací okna
+  Supabase MCP se Jiřímu nezobrazují.
 - Veřejné hodnoty Supabase jsou v `apps/web/.env` (publishable klíč je určený pro prohlížeč). Tajné klíče jen
   do `.env.local` / Cloudflare secrets.
 - Cloudflare Workers přes `@opennextjs/cloudflare`, konfigurace `apps/web/wrangler.jsonc`. Deploy přes
