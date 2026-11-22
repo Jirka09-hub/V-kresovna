@@ -258,7 +258,9 @@ select throws_ok($$ select public.join_organization('CCCCCCCC') $$, 'P0001', 'LI
 select throws_ok($$ select public.create_organization('X', 'company', 5, current_date + 10) $$, '42501', null, 'organizaci nezaloží běžný uživatel');
 select pg_temp.login('platform');
 select lives_ok($$ select public.create_organization('Nová D', 'school', 25, current_date + 365) $$, 'správce platformy založí organizaci');
-select is((select count(*)::int from public.platform_organizations()), 4, 'správce platformy vidí přehled organizací');
+-- jen organizace z tohoto testu (sdílená lokální databáze může mít data z e2e testů)
+select is((select count(*)::int from public.platform_organizations()
+            where name in ('Firma A', 'Škola B', 'Prošlá C', 'Nová D')), 4, 'správce platformy vidí přehled organizací');
 
 select pg_temp.admin();
 create temp table code as select verification_code from public.certificates limit 1;

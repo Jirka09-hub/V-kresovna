@@ -27,14 +27,14 @@ isOneToOne: false
                   ]
                 },"attempts": {
                   Row: {
-                    "answer": Json | null,"created_at": string,"difficulty": number,"duration_ms": number | null,"engine_version": string,"error_codes": (string)[],"exercise_type": string,"id": number,"is_correct": boolean,"lesson_slug": string,"module_slug": string,"org_id": string | null,"run_id": string | null,"score": number,"seed": number,"task_index": number | null,"user_id": string
+                    "answer": Json | null,"created_at": string,"difficulty": number,"duration_ms": number | null,"engine_version": string,"error_codes": (string)[],"exercise_type": string,"focus": string | null,"id": number,"is_correct": boolean,"lesson_slug": string,"module_slug": string,"org_id": string | null,"run_id": string | null,"score": number,"seed": number,"task_index": number | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "answer"?: Json | null,"created_at"?: string,"difficulty": number,"duration_ms"?: number | null,"engine_version": string,"error_codes"?: (string)[],"exercise_type": string,"id"?: never,"is_correct": boolean,"lesson_slug": string,"module_slug": string,"org_id"?: string | null,"run_id"?: string | null,"score": number,"seed": number,"task_index"?: number | null,"user_id"?: string
+                    "answer"?: Json | null,"created_at"?: string,"difficulty": number,"duration_ms"?: number | null,"engine_version": string,"error_codes"?: (string)[],"exercise_type": string,"focus"?: string | null,"id"?: never,"is_correct": boolean,"lesson_slug": string,"module_slug": string,"org_id"?: string | null,"run_id"?: string | null,"score": number,"seed": number,"task_index"?: number | null,"user_id"?: string
                   }
                   Update: {
-                    "answer"?: Json | null,"created_at"?: string,"difficulty"?: number,"duration_ms"?: number | null,"engine_version"?: string,"error_codes"?: (string)[],"exercise_type"?: string,"id"?: never,"is_correct"?: boolean,"lesson_slug"?: string,"module_slug"?: string,"org_id"?: string | null,"run_id"?: string | null,"score"?: number,"seed"?: number,"task_index"?: number | null,"user_id"?: string
+                    "answer"?: Json | null,"created_at"?: string,"difficulty"?: number,"duration_ms"?: number | null,"engine_version"?: string,"error_codes"?: (string)[],"exercise_type"?: string,"focus"?: string | null,"id"?: never,"is_correct"?: boolean,"lesson_slug"?: string,"module_slug"?: string,"org_id"?: string | null,"run_id"?: string | null,"score"?: number,"seed"?: number,"task_index"?: number | null,"user_id"?: string
                   }
                   Relationships: [
                     {
