@@ -153,4 +153,32 @@ describe('otisk pohledu v řezu', () => {
       viewFingerprint(view(withSection(), c.view)),
     )
   })
+
+  it('vrcholy plochy řezu na přímce mezi sousedy otisk nemění (stejně nakreslená plocha)', () => {
+    const sec = view(withSection(), c.view)
+    const faces = sec.section!.faces
+    const face = faces[0]!
+    const [a, b] = [face.outer[0]!, face.outer[1]!]
+    const mid: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    const extra: DrawingView = {
+      ...sec,
+      section: {
+        ...sec.section!,
+        faces: [{ ...face, outer: [a, mid, mid, ...face.outer.slice(1)] }, ...faces.slice(1)],
+      },
+    }
+    expect(viewFingerprint(extra)).toBe(viewFingerprint(sec))
+    // posunutý vrchol (mimo přímku) otisk změní
+    const bent: DrawingView = {
+      ...sec,
+      section: {
+        ...sec.section!,
+        faces: [
+          { ...face, outer: [a, [mid[0] + 0.5, mid[1] + 0.5], ...face.outer.slice(1)] },
+          ...faces.slice(1),
+        ],
+      },
+    }
+    expect(viewFingerprint(bent)).not.toBe(viewFingerprint(sec))
+  })
 })

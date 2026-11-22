@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { ManifoldToplevel } from 'manifold-3d'
 import { STANDARD_VIEWS } from '@vykresovna/drafting-standards'
-import { ENGINE_VERSION, loadManifold, viewFingerprint } from '@vykresovna/engine'
+import { canonicalView, ENGINE_VERSION, loadManifold, viewFingerprint } from '@vykresovna/engine'
 import {
   buildSectionViews,
   DIFFICULTIES,
@@ -31,6 +31,13 @@ const SEEDS = seeds(10)
 const sectionFp = (render: Parameters<typeof buildSectionViews>[1]) =>
   viewFingerprint(buildSectionViews(wasm, render)[0]!.views[0]!)
 
+/** Jen to, co je opravdu nakreslené (čáry, kružnice, osy, šrafy), bez obrysů ploch řezu. */
+const drawnLines = (render: Parameters<typeof buildSectionViews>[1]) =>
+  canonicalView(buildSectionViews(wasm, render)[0]!.views[0]!)
+    .split(';')
+    .filter((x) => !/^[FU] /.test(x))
+    .join(';')
+
 function section(seed: number, d: (typeof DIFFICULTIES)[number]): SectionTask {
   const t = generateTask(wasm, 'section', seed, d)
   if (t.kind !== 'section') throw new Error('špatný typ úlohy')
@@ -48,6 +55,8 @@ function checkChoose(task: SectionChooseTask) {
   // každá možnost vypadá jinak (otisk pohledu v řezu včetně ploch řezu a šraf)
   const fps = task.options.map((o) => sectionFp(optionRender(o)))
   expect(new Set(fps).size).toBe(4)
+  // … a liší se i samotnými nakreslenými čarami (ne jen neviditelným dělením obrysu plochy)
+  expect(new Set(task.options.map((o) => drawnLines(optionRender(o)))).size).toBe(4)
   for (const o of task.options) {
     expect(layoutOk(o.part)).toBe(true)
     expect(o.part.id).toBe(`${task.part.id}/${o.id}`)

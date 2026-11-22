@@ -134,7 +134,9 @@ export function canonicalView(view: DrawingView): string {
     return `${tag} ${pa < pb ? `${pa} ${pb}` : `${pb} ${pa}`}`
   }
   const ring = (loop: readonly Vec2[]) => {
-    const pts = loop.map(pt)
+    const pts = simplifyRing(loop.map((p) => rel(p).map(q) as unknown as Vec2)).map(
+      (p) => `${p[0]},${p[1]}`,
+    )
     const variants: string[] = []
     for (const seq of [pts, [...pts].reverse()]) {
       for (let i = 0; i < seq.length; i++) {
@@ -153,6 +155,39 @@ export function canonicalView(view: DrawingView): string {
   for (const m of view.cuttingPlanes ?? []) items.push(seg(`P${m.label}`, m.line.a, m.line.b))
   items.push(`S ${q(view.size[0])},${q(view.size[1])}`)
   return [...new Set(items)].sort().join(';')
+}
+
+/**
+ * Obrys plochy bez nadbytečných vrcholů (opakované body a body ležící na přímce mezi sousedy, např.
+ * z dělení kružnice díry na straně, kterou rovina řezu díru jen míjí): stejně nakreslené plochy
+ * pak mají stejný otisk. Souřadnice jsou už zaokrouhlené (celé násobky přesnosti otisku).
+ */
+function simplifyRing(points: readonly Vec2[]): Vec2[] {
+  let pts = points.filter((p, i) => {
+    const prev = points[(i + points.length - 1) % points.length]!
+    return points.length < 2 || p[0] !== prev[0] || p[1] !== prev[1]
+  })
+  let changed = true
+  while (changed && pts.length > 3) {
+    changed = false
+    for (let i = 0; i < pts.length && pts.length > 3; i++) {
+      const a = pts[(i + pts.length - 1) % pts.length]!
+      const b = pts[i]!
+      const c = pts[(i + 1) % pts.length]!
+      const len = Math.hypot(c[0] - a[0], c[1] - a[1])
+      // vzdálenost b od přímky a–c nejvýš jedna jednotka zaokrouhlení
+      const cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+      const between =
+        (b[0] - a[0]) * (c[0] - a[0]) + (b[1] - a[1]) * (c[1] - a[1]) >= 0 &&
+        (b[0] - c[0]) * (a[0] - c[0]) + (b[1] - c[1]) * (a[1] - c[1]) >= 0
+      if (len > 0 && between && Math.abs(cross) / len <= 1) {
+        pts = [...pts.slice(0, i), ...pts.slice(i + 1)]
+        changed = true
+        i--
+      }
+    }
+  }
+  return pts
 }
 
 /** 53bitový hash řetězce (cyrb53), deterministický v prohlížeči i v Node. */
