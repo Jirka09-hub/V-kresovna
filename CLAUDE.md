@@ -31,6 +31,13 @@ průmyslové školy a SOU, později B2C modul stereometrie (připravit architekt
   Lekce 1–9 dostupné: 7 řez, 8 kóty (živé úvody `SectionDemo`, `DimensionDemo`), 9 závěrečný test
   (`FINAL_TEST` v `packages/content`, UI `FinalTest.tsx`, nic se neukládá). Demo: 5 úloh pěti typů.
   Styly SVG výkresu omezené na třídu `vk-drawing` (`scopeCss`). `ENGINE_VERSION` 0.4.0.
+- Fáze 4, účty (D-026, D-027): migrace `supabase/migrations/20261122070000_organizace_a_vysledky.sql`,
+  pgTAP `supabase/tests/010_organizace.sql`. Účty zakládá jen server (`lib/supabase/admin.ts`,
+  `SUPABASE_SECRET_KEY`), přihlášení e-mailem nebo jménem (`lib/auth/login-id.ts`, technická doména
+  `ucet.vykresovna.invalid`), připojení `/cs/pripojit?kod=`, pozvánky `/cs/pozvanka/<token>`, aktivní
+  organizace v cookie `vk_org`, klientský `useViewer()` (`components/auth/ViewerContext.tsx`).
+- Fáze 4, správa (D-028): `/cs/skolitel` (skupiny, matice postupu, hromadné účty, CSV), `/cs/sprava`
+  (správce organizace), `/cs/platforma` (provozovatel: organizace a licence).
 - Fáze 4, výsledky a certifikát (D-029): lekce a test ukládají přihlášenému s platnou licencí průchod
   a pokusy z prohlížeče (`apps/web/lib/results/`, `TaskSequence onOutcome`), adaptivita čte posledních
   60 pokusů z DB. Certifikát: PDF v prohlížeči (`lib/certificate/pdf.ts`, písmo `public/fonts/`), ověření
@@ -126,6 +133,8 @@ pnpm build && pnpm test:e2e    # Playwright proti produkčnímu buildu (next sta
 pnpm --filter web cf:build     # build pro Cloudflare Workers (OpenNext)
 pnpm --filter web cf:preview   # build + lokální běh ve workerd (wrangler)
 pnpm db:start && pnpm db:test  # lokální Supabase (Docker) + pgTAP testy RLS
+pnpm db:env                    # apps/web/.env.local s lokální Supabase (build + e2e s účty míří na ni)
+pnpm db:types                  # typy databáze z lokální Supabase
 ```
 
 ## Infrastruktura

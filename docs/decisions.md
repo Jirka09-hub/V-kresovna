@@ -444,6 +444,7 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   apostrof (ochrana proti vzorcům). Soubor `vysledky-<skupina>-<datum>.csv`.
 - U účtů s e-mailem se školiteli místo e-mailu ukáže jen „přihlášení e-mailem“ (e-mail není
   v `profiles` a školitel ho nepotřebuje; minimum osobních údajů).
+
 ## D-029 Ukládání výsledků, certifikát v PDF a správa vlastního účtu (fáze 4)
 
 - Stav: přijato (2026-11-22).
