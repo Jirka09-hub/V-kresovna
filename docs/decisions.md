@@ -359,3 +359,46 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   `visualFingerprint` (engine): bez os a se zaokrouhlením na `VISUAL_DIFFERENCE_MM` = 0,5 mm.
   Test `packages/exercises/test/visual-distinct.test.ts` to hlídá pro všechny typy výběru a obtížnosti.
 - Důsledek: pro stejný seed mohou vzniknout jiné distraktory než dřív (nic se zatím neukládá).
+
+## D-026 Účty, přihlášení a role (fáze 4)
+
+- Stav: přijato (2026-11-22).
+- **Účty zakládá jen server** (Auth Admin API se `SUPABASE_SECRET_KEY`): při připojení kódem, přijetí
+  pozvánky nebo hromadném založení školitelem. Veřejná registrace bez organizace nemá smysl (B2B) a
+  Supabase bez vlastního SMTP stejně neposílá potvrzovací e-maily mimo tým projektu. Aplikace proto
+  **neposílá žádné e-maily**; pozvánky jsou odkazy, které správce nebo školitel předá sám.
+- **Přihlášení e-mailem nebo přihlašovacím jménem + heslem** (min. 6 znaků). Účet bez e-mailu má
+  v Auth technickou adresu `<jméno>@ucet.vykresovna.invalid` (doména `.invalid` nikdy nedoručuje);
+  přihlašovací formulář ji doplní, když zadaný údaj neobsahuje `@`. Zapomenuté heslo nastaví školitel
+  nebo správce (Admin API), dokud nebude SMTP.
+- Role v organizaci: `participant` (účastník), `trainer` (školitel), `org_admin` (správce). Nad tím
+  `platform_admins` (provozovatel: zakládá organizace a licence). První správce platformy vznikne
+  jednorázovým odkazem (`platform_invitations`, zakládá se ručně SQL).
+- **Školitel vidí výsledky jen účastníků svých skupin**, a jen ty, které vznikly v této organizaci
+  (agenturní pracovník ve dvou firmách má výsledky oddělené). Jména všech členů organizace vidí, aby je
+  mohl zařadit do skupiny. Správce organizace vidí vše ze své organizace.
+- **Kód skupiny** vedle kódu organizace: žák zadá jeden kód a je rovnou ve třídě. Kódy mají 8 znaků
+  bez zaměnitelných (0/O, 1/I/L), zadání ignoruje mezery a pomlčky.
+- Aktivní organizace (u členů více organizací) se drží v cookie `vk_org`.
+- Výsledky: `lesson_runs` (průchod lekcí/testem) + `attempts` (každá odpověď se `seed` a
+  `engine_version`). Průchod uzavírá funkce `finish_lesson_run` (spočítá správné odpovědi z uložených
+  pokusů, vyžaduje odpověď na každou úlohu). Odebrání člena z organizace jeho výsledky nemaže (správce
+  je dál vidí); smazání účtu maže vše.
+- **Riziko, vědomě přijaté pro pilot**: hodnocení úloh běží v prohlížeči, takže technicky zdatný
+  uživatel by mohl zapsat vymyšlené pokusy. Pro firemní a školní pilot je to přijatelné; pro pozdější
+  ověření stačí uložený `seed` + `engine_version` + odpověď (úlohu jde vygenerovat znovu a přepočítat).
+
+## D-027 Licence a certifikát (fáze 4)
+
+- Stav: přijato (2026-11-22) jako výchozí pravidla; Jiří je může změnit (v plánu je měl dodat on).
+- **Licence** = počet míst pro účastníky (`seat_limit`; školitelé a správci se nepočítají) + platnost
+  do data včetně (`license_valid_until`, kalendář Europe/Prague). Po vypršení: nikdo se nepřipojí
+  (kód ani pozvánka), nové výsledky se neukládají (cvičit jde dál, aplikace to oznámí), přehledy,
+  export a certifikáty zůstávají dostupné. Plná organizace nepřijme dalšího účastníka.
+- **Certifikát**: po závěrečném testu s výsledkem aspoň 75 % (`FINAL_TEST_PASS_THRESHOLD`, stejná
+  hodnota v SQL `app.certificate_rules`, shodu hlídá test). Jeden certifikát na osobu, organizaci a
+  modul; jméno a organizace se uloží v době vydání. Ověřovací kód (16 znaků) a veřejná stránka
+  `/cs/overeni/<kód>` ukážou jen údaje vytištěné na certifikátu. PDF se generuje v prohlížeči
+  (`pdf-lib`, vložené písmo s češtinou), aby Worker na Cloudflare nenesl PDF knihovnu ani písmo.
+- Text certifikátu je návrh vlastními slovy (bez podpisu školitele); Jiří ho může upravit
+  v `messages/cs.json`.
