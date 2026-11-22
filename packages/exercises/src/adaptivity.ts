@@ -11,6 +11,9 @@
 import { createRng, deriveSeed } from './rng'
 import { ERROR_CODES, type Difficulty, type ErrorCode, type ExerciseKind } from './types'
 
+// seznamy pro kontrolu dat z databáze (historie pokusů) bez načtení generátorů úloh
+export { DIFFICULTIES, ERROR_CODES, EXERCISE_KINDS } from './types'
+
 /** Jeden pokus z historie (nic víc se pro adaptivitu nepotřebuje). */
 export type AttemptRecord = {
   readonly kind: ExerciseKind

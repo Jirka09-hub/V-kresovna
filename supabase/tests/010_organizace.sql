@@ -90,7 +90,9 @@ insert into public.lesson_runs (id, user_id, org_id, module_slug, lesson_slug, t
 
 insert into public.attempts (run_id, user_id, org_id, module_slug, lesson_slug, task_index, exercise_type, difficulty, seed, engine_version, is_correct, score)
 select r.id, r.user_id, r.org_id, r.module_slug, r.lesson_slug, 0, 'dimension', 2, 42, '0.4.0', true, 1
-  from public.lesson_runs r;
+  from public.lesson_runs r
+ -- jen průchody tohoto testu (sdílená lokální databáze může mít data z e2e testů)
+ where r.id::text like '00000000-0000-0000-0001-%';
 
 -- ---------------------------------------------------------------------------------------------
 -- Anonym
@@ -258,13 +260,13 @@ select throws_ok($$ select public.join_organization('CCCCCCCC') $$, 'P0001', 'LI
 select throws_ok($$ select public.create_organization('X', 'company', 5, current_date + 10) $$, '42501', null, 'organizaci nezaloží běžný uživatel');
 select pg_temp.login('platform');
 select lives_ok($$ select public.create_organization('Nová D', 'school', 25, current_date + 365) $$, 'správce platformy založí organizaci');
--- (sdílená lokální databáze může obsahovat organizace z e2e testů, proto jen testovací)
+-- jen organizace z tohoto testu (sdílená lokální databáze může mít data z e2e testů)
 select is((select count(*)::int from public.platform_organizations()
-            where name in ('Firma A', 'Škola B', 'Prošlá C', 'Nová D')), 4,
-          'správce platformy vidí přehled organizací');
+            where name in ('Firma A', 'Škola B', 'Prošlá C', 'Nová D')), 4, 'správce platformy vidí přehled organizací');
 
 select pg_temp.admin();
-create temp table code as select verification_code from public.certificates limit 1;
+create temp table code as
+  select verification_code from public.certificates where user_id = pg_temp.uid('a_p1');
 grant select on code to anon;
 select pg_temp.anon();
 select is((select holder_name from public.verify_certificate((select verification_code from code))), 'Jméno a_p1', 'veřejné ověření certifikátu');

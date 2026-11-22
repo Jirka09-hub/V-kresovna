@@ -106,9 +106,10 @@ function SectionChoose({ task, onResult, onNext, nextLabel }: ExerciseProps<Sect
     if (state || busy) return
     setBusy(true)
     try {
-      const result = await evaluateAnswer(task, { kind: 'section', optionId: o.id })
+      const answer = { kind: 'section', optionId: o.id } as const
+      const result = await evaluateAnswer(task, answer)
       setState({ chosenId: o.id, result })
-      onResult(result)
+      onResult(result, answer)
     } finally {
       setBusy(false)
     }
@@ -279,9 +280,10 @@ function SectionPlace({ task, onResult, onNext, nextLabel }: ExerciseProps<Secti
     if (answered || busy) return
     setBusy(true)
     try {
-      const r = await evaluateAnswer(task, { kind: 'section', at })
+      const answer = { kind: 'section', at } as const
+      const r = await evaluateAnswer(task, answer)
       setResult(r)
-      onResult(r)
+      onResult(r, answer)
     } finally {
       setBusy(false)
     }

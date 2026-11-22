@@ -444,3 +444,53 @@ Stavy: **navrženo** (čeká na schválení Jiřím), **přijato**, **nahrazeno*
   apostrof (ochrana proti vzorcům). Soubor `vysledky-<skupina>-<datum>.csv`.
 - U účtů s e-mailem se školiteli místo e-mailu ukáže jen „přihlášení e-mailem“ (e-mail není
   v `profiles` a školitel ho nepotřebuje; minimum osobních údajů).
+## D-029 Ukládání výsledků, certifikát v PDF a správa vlastního účtu (fáze 4)
+
+- Stav: přijato (2026-11-22).
+- **Výsledky ukládá prohlížeč** (Supabase klient s publishable klíčem, oprávnění hlídá RLS), stránky lekcí
+  zůstávají statické. Ukládá se jen přihlášenému v aktivní organizaci s platnou licencí; demo a laboratoř
+  nikdy. `TaskSequence` dostal volitelné `onOutcome` (každá úloha jednou, i přeskočená); bez něj se chová
+  stejně jako dřív. Zapisovač (`apps/web/lib/results/recorder.ts`, bez Reactu, testovaný) založí
+  `lesson_runs` až s první odpovědí (`task_count` včetně adaptivních míst, u testu `seed` testu), zapíše
+  pokus za každou úlohu a po poslední zavolá `finish_lesson_run`. Zápisy jdou ve frontě po sobě,
+  každý se při chybě jednou zopakuje (duplicitní pokus po ztracené odpovědi se bere jako zapsaný);
+  trvalá chyba jen ukáže nenápadné oznámení a další zápisy průchodu se nezkoušejí. Nová sada
+  (opakování lekce, nový test) = nový průchod. Sada, jejíž první úloha proběhla ještě bez přihlášení,
+  se neukládá vůbec (průchod by nešel uzavřít).
+- Pokus: odpověď jako kompaktní JSON (čísla na setiny, nad 3,5 kB jen značka `truncated`), unikátní kódy
+  chyb, `score` 0–1, doba od zobrazení úlohy do odpovědi. Přeskočená úloha: `answer` null, špatně, 0.
+- **Nový sloupec `attempts.focus`** (migrace `20261122100000_pokusy_focus.sql`): upřednostněná chyba je
+  vstup generátoru (D-023), bez ní by adaptivní úlohu „najdi chybu“ nešlo zpětně vygenerovat.
+- `ENGINE_VERSION` se přesunul do `packages/engine/src/version.ts` (subpath `@vykresovna/engine/version`),
+  aby ho aplikace načetla bez celého enginu; `index.ts` ho dál exportuje.
+- **Adaptivita napříč dny**: v lekci se historie relace (`lib/session-history.ts`) doplní posledními 60
+  pokusy uživatele v aktivní organizaci (jednou za uživatele a organizaci). Při změně uživatele nebo
+  organizace se historie relace zahodí (jinak by se pokusy počítaly dvakrát nebo by patřily někomu
+  jinému). Načtení smí selhat, adaptivita pak vychází jen z relace.
+- Přehled lekcí: u přihlášeného „Hotovo · nejlépe N %“ (pohled `lesson_progress`), „Rozpracováno“
+  (začatý, nedokončený průchod) a „Přiřazeno školitelem, termín …“ (přiřazení skupin, kde je uživatel
+  účastníkem; u více skupin nejbližší termín).
+- **Certifikát**: tlačítko „Vydat certifikát“ až po uloženém a databází uzavřeném testu, o splnění
+  rozhoduje počet správných podle databáze (stejně jako `issue_certificate`). PDF A4 na šířku vzniká
+  v prohlížeči (`lib/certificate/pdf.ts` jen rozvrhuje hotové texty, test v Node; pdf-lib a fontkit se
+  načítají dynamicky až po kliknutí). Vzhled: dvojitý rámeček jako na výkresu, rohové razítko s kódem
+  a datem, adresa ověřovací stránky, bez podpisu.
+- **Písmo**: Noto Sans Regular a Bold (SIL OFL 1.1, bez vyhrazeného názvu; zdroj npm balíček
+  `@expo-google-fonts/noto-sans` 0.4.2 = statické TTF z Google Fonts), zmenšené nástrojem fontTools na
+  latinku včetně češtiny, slovenštiny a němčiny, interpunkci a pár symbolů (~30 kB místo ~630 kB);
+  ligatury vypuštěné, protože pdf-lib s nimi špatně počítá šířku („fi“). Licence v
+  `apps/web/public/fonts/OFL.txt`. Test hlídá, že písmo má všechny znaky textů certifikátu.
+- **Ověření** `/cs/overeni` (formulář GET, funguje bez JavaScriptu) a `/cs/overeni/<kód>` (server,
+  `verify_certificate`, nepřihlášený smí); kód se zobrazuje po čtveřicích, zadání ignoruje pomlčky,
+  mezery a velikost písmen. Stránky mají `noindex` (je na nich jméno).
+- **Můj účet**: změna zobrazovaného jména (RLS; už vydané certifikáty mají jméno z doby vydání), změna
+  hesla (server ověří současné heslo přihlášením na přihlašovací e-mail účtu, i technický, pak
+  `updateUser`), odchod z organizace (smazání vlastního členství; poslední správce dostane srozumitelné
+  vysvětlení `LAST_ORG_ADMIN`; výsledky zůstávají organizaci, D-026), certifikáty (PDF znovu, ověřovací
+  odkaz), souhrn postupu v aktivní organizaci a **smazání účtu**: uživatel opíše „SMAZAT“, server zavolá
+  `delete_my_account` (kaskádou zmizí profil, členství, průchody, pokusy i certifikáty), smaže cookies
+  session a přesměruje na úvod s potvrzením. Akce jsou v `lib/account/actions.ts` (ne v
+  `lib/auth/actions.ts`).
+- pgTAP `030_vysledky_a_ucet.sql` prochází zápis jako aplikace (průchod, pokus s `focus`, přeskočená
+  úloha, uzavření), přiřazení jen vlastních skupin, prošlou licenci, změnu jména, odchod z organizace
+  a posledního správce. Test 010 počítá organizace jen ze svých dat (sdílená lokální DB má data z e2e).

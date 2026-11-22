@@ -4,26 +4,46 @@ import { finalTestTasks, type FinalTestSpec } from '@vykresovna/content'
 import { EXERCISE_KINDS, type ErrorCode } from '@vykresovna/exercises'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { CertificatePanel } from '@/components/certificate/CertificatePanel'
 import { KIND_KEY, type TaskRef } from '@/components/exercises/ExerciseRunner'
 import { CheckIcon, CrossIcon } from '@/components/exercises/icons'
 import { TaskSequence, type Outcome } from '@/components/exercises/TaskSequence'
 import { btnPrimary, btnSecondary, panel } from '@/components/ui'
+import { SaveNotice } from '@/components/results/ResultsBanner'
 import { Link } from '@/i18n/navigation'
+import { useLessonRecorder, type RecordingMode } from '@/lib/results/hooks'
+import type { RecorderState } from '@/lib/results/recorder'
 import { randomSeed } from '@/lib/seeds'
 
 /**
  * Závěrečný test modulu: pevný počet úloh ze všech typů cvičení (seedy z jednoho seedu testu),
- * během testu bez zpětné vazby, na konci skóre, rozpis podle typů a vysvětlení chyb. Nic se
- * neukládá (certifikát přijde s účty ve fázi 4).
+ * během testu bez zpětné vazby, na konci skóre, rozpis podle typů a vysvětlení chyb. Přihlášenému
+ * s platnou licencí se výsledek uloží (se seedem testu) a po splnění si může vydat certifikát.
  */
-export function FinalTest({ spec }: { spec: FinalTestSpec }) {
+export function FinalTest({
+  spec,
+  moduleSlug,
+  lessonSlug,
+}: {
+  spec: FinalTestSpec
+  moduleSlug: string
+  lessonSlug: string
+}) {
   const t = useTranslations('finalTest')
   const [phase, setPhase] = useState<'intro' | 'test'>('intro')
-  const [testSeed, setTestSeed] = useState(randomSeed)
+  // seed testu se losuje až po kliknutí na „Začít test“ (jednou, i když React první vykreslení zopakuje)
+  const [testSeed, setTestSeed] = useState<number | null>(null)
   const [round, setRound] = useState(0)
   const percent = Math.round(spec.passThreshold * 100)
+  const recorder = useLessonRecorder({
+    moduleSlug,
+    lessonSlug,
+    taskCount: spec.plan.length,
+    seed: testSeed,
+    round,
+  })
 
-  if (phase === 'intro') {
+  if (phase === 'intro' || testSeed === null) {
     return (
       <section
         className={`flex flex-col gap-4 p-4 sm:p-6 ${panel}`}
@@ -37,13 +57,18 @@ export function FinalTest({ spec }: { spec: FinalTestSpec }) {
           <li>{t('ruleCount', { count: spec.plan.length })}</li>
           <li>{t('ruleNoFeedback')}</li>
           <li>{t('rulePass', { percent })}</li>
-          <li>{t('ruleNothingStored')}</li>
+          <li data-testid="test-storage-rule">
+            {recorder.mode === 'active' ? t('ruleStored') : t('ruleNothingStored')}
+          </li>
         </ul>
         <div>
           <button
             type="button"
             className={btnPrimary}
-            onClick={() => setPhase('test')}
+            onClick={() => {
+              setTestSeed(randomSeed())
+              setPhase('test')
+            }}
             data-testid="start-test"
           >
             {t('start')}
@@ -54,24 +79,30 @@ export function FinalTest({ spec }: { spec: FinalTestSpec }) {
   }
 
   return (
-    <TaskSequence
-      key={round}
-      tasks={finalTestTasks(testSeed, spec)}
-      testMode
-      summaryActions={null}
-      summaryTitle={t('resultsTitle')}
-      renderSummary={(tasks, outcomes) => (
-        <Results
-          tasks={tasks}
-          outcomes={outcomes}
-          threshold={spec.passThreshold}
-          onRetry={() => {
-            setTestSeed(randomSeed())
-            setRound((r) => r + 1)
-          }}
-        />
-      )}
-    />
+    <div className="flex flex-col gap-4">
+      <SaveNotice save={recorder.save} />
+      <TaskSequence
+        key={round}
+        tasks={finalTestTasks(testSeed, spec)}
+        onOutcome={recorder.onOutcome}
+        testMode
+        summaryActions={null}
+        summaryTitle={t('resultsTitle')}
+        renderSummary={(tasks, outcomes) => (
+          <Results
+            tasks={tasks}
+            outcomes={outcomes}
+            threshold={spec.passThreshold}
+            mode={recorder.mode}
+            save={recorder.save}
+            onRetry={() => {
+              setTestSeed(randomSeed())
+              setRound((r) => r + 1)
+            }}
+          />
+        )}
+      />
+    </div>
   )
 }
 
@@ -79,11 +110,15 @@ function Results({
   tasks,
   outcomes,
   threshold,
+  mode,
+  save,
   onRetry,
 }: {
   tasks: readonly TaskRef[]
   outcomes: readonly Outcome[]
   threshold: number
+  mode: RecordingMode
+  save: RecorderState
   onRetry: () => void
 }) {
   const t = useTranslations('finalTest')
@@ -177,9 +212,13 @@ function Results({
         </div>
       ) : null}
 
-      <p className="text-sm text-muted" data-testid="certificate-note">
-        {t('certificateNote')}
-      </p>
+      <CertificateSection
+        passed={passed}
+        total={total}
+        threshold={threshold}
+        mode={mode}
+        save={save}
+      />
       <div className="flex flex-wrap gap-3">
         <button type="button" className={btnPrimary} onClick={onRetry} data-testid="retry-test">
           {t('retry')}
@@ -190,4 +229,53 @@ function Results({
       </div>
     </div>
   )
+}
+
+/** Certifikát pod výsledkem: vydání po uloženém splněném testu, jinak vysvětlení proč ne. */
+function CertificateSection({
+  passed,
+  total,
+  threshold,
+  mode,
+  save,
+}: {
+  passed: boolean
+  total: number
+  threshold: number
+  mode: RecordingMode
+  save: RecorderState
+}) {
+  const t = useTranslations('finalTest')
+  const tc = useTranslations('certificate')
+  if (mode !== 'active') {
+    return (
+      <p className="text-sm text-muted" data-testid="certificate-note">
+        {mode === 'anonymous' ? t('certificateNote') : tc('unavailable')}
+      </p>
+    )
+  }
+  if (save.status === 'error') {
+    return (
+      <p className="text-sm text-red-800" data-testid="certificate-note">
+        {tc('saveFailed')}
+      </p>
+    )
+  }
+  if (save.status !== 'finished' || !save.runId || save.correctCount === null) {
+    return (
+      <p className="text-sm text-muted" role="status" data-testid="certificate-note">
+        {passed ? tc('saving') : ''}
+      </p>
+    )
+  }
+  // rozhoduje výsledek spočítaný databází (stejné pravidlo jako issue_certificate)
+  const savedPassed = total > 0 && save.correctCount / total >= threshold - 1e-9
+  if (!savedPassed) {
+    return (
+      <p className="text-sm text-muted" data-testid="certificate-note">
+        {tc('notPassedSaved')}
+      </p>
+    )
+  }
+  return <CertificatePanel runId={save.runId} />
 }

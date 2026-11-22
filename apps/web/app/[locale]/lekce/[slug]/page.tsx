@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return { title: t(`items.${slug}.title`) }
 }
 
-/** Lekce: výklad s 3D, úlohy podle plánu a shrnutí. Postup se zatím neukládá. */
+/** Lekce: výklad s 3D, úlohy podle plánu a shrnutí. Výsledky ukládá klient (přihlášenému, D-029). */
 export default function LessonPage({ params }: { params: Params }) {
   const { locale, slug } = use(params)
   setRequestLocale(locale)

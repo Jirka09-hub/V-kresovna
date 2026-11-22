@@ -67,9 +67,10 @@ export function MissingView({ task, onResult, onNext, nextLabel }: ExerciseProps
     if (state || busy) return
     setBusy(true)
     try {
-      const result = await evaluateAnswer(task, { kind: 'missing-view', optionId: o.id })
+      const answer = { kind: 'missing-view', optionId: o.id } as const
+      const result = await evaluateAnswer(task, answer)
       setState({ chosenId: o.id, result })
-      onResult(result)
+      onResult(result, answer)
     } finally {
       setBusy(false)
     }

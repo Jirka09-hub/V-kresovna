@@ -71,8 +71,4 @@ export function activeMembership(viewer: Viewer): ViewerMembership | null {
   return viewer.memberships.find((m) => m.orgId === viewer.activeOrgId) ?? null
 }
 
-/** Platí licence k dnešnímu dni (kalendář Europe/Prague, včetně posledního dne)? */
-export function licenseActive(validUntil: string, now: Date = new Date()): boolean {
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Prague' }).format(now)
-  return validUntil >= today
-}
+export { licenseActive } from './license'

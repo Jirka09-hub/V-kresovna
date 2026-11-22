@@ -15,7 +15,7 @@ import {
   type GridPosition,
   type ViewName,
 } from '@vykresovna/drafting-standards'
-import type { AssignViewsTask, TaskResult } from '@vykresovna/exercises'
+import type { Answer, AssignViewsTask, TaskResult } from '@vykresovna/exercises'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState, type CSSProperties } from 'react'
 import { cellFor, ScaledView, type Cell } from '@/components/drawing/ScaledView'
@@ -50,7 +50,8 @@ const GRID_HEIGHT_VH = 44
 
 export type ExerciseProps<T> = {
   task: T
-  onResult: (result: TaskResult) => void
+  /** Výsledek a odpověď, ze které vznikl (odpověď se ukládá s výsledkem, D-029). */
+  onResult: (result: TaskResult, answer?: Answer) => void
   onNext: () => void
   nextLabel: string
 }
@@ -146,9 +147,10 @@ export function AssignViews({ task, onResult, onNext, nextLabel }: ExerciseProps
   const check = async () => {
     setChecking(true)
     try {
-      const r = await evaluateAnswer(task, { kind: 'assign-views', placement })
+      const answer = { kind: 'assign-views', placement } as const
+      const r = await evaluateAnswer(task, answer)
       setResult(r)
-      onResult(r)
+      onResult(r, answer)
     } finally {
       setChecking(false)
     }
