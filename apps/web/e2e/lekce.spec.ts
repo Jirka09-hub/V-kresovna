@@ -2,18 +2,16 @@ import { expect, test } from '@playwright/test'
 import { solveCurrent } from './helpers'
 
 test.describe('lekce', () => {
-  test('přehled: 9 lekcí, 1–6 dostupné, 7–9 připravujeme', async ({ page }) => {
+  test('přehled: 9 lekcí, všechny dostupné, poslední je závěrečný test', async ({ page }) => {
     await page.goto('/cs/lekce')
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Pohledy a řezy')
     const items = page.locator('[data-testid="lesson-list"] > li')
     await expect(items).toHaveCount(9)
     await expect(
       page.locator('[data-testid="lesson-list"] > li[data-status="available"] a'),
-    ).toHaveCount(6)
-    await expect(page.locator('li[data-status="coming-soon"]')).toHaveCount(3)
-    await expect(page.locator('li[data-status="coming-soon"]').first()).toContainText(
-      'připravujeme',
-    )
+    ).toHaveCount(9)
+    await expect(page.locator('li[data-status="coming-soon"]')).toHaveCount(0)
+    await expect(items.last()).toContainText('Závěrečný test')
   })
 
   test('lekce 1: výklad s animací, pak úloha', async ({ page }) => {
@@ -37,10 +35,5 @@ test.describe('lekce', () => {
     await expect(drawing).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'slepá díra' }).click()
     await expect(drawing.locator('[data-highlight="true"]').first()).toBeVisible()
-  })
-
-  test('připravovaná lekce ukáže hlášku', async ({ page }) => {
-    await page.goto('/cs/lekce/koty')
-    await expect(page.getByTestId('coming-soon')).toBeVisible()
   })
 })

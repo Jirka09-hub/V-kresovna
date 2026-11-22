@@ -46,7 +46,6 @@ export function DrawingSvg({
       const hit = el.cloneNode() as SVGElement
       hit.removeAttribute('class')
       hit.setAttribute('data-hit', 'true')
-      hit.setAttribute('style', 'stroke:transparent;stroke-width:3;stroke-dasharray:none')
       el.parentNode?.insertBefore(hit, el)
     }
   }, [svg, onHover])
