@@ -42,6 +42,16 @@ export type IntroDemo =
    * správný výkres.
    */
   | { readonly kind: 'error-example'; readonly mutation: DrawingMutation }
+  /**
+   * Živý řez: 3D model s posuvnou rovinou řezu kolmou na `axis` (výchozí poloha `at`) a vedle
+   * výkres s řezem A–A, který se po posunu roviny přepočítá.
+   */
+  | { readonly kind: 'section'; readonly axis: 'x' | 'y' | 'z'; readonly at: number }
+  /**
+   * Zakótovaný výkres vedle 3D modelu: najetí na kótu zvýrazní kótovaný prvek ve 3D, tlačítka
+   * zvýrazní prvek a jeho kóty.
+   */
+  | { readonly kind: 'dimensions'; readonly features?: readonly IntroFeature[] }
 
 export type IntroScreen = {
   /** Id obrazovky v rámci lekce (texty: `lessons.items.<slug>.intro.<id>.title|text`). */
@@ -71,6 +81,16 @@ export type AdaptiveSlots = {
 
 export type LessonStatus = 'available' | 'coming-soon'
 
+/**
+ * Závěrečný test: pevný plán úloh (typ a obtížnost), seedy se odvodí z jednoho seedu testu
+ * (`finalTestTasks`). Během testu se nezobrazuje zpětná vazba, výsledek až na konci.
+ */
+export type FinalTestSpec = {
+  readonly plan: readonly Pick<FixedTask, 'kind' | 'difficulty'>[]
+  /** Podíl správných odpovědí potřebný ke splnění (0–1). */
+  readonly passThreshold: number
+}
+
 export type Lesson = {
   /** Slug v URL (`/lekce/<slug>`), zároveň klíč textů `lessons.items.<slug>`. */
   readonly slug: string
@@ -79,6 +99,8 @@ export type Lesson = {
   readonly plan: readonly TaskPlanItem[]
   /** Adaptivní úlohy po pevném plánu (volitelné). */
   readonly adaptive?: AdaptiveSlots
+  /** Lekce je závěrečný test (místo plánu úloh a adaptivních úloh). */
+  readonly test?: FinalTestSpec
 }
 
 export type Module = {

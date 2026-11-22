@@ -67,3 +67,28 @@ export const INTRO_PART_ERRORS: PartSpec = {
     { kind: 'hole', id: 'd1', axis: 'z', at: [44, 11], diameter: 10 },
   ],
 }
+
+/**
+ * Lekce 7: průchozí díra, slepá díra s kuželovým dnem a drážka nahoře. Rovina y = 20 prochází
+ * osami obou děr (řez A–A místo nárysu).
+ */
+export const INTRO_PART_SECTION: PartSpec = {
+  id: 'uvod-rez',
+  base: { kind: 'block', size: [80, 40, 30] },
+  features: [
+    { kind: 'hole', id: 'd1', axis: 'z', at: [18, 20], diameter: 12 },
+    { kind: 'hole', id: 'd2', axis: 'z', at: [60, 20], diameter: 10, depth: 14, from: 'max' },
+    { kind: 'slot', id: 's1', box: { min: [34, 0, 22], max: [46, 40, 30] } },
+  ],
+}
+
+/** Lekce 8: průchozí díra, drážka uprostřed a osazení vpravo nahoře (kóty velikostí i poloh). */
+export const INTRO_PART_DIMENSIONS: PartSpec = {
+  id: 'uvod-koty',
+  base: { kind: 'block', size: [80, 40, 30] },
+  features: [
+    { kind: 'hole', id: 'd1', axis: 'z', at: [18, 20], diameter: 10 },
+    { kind: 'slot', id: 's1', box: { min: [32, 0, 20], max: [44, 40, 30] } },
+    { kind: 'step', id: 'o1', box: { min: [60, 0, 18], max: [80, 40, 30] } },
+  ],
+}
