@@ -68,9 +68,12 @@ export function Model3D({
   const tv = useTranslations('viewer')
   const cubeLabels = useCubeLabels()
   const [webgl] = useState(() => webglSupported())
+  const [slow, setSlow] = useState(false)
   const fallback = <NoWebGL text={tv('noWebgl')} />
   return (
-    <div className={`overflow-hidden rounded-lg border border-slate-200 bg-[#eef2f7] ${className}`}>
+    <div
+      className={`relative overflow-hidden rounded-lg border border-slate-200 bg-[#eef2f7] ${className}`}
+    >
       {!webgl ? (
         fallback
       ) : data ? (
@@ -88,7 +91,17 @@ export function Model3D({
             {...(sectionStep !== undefined ? { sectionStep } : {})}
             className="h-full w-full"
             ariaLabel={ariaLabel}
+            onSlowRendering={() => setSlow(true)}
           />
+          {slow ? (
+            <p
+              role="status"
+              className="absolute inset-x-2 bottom-2 rounded-md bg-white/95 px-3 py-2 text-xs text-ink shadow"
+              data-testid="slow-3d"
+            >
+              {t('slow')}
+            </p>
+          ) : null}
         </WebGLBoundary>
       ) : (
         <div className="flex h-full items-center justify-center text-sm text-muted">

@@ -1,4 +1,4 @@
-import type { PartSpec } from './types'
+import type { IntroFeature, PartSpec } from './types'
 
 /**
  * Součásti pro úvodní výklad lekcí. Souřadnice enginu: X doprava, Y dozadu, Z nahoru, mm,
@@ -92,3 +92,23 @@ export const INTRO_PART_DIMENSIONS: PartSpec = {
     { kind: 'step', id: 'o1', box: { min: [60, 0, 18], max: [80, 40, 30] } },
   ],
 }
+
+/**
+ * Úvodní stránka: živá ukázka bez výpočtu v prohlížeči (předpočítaná data, D-031). Osazení vlevo
+ * nahoře, svislá průchozí díra vpravo a drážka zespodu napříč.
+ */
+export const LANDING_PART: PartSpec = {
+  id: 'ukazka-uvod',
+  base: { kind: 'block', size: [80, 50, 40] },
+  features: [
+    { kind: 'step', id: 'o1', box: { min: [0, 0, 24], max: [32, 50, 40] } },
+    { kind: 'hole', id: 'd1', axis: 'z', at: [56, 25], diameter: 14 },
+    { kind: 'slot', id: 's1', box: { min: [10, 0, 0], max: [24, 50, 8] } },
+  ],
+}
+
+export const LANDING_FEATURES: readonly IntroFeature[] = [
+  { featureId: 'o1', term: 'step' },
+  { featureId: 'd1', term: 'throughHole' },
+  { featureId: 's1', term: 'slot' },
+]

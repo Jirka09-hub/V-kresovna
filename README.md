@@ -37,6 +37,22 @@ po napojení repozitáře se každý push do `main` nasadí do produkce a každ�
 
 Vlastní doménu přidáme později v **Settings → Domains & Routes**.
 
+### Upozornění e-mailem na poptávku pilotu (až bude doména)
+
+Poptávky z formuláře „Chci pilot“ se vždy uloží do databáze a jsou v `/cs/platforma`. E-mail navíc
+posílá Cloudflare Email Service, který potřebuje doménu spravovanou Cloudflare a placený plán Workers.
+
+1. Doména v Cloudflare (DNS u Cloudflare), v dashboardu **Email → Email Sending** ji přidej
+   a nech Cloudflare nastavit DNS záznamy.
+2. Do `apps/web/wrangler.jsonc` přidej vazbu (adresu příjemce stačí mít v proměnné níže):
+   ```jsonc
+   "send_email": [{ "name": "PILOT_EMAIL" }],
+   ```
+3. Ve Workeru **Settings → Variables and secrets** (runtime) přidej `PILOT_NOTIFY_TO` (kam chodí
+   upozornění) a `PILOT_NOTIFY_FROM` (např. `poptavky@<doména>`).
+4. Po nasazení odešli zkušební poptávku. Když e-mail nepřijde, chyba je v logu Workeru
+   („pilot: e-mail se nepodařilo odeslat“), poptávka zůstane v databázi.
+
 ## Struktura
 
 ```

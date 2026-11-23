@@ -4,6 +4,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { ReactNode } from 'react'
 import { ViewerProvider } from '@/components/auth/ViewerContext'
+import { SiteFooter } from '@/components/SiteFooter'
 import { SiteHeader } from '@/components/SiteHeader'
 import { routing } from '@/i18n/routing'
 import '../globals.css'
@@ -35,11 +36,14 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className="min-h-screen antialiased">
+      <body className="flex min-h-screen flex-col antialiased">
         <NextIntlClientProvider>
           <ViewerProvider>
             <SiteHeader />
-            <div id="obsah">{children}</div>
+            <div id="obsah" className="flex-1">
+              {children}
+            </div>
+            <SiteFooter />
           </ViewerProvider>
         </NextIntlClientProvider>
       </body>

@@ -1,22 +1,90 @@
 {
   "meta": {
     "title": "Výkresovna",
-    "description": "Interaktivní trenažér čtení technických výkresů na 3D modelech."
+    "description": "Trenažér čtení technických výkresů na 3D modelech pro firmy a střední technické školy."
   },
   "home": {
-    "eyebrow": "Pilotní verze se připravuje",
+    "eyebrow": "Pilotní verze pro firmy a školy",
     "title": "Naučte lidi číst technické výkresy na 3D modelech",
-    "lead": "Model si otočíte, rozříznete a porovnáte s výkresem. Tak se pochopí vztah mezi tělesem a jeho pohledy rychleji než z učebnice.",
-    "forCompanies": "Pro firmy",
-    "forCompaniesText": "Zaučení operátorů CNC, montážníků a kontrolorů kvality bez prezenčního školení.",
-    "forSchools": "Pro školy",
-    "forSchoolsText": "Technická dokumentace na SPŠ a SOU: úlohy s okamžitou zpětnou vazbou.",
-    "status": "Stav: vývoj, fáze 3 (řezy, kóty a závěrečný test)",
+    "lead": "Model si otočíte, rozříznete a porovnáte s výkresem. Vztah mezi tělesem a jeho pohledy se tak pochopí rychleji než z učebnice.",
     "ctaDemo": "Vyzkoušet demo",
-    "ctaDemoText": "Pět krátkých úloh bez registrace. Zabere to asi pět minut.",
+    "ctaDemoText": "Pět krátkých úloh bez registrace, asi na pět minut.",
+    "ctaPilot": "Chci pilot",
     "ctaLessons": "Projít lekce",
-    "ctaLessonsText": "Pilotní modul: pohledy, skryté hrany, díry, řezy, kóty a závěrečný test.",
-    "tryTitle": "Vyzkoušejte si to"
+    "heroNote": "Nic se neinstaluje. Běží v prohlížeči na počítači i tabletu.",
+    "sample": {
+      "title": "Zkuste si to hned",
+      "text": "Model otočíte myší nebo prstem. Najeďte na hranu a uvidíte, kde je ve výkresu. Tlačítka pod ním zvýrazní celý prvek.",
+      "start": "Spustit 3D ukázku",
+      "startHint": "Ukázka načte asi 30 kB dat a 3D zobrazení.",
+      "loading": "Načítám 3D ukázku…",
+      "error": "Ukázku se nepodařilo načíst. Zkuste obnovit stránku."
+    },
+    "how": {
+      "title": "Jak to funguje",
+      "steps": {
+        "look": {
+          "title": "Prohlédnout",
+          "text": "Součást otočíte, rozříznete rovinou řezu nebo necháte rozložit do pohledů a sledujete, jak vzniká výkres."
+        },
+        "practice": {
+          "title": "Procvičit",
+          "text": "Krátké úlohy: přiřadit pohled, doplnit chybějící čáru, najít chybu ve výkresu, vybrat správný řez, odečíst kótu. Zpětná vazba hned."
+        },
+        "verify": {
+          "title": "Ověřit",
+          "text": "Závěrečný test a certifikát s kódem, který si kdokoli ověří na webu."
+        }
+      }
+    },
+    "companies": {
+      "title": "Pro firmy",
+      "lead": "Zaučení operátorů CNC, montážníků a kontrolorů kvality bez prezenčního školení.",
+      "points": {
+        "pace": "Každý se učí svým tempem, klidně z tabletu přímo na dílně.",
+        "noEmail": "Účet založíte i lidem bez e-mailu, stačí uživatelské jméno.",
+        "overview": "Školitel v přehledu vidí, kdo co zvládl a kde nejčastěji chybuje.",
+        "certificate": "Certifikát s ověřovacím kódem jako doklad o zaškolení."
+      },
+      "cta": "Chci pilot pro firmu"
+    },
+    "schools": {
+      "title": "Pro školy",
+      "lead": "Technická dokumentace na SPŠ a SOU: úlohy s okamžitou zpětnou vazbou.",
+      "points": {
+        "code": "Žáci se připojí kódem třídy, nic se neinstaluje.",
+        "generated": "Úlohy se generují, takže sousedé v lavici mají různá zadání.",
+        "matrix": "Přehled postupu třídy a export výsledků do CSV.",
+        "projection": "Evropské promítání (metoda E), jak se učí v české technické výuce."
+      },
+      "cta": "Chci pilot pro školu"
+    },
+    "module": {
+      "title": "Co je v pilotním modulu",
+      "text": "Pohledy a řezy jednoduchých součástí: devět lekcí od pohledů přes skryté hrany, díry, řezy a kóty až po závěrečný test."
+    },
+    "faq": {
+      "title": "Časté otázky",
+      "items": {
+        "requirements": {
+          "q": "Co je potřeba k provozu?",
+          "a": "Běžný prohlížeč (Chrome, Edge, Firefox nebo Safari) a připojení k internetu. Na slabších počítačích se 3D zobrazení samo zjednoduší a bez 3D fungují úlohy s výkresy."
+        },
+        "data": {
+          "q": "Kde jsou data uložená?",
+          "a": "V datovém centru ve Frankfurtu (EU). Nepoužíváme reklamní ani analytické sledovací nástroje."
+        },
+        "minors": {
+          "q": "Mohou aplikaci používat nezletilí žáci?",
+          "a": "Ano. Žák potřebuje jen jméno a uživatelské jméno, e-mail není nutný. Účty zakládá škola."
+        },
+        "terms": {
+          "q": "Jak pilot probíhá a kolik stojí?",
+          "a": "Rozsah, délku a podmínky pilotu domluvíme podle počtu lidí a toho, co potřebujete naučit. Napište nám přes formulář."
+        }
+      }
+    },
+    "privacyLink": "Podrobnosti v zásadách zpracování osobních údajů."
   },
   "drafting": {
     "view": {
@@ -110,7 +178,8 @@
     "reset": "Výchozí pohled",
     "xray": "Rentgen (skryté hrany)",
     "loading": "Načítám 3D model…",
-    "dragHint": "Model otočíte tažením myší nebo prstem."
+    "dragHint": "Model otočíte tažením myší nebo prstem.",
+    "slow": "3D se na tomto zařízení vykresluje pomalu. Zkuste zavřít ostatní okna, nebo se řiďte jen výkresem: úlohy jdou vyřešit i tak."
   },
   "exercises": {
     "kind": {
@@ -821,6 +890,24 @@
       "seatsValue": "{used} / {limit}",
       "expired": "vypršela",
       "manage": "Licence a pozvánka"
+    },
+    "requests": {
+      "title": "Poptávky pilotu ({count})",
+      "none": "Zatím žádné poptávky.",
+      "retention": "Poptávky se po 24 měsících samy smažou.",
+      "notifyOff": "Upozornění e-mailem zatím není zapnuté (chybí doména). Nové poptávky uvidíte tady.",
+      "colDate": "Přijato",
+      "colWho": "Kdo",
+      "colContact": "Kontakt",
+      "colMessage": "Zpráva",
+      "colState": "Stav",
+      "headcount": "{count} lidí",
+      "handled": "vyřízeno",
+      "open": "nová",
+      "markHandled": "Označit jako vyřízené",
+      "markOpen": "Vrátit mezi nové",
+      "delete": "Smazat",
+      "deleteConfirm": "Opravdu smazat poptávku od {name}? Nejde to vrátit."
     }
   },
   "csv": {
@@ -1032,5 +1119,125 @@
     "notFoundHint": "Zkontrolujte, že je kód opsaný správně (16 znaků). Certifikát mohl také zaniknout smazáním účtu držitele.",
     "error": "Ověření se teď nepodařilo. Zkuste to prosím za chvíli.",
     "another": "Ověřit jiný kód"
+  },
+  "pilot": {
+    "title": "Chci pilot",
+    "lead": "Vyplňte pár údajů a ozveme se vám s návrhem pilotu.",
+    "segment": "Kdo poptává",
+    "segments": {
+      "company": "Firma",
+      "school": "Škola"
+    },
+    "name": "Jméno a příjmení",
+    "organization": "Firma nebo škola",
+    "email": "E-mail",
+    "phone": "Telefon (nepovinné)",
+    "headcount": "Kolik lidí by se učilo (přibližně, nepovinné)",
+    "message": "Co potřebujete naučit (nepovinné)",
+    "consent": "Rozumím, že údaje použijete jen k vyřízení poptávky.",
+    "consentLink": "Jak s údaji zacházíme",
+    "honeypot": "Toto pole nevyplňujte",
+    "submit": "Odeslat poptávku",
+    "sending": "Odesílám…",
+    "success": "Děkujeme, poptávku máme. Ozveme se vám na zadaný e-mail.",
+    "fieldErrors": "Zkontrolujte prosím označená pole.",
+    "fields": {
+      "segment": "Vyberte firmu, nebo školu.",
+      "name": "Napište jméno (2 až 120 znaků).",
+      "organization": "Napište název firmy nebo školy (2 až 160 znaků).",
+      "email": "Zadejte platný e-mail.",
+      "phone": "Telefon může obsahovat jen číslice, mezery a znaky + ( ) / -.",
+      "headcount": "Zadejte celé číslo od 1 do 100 000.",
+      "message": "Zpráva může mít nejvýš 2 000 znaků.",
+      "consent": "Bez tohoto potvrzení poptávku odeslat nejde."
+    },
+    "errors": {
+      "RETRY": "Formulář se odeslal moc rychle nebo neúplný. Zkontrolujte ho prosím a odešlete znovu.",
+      "RATE_LIMITED": "Z této adresy dnes už přišlo několik poptávek. Ozveme se, nebo to zkuste zítra.",
+      "SERVER": "Poptávku se teď nepodařilo uložit. Zkuste to prosím za chvíli znovu."
+    }
+  },
+  "footer": {
+    "label": "Patička",
+    "privacy": "Zásady zpracování osobních údajů",
+    "verify": "Ověřit certifikát",
+    "pilot": "Chci pilot",
+    "copyright": "© Výkresovna"
+  },
+  "privacy": {
+    "title": "Zásady zpracování osobních údajů",
+    "lead": "Shrnutí, jaké údaje Výkresovna zpracovává, proč, jak dlouho je drží a jaká máte práva. Snažíme se sbírat co nejméně.",
+    "updated": "Platné od 22. 11. 2026 (pilotní verze).",
+    "sections": [
+      {
+        "id": "spravce",
+        "title": "Kdo údaje zpracovává",
+        "paragraphs": [
+          "Provozovatelem Výkresovny je: {controller}",
+          "Když vám účet založí firma nebo škola, rozhoduje o vašich údajích ona (je jejich správcem) a Výkresovna je pro ni zpracovává podle smlouvy. S otázkami k takovému účtu se můžete obrátit na ni i na nás."
+        ]
+      },
+      {
+        "id": "poptavka",
+        "title": "Poptávka pilotu",
+        "paragraphs": [
+          "Když vyplníte formulář „Chci pilot“, uložíme jméno, název firmy nebo školy, e-mail, případně telefon, přibližný počet lidí a vaši zprávu. Použijeme je jen k tomu, abychom vám odpověděli a domluvili pilot. Zpracování je nutné k jednání o smlouvě, o které jste sami začali mluvit.",
+          "Poptávky se automaticky mažou 24 měsíců po odeslání. Dřív je smažeme, když o to požádáte."
+        ]
+      },
+      {
+        "id": "ucty",
+        "title": "Účty a výsledky",
+        "paragraphs": [
+          "U účtu evidujeme jméno, které se zobrazuje školiteli a na certifikátu, a k přihlášení e-mail nebo uživatelské jméno. Heslo neukládáme, jen jeho bezpečný otisk. Dále členství v organizaci a skupině, výsledky úloh (které úlohy jste řešili, jestli správně a s jakou chybou) a vydané certifikáty.",
+          "Výsledky slouží k výuce: aplikace podle nich vybírá další úlohy a školitel vidí postup své skupiny. Školitel vidí jen výsledky lidí ve svých skupinách a jen z vaší organizace.",
+          "Údaje držíme, dokud účet existuje. Účet můžete kdykoli smazat sami v sekci Můj účet; smažou se s ním i výsledky a certifikáty. Ověření certifikátu podle kódu pak přestane fungovat."
+        ]
+      },
+      {
+        "id": "demo",
+        "title": "Demo a lekce bez přihlášení",
+        "paragraphs": [
+          "Když si demo nebo lekce zkoušíte bez přihlášení, na server nic neukládáme. Průběh si pamatuje jen váš prohlížeč do zavření stránky."
+        ]
+      },
+      {
+        "id": "cookies",
+        "title": "Cookies",
+        "paragraphs": [
+          "Používáme jen cookies nutné pro fungování: přihlášení a volbu organizace, ve které právě pracujete. Analytické ani reklamní cookies nepoužíváme, proto se na ně stránka neptá."
+        ]
+      },
+      {
+        "id": "prijemci",
+        "title": "Kdo další k údajům má přístup",
+        "paragraphs": [
+          "Databázi pro nás provozuje Supabase v datovém centru ve Frankfurtu (EU). Web běží na síti Cloudflare, která požadavky zpracovává, ale osobní údaje z aplikace neukládá. Oba poskytovatelé vedou kvůli bezpečnosti krátkodobé technické záznamy (například IP adresu a čas požadavku).",
+          "Údaje nikomu neprodáváme a nepoužíváme sledovací nástroje třetích stran."
+        ]
+      },
+      {
+        "id": "nezletili",
+        "title": "Žáci a nezletilí",
+        "paragraphs": [
+          "Účty žákům zakládá škola. Žák nepotřebuje e-mail, stačí jméno a uživatelské jméno. O informování žáků a jejich zákonných zástupců se stará škola jako správce údajů."
+        ]
+      },
+      {
+        "id": "prava",
+        "title": "Vaše práva",
+        "paragraphs": [
+          "Máte právo vědět, jaké údaje o vás zpracováváme, nechat je opravit nebo smazat, omezit jejich zpracování, získat je ve strojově čitelné podobě a vznést proti zpracování námitku. Jméno, heslo a smazání účtu zvládnete sami v sekci Můj účet, s ostatním nám napište.",
+          "Pokud máte za to, že s údaji zacházíme špatně, můžete podat stížnost u Úřadu pro ochranu osobních údajů (www.uoou.gov.cz)."
+        ]
+      },
+      {
+        "id": "kontakt",
+        "title": "Kontakt",
+        "paragraphs": ["{contact}"]
+      }
+    ],
+    "controller": "údaje o provozovateli (jméno nebo firma, IČO a adresa) doplníme před spuštěním pilotu.",
+    "contact": "Kontaktní e-mail pro otázky k osobním údajům doplníme spolu s údaji o provozovateli. Do té doby nám napište přes formulář Chci pilot na úvodní stránce."
   }
 }

@@ -11,7 +11,16 @@ import {
 } from 'react'
 import { usePathname } from '@/i18n/navigation'
 import type { Database } from '@/lib/supabase/database.types'
-import { createClient } from '@/lib/supabase/client'
+
+/**
+ * Supabase klient se stáhne až u přihlášeného (má cookie `sb-…`). Návštěvník bez účtu, třeba na
+ * úvodní stránce, tak nestahuje knihovnu Supabase vůbec (výkon na slabých zařízeních, D-032).
+ */
+const loadClient = () => import('@/lib/supabase/client').then((m) => m.createClient())
+
+function hasSessionCookie(): boolean {
+  return /(?:^|; )sb-[^=]*-auth-token/.test(document.cookie)
+}
 
 type OrgRole = Database['public']['Enums']['org_role']
 
@@ -51,7 +60,11 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ status: 'loading', viewer: null })
 
   const load = useCallback(async () => {
-    const supabase = createClient()
+    if (!hasSessionCookie()) {
+      setState({ status: 'ready', viewer: null })
+      return
+    }
+    const supabase = await loadClient()
     const { data } = await supabase.auth.getSession()
     const user = data.session?.user
     if (!user) {
@@ -90,14 +103,28 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Bez přihlášení stačí jednou říct „nikdo“ (mimo tělo efektu kvůli pravidlům Reactu).
+    if (!hasSessionCookie()) {
+      const timer = setTimeout(() => void load(), 0)
+      return () => clearTimeout(timer)
+    }
     // INITIAL_SESSION přijde hned po přihlášení k odběru; volání Supabase uvnitř callbacku se
     // odkládá (doporučení supabase-js, jinak hrozí zablokování zámku session)
-    const { data } = createClient().auth.onAuthStateChange((event) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setTimeout(() => void load(), 0)
-      }
+    let unsubscribe: (() => void) | null = null
+    let alive = true
+    void loadClient().then((client) => {
+      if (!alive) return
+      const { data } = client.auth.onAuthStateChange((event) => {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          setTimeout(() => void load(), 0)
+        }
+      })
+      unsubscribe = () => data.subscription.unsubscribe()
     })
-    return () => data.subscription.unsubscribe()
+    return () => {
+      alive = false
+      unsubscribe?.()
+    }
   }, [load])
 
   // Přihlášení a odhlášení probíhá i na serveru (server actions): po každé navigaci ověřit, jestli se
@@ -110,7 +137,11 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (currentUser.current === undefined) return
-      const { data } = await createClient().auth.getSession()
+      if (!hasSessionCookie()) {
+        if (currentUser.current !== null) void load()
+        return
+      }
+      const { data } = await (await loadClient()).auth.getSession()
       if ((data.session?.user.id ?? null) !== currentUser.current) void load()
     }, 0)
     return () => clearTimeout(timer)
